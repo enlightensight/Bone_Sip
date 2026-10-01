@@ -3509,31 +3509,61 @@
     try { return localStorage.getItem('bonesip_voice') !== 'off'; } catch (e) { return true; }
   }
 
+  function getVolume() {
+    try {
+      const v = localStorage.getItem('bonesip_player_vol');
+      return v !== null ? parseFloat(v) : 1;
+    } catch (e) { return 1; }
+  }
+
+  function setVolume(val) {
+    val = Math.max(0, Math.min(1, parseFloat(val) || 0));
+    try { localStorage.setItem('bonesip_player_vol', String(val)); } catch (e) {}
+    try { localStorage.setItem('bonesip_voice', val > 0 ? 'on' : 'off'); } catch (e) {}
+    updateVoiceButton();
+    const v = document.getElementById('plVideo');
+    if (v) v.volume = val;
+  }
+
   function speak(text) {
-    if (!voiceOn() || !('speechSynthesis' in window)) return;
+    const vol = getVolume();
+    if (vol <= 0 || !voiceOn() || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
       u.rate = 0.9;
+      u.volume = vol;
       u.lang = 'en-IN';
       window.speechSynthesis.speak(u);
     } catch (e) { /* speech is optional */ }
   }
 
-  function toggleVoice() {
-    const next = !voiceOn();
-    try { localStorage.setItem('bonesip_voice', next ? 'on' : 'off'); } catch (e) { /* ignore */ }
-    if (!next && 'speechSynthesis' in window) window.speechSynthesis.cancel();
-    updateVoiceButton();
-    showToast(next ? 'Voice guide on' : 'Voice guide off', next ? 'fa-volume-high' : 'fa-volume-xmark');
+  function toggleVoice(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const pop = document.getElementById('plVolPop');
+    if (pop) {
+      pop.hidden = !pop.hidden;
+      if (!pop.hidden) updateVoiceButton();
+    }
+  }
+
+  function onVolumeChange(val) {
+    setVolume(val);
   }
 
   function updateVoiceButton() {
     const btn = document.getElementById('plVoiceBtn');
     if (!btn) return;
+    const vol = getVolume();
+    const isMuted = vol <= 0 || !voiceOn();
     btn.style.display = 'speechSynthesis' in window ? '' : 'none';
-    btn.innerHTML = `<i class="fa-solid ${voiceOn() ? 'fa-volume-high' : 'fa-volume-xmark'}"></i>`;
-    btn.setAttribute('aria-label', voiceOn() ? 'Turn voice guide off' : 'Turn voice guide on');
+    const iconClass = isMuted ? 'fa-volume-xmark' : (vol < 0.5 ? 'fa-volume-low' : 'fa-volume-high');
+    btn.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+    btn.setAttribute('aria-label', `Volume: ${Math.round(vol * 100)}%`);
+    const slider = document.getElementById('plVolSlider');
+    if (slider) slider.value = vol;
+    const valEl = document.getElementById('plVolVal');
+    if (valEl) valEl.textContent = `${Math.round(vol * 100)}%`;
   }
 
   async function requestWakeLock() {
@@ -3591,14 +3621,13 @@
 
     if (phase === 'ready') {
       player.total = player.remaining = READY_SEC;
-      speak(`Get ready. ${ex.name}.`);
+      speak('Get ready.');
     } else if (phase === 'work') {
       player.total = player.remaining = getExDuration(ex);
-      speak(`Begin. ${ex.name}.`);
+      speak('Begin.');
     } else if (phase === 'rest') {
       player.total = player.remaining = REST_SEC;
-      const next = findWorkout(player.queue[player.index + 1]);
-      speak(`Rest. Next: ${next ? next.name : ''}.`);
+      speak('Rest.');
     } else if (phase === 'done') {
       releaseWakeLock();
       celebrate('big');
@@ -3688,6 +3717,8 @@
     releaseWakeLock();
     const el = document.getElementById('workoutPlayer');
     if (el) el.hidden = true;
+    const pop = document.getElementById('plVolPop');
+    if (pop) pop.hidden = true;
     document.body.classList.remove('player-open');
     if (player.dailyGoalReached) {
       showToast(`Daily workout done! ${state.activeStreakDays}-day streak 🔥`, 'fa-fire');
@@ -4136,6 +4167,15 @@
       });
     });
 
+    // Close volume dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      const wrap = document.querySelector('.pl-vol-wrap');
+      const pop = document.getElementById('plVolPop');
+      if (pop && !pop.hidden && wrap && !wrap.contains(e.target)) {
+        pop.hidden = true;
+      }
+    });
+
     registerServiceWorker();
   }
 
@@ -4202,6 +4242,7 @@
     playerAddRest,
     closePlayer,
     toggleVoice,
+    onVolumeChange,
     closeWorkoutTimerModal,
     toggleWorkoutTimer,
     resetWorkoutTimer,
