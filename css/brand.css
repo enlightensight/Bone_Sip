@@ -1002,31 +1002,258 @@ body { overflow-x: clip; }
    GUIDED WORKOUTS — exercise home, detail sheet, full-screen player
    Sized for older adults: large type, 48px+ targets, labelled buttons.
    ========================================================================== */
-.wk-hero { position: relative; overflow: hidden; color: #fff; background: var(--grad-brand); border-radius: 28px; padding: 20px 18px 18px; margin-bottom: 14px; box-shadow: 0 16px 34px -14px rgba(177, 49, 93, 0.6); }
-.wk-hero::after { content: ""; position: absolute; width: 260px; height: 260px; right: -90px; top: -110px; border-radius: 50%; background: rgba(255, 255, 255, 0.09); pointer-events: none; }
-.wk-hero > * { position: relative; z-index: 1; }
-.wk-hero-top { display: flex; justify-content: space-between; align-items: center; }
-.wk-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.18); border-radius: var(--radius-full); padding: 5px 12px; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
-.wk-week-count { display: inline-flex; align-items: center; gap: 4px; background: #fff; color: var(--text-primary); border-radius: var(--radius-full); padding: 3px 10px 3px 5px; font-weight: 800; font-size: 0.86rem; }
-.wk-hero h2 { color: #fff; font-size: 1.7rem; font-weight: 800; margin: 12px 0 0; line-height: 1.1; }
-.wk-day { font-size: 1.05rem; opacity: 0.92; margin: 2px 0 10px; }
-.wk-day b { font-family: var(--font-heading); font-size: 1.6rem; }
-.wk-progress { height: 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.25); overflow: hidden; }
-.wk-progress i { display: block; height: 100%; min-width: 10px; background: #fff; border-radius: 10px; transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-.wk-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 12px 0 14px; }
-.wk-week span { aspect-ratio: 1; max-width: 38px; justify-self: center; width: 100%; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 0.78rem; background: rgba(255, 255, 255, 0.16); color: rgba(255, 255, 255, 0.9); }
-.wk-week span.today { box-shadow: inset 0 0 0 2px #fff; }
-.wk-week span.done { background: #fff; color: var(--build); }
-.wk-today { display: flex; align-items: center; gap: 12px; background: rgba(255, 255, 255, 0.14); border-radius: 18px; padding: 10px 12px; margin-bottom: 12px; }
-.wk-today-icons { display: flex; }
-.wk-today-icons span { width: 40px; height: 40px; border-radius: 50%; background: #fff; display: grid; place-items: center; margin-left: -8px; border: 2px solid rgba(255, 255, 255, 0.6); position: relative; }
-.wk-today-icons span:first-child { margin-left: 0; }
-.wk-today-icons span img { width: 28px; height: 28px; }
-.wk-today-icons span.done::after { content: "\f00c"; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; right: -3px; bottom: -3px; width: 16px; height: 16px; border-radius: 50%; background: var(--success); color: #fff; font-size: 0.5rem; display: grid; place-items: center; border: 2px solid #fff; }
-.wk-today-text b { display: block; font-family: var(--font-heading); font-size: 1.05rem; }
-.wk-today-text span { font-size: 0.86rem; opacity: 0.92; }
-.wk-hero-btn { width: 100%; min-height: 54px; border: none; border-radius: var(--radius-full); background: #fff; color: var(--build); font-family: var(--font-heading); font-weight: 800; font-size: 1.08rem; display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; box-shadow: 0 8px 18px -8px rgba(42, 37, 64, 0.45); transition: transform var(--transition-fast); }
-.wk-hero-btn:active { transform: scale(0.98); }
+.wk-hero {
+  position: relative;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1.5px solid var(--border-subtle, #ECEBF2);
+  border-radius: 26px;
+  padding: 22px 20px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 30px -10px rgba(42, 37, 64, 0.08);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.wk-hero::after {
+  content: "";
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  right: -70px;
+  top: -90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(229, 48, 95, 0.05), transparent 70%);
+  pointer-events: none;
+}
+.wk-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Top bar: Trophy badge + Week streak count */
+.wk-hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.wk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFF1F5;
+  color: #C2234E;
+  border: 1px solid rgba(229, 48, 95, 0.16);
+  border-radius: var(--radius-full);
+  padding: 5px 12px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.wk-badge i {
+  color: #E5305F;
+  font-size: 0.75rem;
+}
+.wk-week-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #FFF9ED;
+  color: #B25E00;
+  border: 1px solid #FFE4B8;
+  border-radius: var(--radius-full);
+  padding: 4px 11px 4px 6px;
+  font-weight: 800;
+  font-size: 0.84rem;
+}
+.wk-week-count img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* Headings */
+.wk-hero h2 {
+  color: var(--text-primary, #2A2540);
+  font-family: var(--font-heading);
+  font-size: 1.65rem;
+  font-weight: 800;
+  margin: 14px 0 2px;
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+}
+.wk-day {
+  font-size: 0.95rem;
+  color: var(--text-secondary, #605A75);
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+.wk-day b {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--brand-pink, #E5305F);
+}
+
+/* Progress bar */
+.wk-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: #F0EDF6;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.wk-progress i {
+  display: block;
+  height: 100%;
+  min-width: 8px;
+  background: var(--grad-brand, linear-gradient(135deg, #E5305F, #8F2D56));
+  border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Day of week strip: Clean, airy mini capsules */
+.wk-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin: 0 0 16px;
+}
+.wk-week span {
+  aspect-ratio: 1;
+  max-width: 40px;
+  justify-self: center;
+  width: 100%;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.8rem;
+  background: #F7F6FA;
+  color: #726C88;
+  border: 1px solid #EBE7F3;
+  transition: all 0.2s ease;
+}
+.wk-week span.today {
+  background: var(--brand-navy, #2A2540);
+  color: #ffffff;
+  border-color: var(--brand-navy, #2A2540);
+  box-shadow: 0 4px 12px rgba(42, 37, 64, 0.24);
+  transform: translateY(-2px);
+}
+.wk-week span.done {
+  background: #E8F8F0;
+  color: #168A53;
+  border-color: #BBEBD3;
+}
+
+/* Today's workout preview row */
+.wk-today {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #FAF9FD;
+  border: 1.5px solid #EBE7F3;
+  border-radius: 20px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.wk-today-icons {
+  display: flex;
+  align-items: center;
+}
+.wk-today-icons span {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #EBE7F3;
+  box-shadow: 0 2px 8px rgba(42, 37, 64, 0.08);
+  display: grid;
+  place-items: center;
+  margin-left: -10px;
+  position: relative;
+  transition: transform var(--transition-fast);
+}
+.wk-today-icons span:first-child {
+  margin-left: 0;
+}
+.wk-today-icons span:hover {
+  transform: translateY(-2px) scale(1.08);
+  z-index: 2;
+}
+.wk-today-icons span img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+.wk-today-icons span.done::after {
+  content: "\f00c";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--success, #168A53);
+  color: #fff;
+  font-size: 0.55rem;
+  display: grid;
+  place-items: center;
+  border: 2px solid #fff;
+}
+.wk-today-text {
+  flex: 1;
+  min-width: 0;
+}
+.wk-today-text b {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--text-primary, #2A2540);
+  line-height: 1.3;
+}
+.wk-today-text span {
+  font-size: 0.84rem;
+  color: var(--text-secondary, #605A75);
+  font-weight: 600;
+}
+
+/* Call to action button */
+.wk-hero-btn {
+  width: 100%;
+  min-height: 52px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--grad-brand, linear-gradient(135deg, #E5305F, #8F2D56));
+  color: #ffffff;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 8px 22px -6px rgba(229, 48, 95, 0.45);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+}
+.wk-hero-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(229, 48, 95, 0.55);
+  filter: brightness(1.03);
+}
+.wk-hero-btn:active {
+  transform: scale(0.98);
+}
+.wk-hero-btn i {
+  font-size: 0.95rem;
+}
 
 .wk-safety { display: flex; align-items: center; gap: 12px; background: #FFF8E6; border: 1.5px solid #FBE3A8; border-radius: 18px; padding: 10px 14px; margin-bottom: 14px; }
 .wk-safety img { width: 40px; height: 40px; flex-shrink: 0; }
