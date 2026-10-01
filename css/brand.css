@@ -12,6 +12,11 @@ body {
     radial-gradient(900px 500px at -10% 10%, rgba(74, 63, 122, 0.06), transparent 60%),
     var(--bg-primary);
   background-attachment: fixed;
+  font-family: var(--font-body);
+}
+
+button, input, select, textarea, optgroup {
+  font-family: inherit;
 }
 
 h1, h2, h3, h4, h5 { font-family: var(--font-heading); letter-spacing: -0.01em; color: var(--text-primary); }
@@ -718,13 +723,37 @@ body[data-view="assessment"] .bone-ai-fab, body[data-view="auth"] .bone-ai-fab {
 .ask-ai-card > div { flex: 1; }
 .ask-ai-card > i { color: var(--build); }
 
-/* Calendar refresh */
-.calendar-date-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; }
-.calendar-month-heading { display: flex; align-items: center; gap: 8px; font-family: var(--font-heading); font-weight: 800; font-size: 1.02rem; }
-.calendar-month-heading img { width: 22px; height: 22px; }
-.cal-today-pill { background: var(--brand-navy); color: #fff; border: none; }
-.calendar-day-btn.active { background: var(--grad-brand) !important; border-color: transparent !important; color: #fff !important; box-shadow: var(--shadow-brand); }
-.calendar-day-btn.active .day-abbr, .calendar-day-btn.active .day-date-number, .calendar-day-btn.active .status-count, .calendar-day-btn.active .status-dot { color: #fff !important; }
+/* Calendar: Minimalist, modern, proportional week strip (Image 3 fix) */
+.calendar-date-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
+.calendar-month-heading { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-heading); font-weight: 700; font-size: 0.94rem; color: var(--text-primary); letter-spacing: -0.01em; }
+.calendar-month-heading img { width: 19px; height: 19px; }
+.calendar-nav-controls { display: inline-flex; align-items: center; gap: 5px; }
+.cal-nav-btn { width: 28px; height: 28px; border-radius: var(--radius-full); background: #FFFFFF; border: 1.5px solid var(--border-subtle); color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.68rem; transition: all var(--transition-fast); }
+.cal-nav-btn:hover { background: var(--bg-surface-elevated); color: var(--text-primary); border-color: var(--border-medium); }
+.cal-today-pill { height: 28px; padding: 0 12px; border-radius: var(--radius-full); background: var(--brand-navy); color: #FFFFFF; font-family: var(--font-body); font-size: 0.74rem; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all var(--transition-fast); }
+.cal-today-pill:hover { background: #231E35; }
+.calendar-day-selector { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 4px 1px 8px 1px; margin-bottom: 12px; }
+.calendar-day-btn { flex: 1; min-width: 44px; background: #FFFFFF; border: 1.5px solid var(--border-subtle); border-radius: 14px; padding: 7px 3px 6px 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); text-align: center; position: relative; box-shadow: 0 1px 3px rgba(42, 37, 64, 0.03); }
+.calendar-day-btn:hover:not(.active) { border-color: var(--border-medium); background: #FAF9FC; transform: translateY(-1px); }
+.calendar-day-btn .day-abbr { font-size: 0.63rem; font-weight: 700; color: #8C86A0; letter-spacing: 0.4px; text-transform: uppercase; line-height: 1.1; }
+.calendar-day-btn .day-date-number { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 800; color: var(--text-primary); line-height: 1.15; margin: 1px 0 2px 0; }
+.calendar-day-btn .day-status-pill { font-size: 0.62rem; font-weight: 700; color: #B4AECA; display: flex; align-items: center; justify-content: center; min-height: 10px; line-height: 1; }
+.calendar-day-btn .status-dot { font-size: 0.72rem; line-height: 1; color: #C8C3D8; }
+.calendar-day-btn .status-check { font-size: 0.64rem; font-weight: 900; color: var(--success); }
+.calendar-day-btn .status-count { font-size: 0.56rem; font-weight: 700; color: var(--build); }
+.calendar-day-btn.is-today:not(.active) { border-color: #D6D0E3; background: #FFFFFF; }
+.calendar-day-btn.is-today:not(.active) .day-abbr { color: var(--build); font-weight: 800; }
+.calendar-day-btn.is-today:not(.active) .day-date-number { color: var(--text-primary); }
+.calendar-day-btn.active { background: var(--brand-navy) !important; border-color: var(--brand-navy) !important; color: #FFFFFF !important; box-shadow: 0 4px 14px rgba(51, 45, 75, 0.20) !important; transform: translateY(-1px); }
+.calendar-day-btn.active .day-abbr { color: #D5CEE8 !important; font-weight: 700 !important; }
+.calendar-day-btn.active .day-date-number { color: #FFFFFF !important; font-weight: 800 !important; }
+.calendar-day-btn.active .day-status-pill, .calendar-day-btn.active .status-dot { color: #FFFFFF !important; opacity: 0.85; }
+.calendar-day-btn.active .status-check { color: #55E8A3 !important; }
+.calendar-day-btn.active .status-count { color: #FFD4E2 !important; }
+.calendar-day-btn .today-micro-badge { position: absolute; top: -6px; background: var(--build); color: #FFFFFF; font-size: 0.50rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 5px; border-radius: var(--radius-full); box-shadow: 0 2px 4px rgba(214, 38, 90, 0.30); line-height: 1.1; pointer-events: none; }
+.calendar-day-btn.active .today-micro-badge { background: var(--build); color: #FFFFFF; }
+.calendar-day-btn.day-completed:not(.active) { border-color: #C8EBD8; background: #F4FBF7; }
+.calendar-day-btn.day-completed:not(.active) .day-status-pill { color: var(--success); }
 
 /* Exercise */
 .coach-selector-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }

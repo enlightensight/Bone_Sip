@@ -43,8 +43,7 @@ Risk levels stay semantic (green / amber / red) and are always paired with a tex
 ---
 
 ## 2. Typography
-- **Headings:** `Outfit` 700–900. Geometric and heavy, it echoes the logo's letterforms.
-- **Body & controls:** `DM Sans` 400–800.
+- **Unified Font Family:** `Outfit` (300–900). Geometric, modern, and clean throughout the entire application across all headings, body copy, milestone cards, badges, and controls. Echoes the brand logo letterforms and matches modern clinical wellness aesthetics.
 - Headings are short (≤ 6 words). Supporting copy is one line (≤ 12 words). Details go behind a disclosure ("How & why").
 
 ---

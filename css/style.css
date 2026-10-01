@@ -84,9 +84,9 @@
   --grad-spark: var(--grad-brand);
   --grad-hero: radial-gradient(circle at 50% 0%, rgba(229, 48, 95, 0.08) 0%, rgba(74, 63, 122, 0.05) 50%, #F8F6FB 90%);
 
-  /* ---- Typography ---- */
+  /* ---- Typography (Unified to Outfit throughout the entire application) ---- */
   --font-heading: 'Outfit', system-ui, -apple-system, sans-serif;
-  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Outfit', system-ui, -apple-system, sans-serif;
   --font-mono: 'Outfit', ui-monospace, monospace;
 
   /* ---- Geometry & elevation ---- */
@@ -129,6 +129,10 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+}
+
+button, input, select, textarea, optgroup {
+  font-family: inherit;
 }
 
 /* ==========================================================================
@@ -3595,72 +3599,82 @@ body.portal-locked main.app-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 12px 0 14px 0;
-  padding: 0 4px;
+  margin: 10px 0 10px 0;
+  padding: 0 2px;
+  gap: 8px;
 }
 
 .calendar-month-heading {
   font-family: var(--font-heading);
-  font-size: 1.25rem;
-  font-weight: 800;
+  font-size: 0.94rem;
+  font-weight: 700;
   color: var(--text-primary);
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  gap: 7px;
+  letter-spacing: -0.01em;
+}
+
+.calendar-month-heading img {
+  width: 19px;
+  height: 19px;
 }
 
 .calendar-nav-controls {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .cal-nav-btn {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-full);
   background: #FFFFFF;
-  border: 1.5px solid #E7E3EF;
-  color: var(--text-primary);
-  display: flex;
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-secondary);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
+  font-size: 0.68rem;
+  transition: all var(--transition-fast);
 }
 
 .cal-nav-btn:hover {
-  background: #D6265A;
-  color: #FFFFFF;
-  border-color: #D6265A;
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
 }
 
 .cal-today-pill {
-  padding: 6px 14px;
+  height: 28px;
+  padding: 0 12px;
   border-radius: var(--radius-full);
-  background: #FFE4EC;
-  border: 1.5px solid #D6265A;
-  color: #D6265A;
-  font-size: 0.8rem;
-  font-weight: 800;
+  background: var(--brand-navy);
+  border: none;
+  color: #FFFFFF;
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
 }
 
 .cal-today-pill:hover {
-  background: #D6265A;
-  color: #FFFFFF;
+  background: #231E35;
 }
 
-/* 7-Day Date-Wise Selector Strip */
+/* 7-Day Date-Wise Selector Strip (Minimalistic & Modern) */
 .calendar-day-selector {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-  padding: 4px 2px 14px 2px;
-  margin-bottom: 16px;
+  gap: 6px;
+  padding: 4px 1px 8px 1px;
+  margin-bottom: 12px;
 }
 
 @media (max-width: 640px) {
@@ -3669,6 +3683,8 @@ body.portal-locked main.app-container {
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    gap: 6px;
+    padding: 4px 1px 8px 1px;
   }
 }
 
@@ -3678,117 +3694,150 @@ body.portal-locked main.app-container {
 
 .calendar-day-btn {
   flex: 1;
-  min-width: 52px;
+  min-width: 44px;
   background: #FFFFFF;
-  border: 1.5px solid #E7E3EF;
-  border-radius: 16px;
-  padding: 10px 4px 8px 4px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 7px 3px 6px 3px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
   position: relative;
+  box-shadow: 0 1px 3px rgba(42, 37, 64, 0.03);
 }
 
 .calendar-day-btn:hover:not(.active) {
-  border-color: #D6265A;
-  transform: translateY(-2px);
+  border-color: var(--border-medium);
   background: #FAF9FC;
+  transform: translateY(-1px);
 }
 
 .calendar-day-btn .day-abbr {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #6B6580;
-  letter-spacing: 0.5px;
+  font-size: 0.63rem;
+  font-weight: 700;
+  color: #8C86A0;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
+  line-height: 1.1;
 }
 
 .calendar-day-btn .day-date-number {
   font-family: var(--font-heading);
-  font-size: 1.32rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  color: #2A2540;
-  line-height: 1.1;
-  margin: 2px 0 1px 0;
+  color: var(--text-primary);
+  line-height: 1.15;
+  margin: 1px 0 2px 0;
 }
 
 .calendar-day-btn .day-status-pill {
-  font-size: 0.74rem;
+  font-size: 0.62rem;
   font-weight: 700;
   color: #B4AECA;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 16px;
+  min-height: 10px;
+  line-height: 1;
+}
+
+.calendar-day-btn .status-dot {
+  font-size: 0.72rem;
+  line-height: 1;
+  color: #C8C3D8;
+}
+
+.calendar-day-btn .status-check {
+  font-size: 0.64rem;
+  font-weight: 900;
+  color: var(--success);
+}
+
+.calendar-day-btn .status-count {
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: var(--build);
 }
 
 .calendar-day-btn.is-today:not(.active) {
-  border-color: #D6265A;
-  background: #FAF9FC;
+  border-color: #D6D0E3;
+  background: #FFFFFF;
 }
 
 .calendar-day-btn.is-today:not(.active) .day-abbr {
-  color: #D6265A;
-}
-
-.calendar-day-btn.is-today:not(.active) .day-date-number {
-  color: #D6265A;
-}
-
-.calendar-day-btn.active {
-  background: #D6265A;
-  border-color: #D6265A;
-  box-shadow: 0 4px 14px rgba(214, 38, 90, 0.28);
-}
-
-.calendar-day-btn.active .day-abbr {
-  color: #FFE4EC;
-}
-
-.calendar-day-btn.active .day-date-number {
-  color: #FFFFFF;
-}
-
-.calendar-day-btn.active .day-status-pill {
-  color: #F3B5CF;
+  color: var(--build);
   font-weight: 800;
 }
 
-.calendar-day-btn.day-completed:not(.active) {
-  border-color: #D6265A;
-  background: #FFE4EC;
+.calendar-day-btn.is-today:not(.active) .day-date-number {
+  color: var(--text-primary);
 }
 
-.calendar-day-btn.day-completed .day-status-pill {
-  color: #D6265A;
-  font-weight: 900;
+.calendar-day-btn.active {
+  background: var(--brand-navy) !important;
+  border-color: var(--brand-navy) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(51, 45, 75, 0.20) !important;
+  transform: translateY(-1px);
 }
 
-.calendar-day-btn.active.day-completed {
-  background: #D6265A;
+.calendar-day-btn.active .day-abbr {
+  color: #D5CEE8 !important;
+  font-weight: 700 !important;
 }
 
-.calendar-day-btn.active.day-completed .day-status-pill {
-  color: #F3B5CF;
+.calendar-day-btn.active .day-date-number {
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+}
+
+.calendar-day-btn.active .day-status-pill,
+.calendar-day-btn.active .status-dot {
+  color: #FFFFFF !important;
+  opacity: 0.85;
+}
+
+.calendar-day-btn.active .status-check {
+  color: #55E8A3 !important;
+}
+
+.calendar-day-btn.active .status-count {
+  color: #FFD4E2 !important;
 }
 
 .calendar-day-btn .today-micro-badge {
   position: absolute;
-  top: -8px;
-  background: #8E2C6A;
+  top: -6px;
+  background: var(--build);
   color: #FFFFFF;
-  font-size: 0.58rem;
+  font-size: 0.50rem;
   font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 50px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 2px 4px rgba(214, 38, 90, 0.30);
+  line-height: 1.1;
+  pointer-events: none;
+}
+
+.calendar-day-btn.active .today-micro-badge {
+  background: var(--build);
+  color: #FFFFFF;
+}
+
+.calendar-day-btn.day-completed:not(.active) {
+  border-color: #C8EBD8;
+  background: #F4FBF7;
+}
+
+.calendar-day-btn.day-completed:not(.active) .day-status-pill {
+  color: var(--success);
 }
 
 /* Habit Milestone Checklist Row */
@@ -4506,99 +4555,7 @@ body.portal-locked main.app-container {
   flex-wrap: wrap;
 }
 
-/* 2. Clean Horizontal Calendar Day Cards (matching Image 2) */
-.calendar-day-selector.date-wise {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
-  margin-bottom: 16px;
-  padding: 4px 2px;
-}
-
-@media (max-width: 680px) {
-  .calendar-day-selector.date-wise {
-    display: flex;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-.calendar-day-btn {
-  flex: 1;
-  min-width: 58px;
-  background: #FFFFFF;
-  border: 1.5px solid #EFECF5;
-  border-radius: 16px;
-  padding: 12px 6px 10px 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  text-align: center;
-  position: relative;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
-}
-
-.calendar-day-btn:hover:not(.active) {
-  border-color: #D6265A;
-  background: #FAF9FC;
-  transform: translateY(-2px);
-}
-
-.calendar-day-btn .day-abbr {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #7D7893;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-}
-
-.calendar-day-btn .day-date-number {
-  font-family: var(--font-heading);
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #2A2540;
-  line-height: 1.1;
-}
-
-.calendar-day-btn.active {
-  background: #FDF0F4 !important;
-  border: 2px solid #D6265A !important;
-  box-shadow: 0 3px 12px rgba(214, 38, 90, 0.16) !important;
-}
-
-.calendar-day-btn.active .day-abbr {
-  color: #D6265A !important;
-  font-weight: 800 !important;
-}
-
-.calendar-day-btn.active .day-date-number {
-  color: #D6265A !important;
-  font-weight: 900 !important;
-}
-
-.calendar-day-btn.day-completed:not(.active) {
-  border-color: #D6265A;
-  background: #FDF0F4;
-}
-
-.calendar-day-btn .day-status-pill {
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: #B4AECA;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 16px;
-}
-
-.calendar-day-btn.active .day-status-pill {
-  color: #D6265A !important;
-}
+/* 2. Calendar strip styles are defined in core calendar section and refined in brand.css */
 
 /* 3. Slot Filter Pills (matching Image 2) */
 .meal-slot-filter-strip {
