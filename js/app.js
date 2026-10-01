@@ -2929,14 +2929,18 @@
       return `
         <div class="meal-card fade-up ${isChecked ? 'completed' : ''} ${justDone ? 'just-done' : ''}" data-slot-id="${item.id}" id="mealSlotCard_${item.id}" style="--i: ${i}; ${hidden ? 'display: none;' : ''}">
           <div class="meal-head">
-            <span class="meal-ico"><i class="${meta.icon || 'fa-solid fa-utensils'}"></i></span>
+            <div class="meal-ico">
+              ${meta.img ? `<img src="assets/icons3d/${meta.img}.webp" alt="" class="i3d meal-ico-img" width="34" height="34">` : `<i class="${meta.icon || 'fa-solid fa-utensils'}"></i>`}
+            </div>
             <div class="meal-head-text">
               <b>${meta.name}</b>
               <span>${meta.time} · ${item.meal.calcium || 0} mg calcium · ${item.meal.protein || 0} g protein</span>
             </div>
             ${!isPast ? `
-              <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', -1)" aria-label="Previous ${meta.name} idea"><i class="fa-solid fa-chevron-left"></i></button>
-              <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', 1)" aria-label="Next ${meta.name} idea"><i class="fa-solid fa-chevron-right"></i></button>` : ''}
+              <div class="meal-head-nav">
+                <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', -1)" aria-label="Previous ${meta.name} idea"><i class="fa-solid fa-chevron-left"></i></button>
+                <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', 1)" aria-label="Next ${meta.name} idea"><i class="fa-solid fa-chevron-right"></i></button>
+              </div>` : ''}
             <button class="meal-check ${isPast ? 'locked' : ''}" onclick="${action}" aria-pressed="${isChecked}" aria-label="${isChecked ? 'Undo' : 'Mark done'}: ${meta.name}">
               <i class="fa-solid ${isPast && !isChecked ? 'fa-lock' : 'fa-check'}"></i>
             </button>

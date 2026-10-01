@@ -1,6 +1,6 @@
 // BONE SIP service worker — offline app shell + runtime caching.
 // Bump CACHE_VERSION whenever you deploy changed files (or let your build step do it).
-const CACHE_VERSION = 'bonesip-v3.2.0';
+const CACHE_VERSION = 'bonesip-v3.2.1';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -8,12 +8,12 @@ const APP_SHELL = [
   "./",
   "index.html",
   "manifest.webmanifest",
-  "css/style.css?v=3.0",
-  "css/brand.css?v=3.0",
-  "js/config.js?v=3.0",
-  "js/data.js?v=3.0",
-  "js/app.js?v=3.0",
-  "js/character.js?v=3.1",
+  "css/style.css?v=3.2.1",
+  "css/brand.css?v=3.2.1",
+  "js/config.js?v=3.2.1",
+  "js/data.js?v=3.2.1",
+  "js/app.js?v=3.2.1",
+  "js/character.js?v=3.2.1",
   "js/vendor/confetti.browser.min.js",
   "assets/images/bonesip_logo_720.webp",
   "assets/icons/icon-192.png",
