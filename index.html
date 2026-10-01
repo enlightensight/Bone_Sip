@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>BONE SIP · Invest in Bones. Invest in Life.</title>
+  <meta name="description" content="BONE SIP — your Strong Independence Plan. Build bone strength with a personalised 3-2-1 diet and guided exercises, protect yourself from falls, and review your bone health with your doctor.">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="color-scheme" content="light">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="BONE SIP">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Social share -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="BONE SIP · Invest in Bones. Invest in Life.">
+  <meta property="og:description" content="A daily plan to build, protect and strengthen your bones.">
+  <meta property="og:image" content="assets/icons/og-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Icons & PWA -->
+  <link rel="icon" href="assets/icons/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Fonts: Outfit (headings, matches logo letterforms) + DM Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 (UI glyphs) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha384-t1nt8BQoYMLFN5p42tRAtuAAFQaCQODekUVeKKZrEnEyp4H2R0RHFz0KWpmj7i8g" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <link rel="preload" as="image" href="assets/images/bonesip_logo_720.webp">
+  <link rel="stylesheet" href="css/style.css?v=3.0">
+  <link rel="stylesheet" href="css/brand.css?v=3.0">
+</head>
+<body class="portal-locked">
+  <a class="skip-link" href="#mainContent">Skip to content</a>
+
+  <!-- Shared SVG paint servers (kept outside any hidden view so every ring can use them) -->
+  <svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="gradBrandRing" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#6B2A5C"/>
+        <stop offset="55%" stop-color="#B1315D"/>
+        <stop offset="100%" stop-color="#E5305F"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- =========================================================================
+       SPLASH
+       ========================================================================= -->
+  <div class="splash" id="appSplashScreen" role="dialog" aria-label="Welcome to BONE SIP">
+    <div class="splash-bg" aria-hidden="true">
+      <span class="blob blob-1"></span>
+      <span class="blob blob-2"></span>
+      <span class="blob blob-3"></span>
+    </div>
+
+    <div class="splash-orbit" aria-hidden="true">
+      <img class="i3d orbit-icon o1" src="assets/icons3d/milk.webp" alt="" width="64" height="64">
+      <img class="i3d orbit-icon o2" src="assets/icons3d/sun.webp" alt="" width="64" height="64">
+      <img class="i3d orbit-icon o3" src="assets/icons3d/biceps.webp" alt="" width="64" height="64">
+      <img class="i3d orbit-icon o4" src="assets/icons3d/shield.webp" alt="" width="64" height="64">
+      <img class="i3d orbit-icon o5" src="assets/icons3d/bone.webp" alt="" width="64" height="64">
+      <img class="i3d orbit-icon o6" src="assets/icons3d/chart.webp" alt="" width="64" height="64">
+    </div>
+
+    <div class="splash-content">
+      <img class="splash-logo" src="assets/images/bonesip_logo_720.webp" alt="BONE SIP — Invest in Bones. Invest in Life." width="720" height="289">
+      <p class="splash-sub">Your daily plan for strong bones &amp; an independent life.</p>
+
+      <div class="splash-pillars" aria-hidden="true">
+        <span class="pillar-chip build"><img src="assets/icons3d/biceps.webp" alt="" width="22" height="22"> Build</span>
+        <span class="pillar-chip protect"><img src="assets/icons3d/shield.webp" alt="" width="22" height="22"> Protect</span>
+        <span class="pillar-chip strengthen"><img src="assets/icons3d/chart.webp" alt="" width="22" height="22"> Strengthen</span>
+      </div>
+
+      <button class="cta-btn cta-lg" id="splashCtaBtn" onclick="BoneApp.startOnboardingTour()">
+        <span id="splashCtaLabel">Get started</span> <i class="fa-solid fa-arrow-right"></i>
+      </button>
+      <div class="splash-foot">
+        <i class="fa-solid fa-ribbon"></i> World Osteoporosis Day · 20 October
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       ONBOARDING (3 visual slides)
+       ========================================================================= -->
+  <div class="onboarding-tour-overlay" id="appOnboardingOverlay" style="display: none;" role="dialog" aria-label="How BONE SIP works">
+    <div class="onboarding-tour-container">
+      <div class="onboarding-top-bar">
+        <img src="assets/images/bonesip_logo_720.webp" alt="BONE SIP" class="onboarding-logo" width="720" height="289">
+        <button class="onboarding-skip-btn" onclick="BoneApp.skipOnboarding()">Skip</button>
+      </div>
+
+      <div class="onboarding-carousel-stage" id="onboardingCarousel"></div>
+
+      <div class="onboarding-bottom-bar">
+        <div class="onboarding-dots-indicator" id="onboardingDots"></div>
+        <button class="cta-btn" id="onboardNextBtn" onclick="BoneApp.nextOnboardingSlide()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       HEADER
+       ========================================================================= -->
+  <header class="app-header">
+    <div class="app-container header-inner">
+      <button class="brand-logo" onclick="BoneApp.navigatePillar('build')" aria-label="BONE SIP home">
+        <img src="assets/images/bonesip_logo_720.webp" alt="BONE SIP" class="header-logo-img" width="720" height="289">
+      </button>
+
+      <div class="header-actions">
+        <button class="icon-pill" onclick="BoneApp.openProgressiveReportModal()" title="My health report" aria-label="Open my health report">
+          <img src="assets/icons3d/barchart.webp" alt="" width="22" height="22"> <span class="hide-mobile">Report</span>
+        </button>
+        <div id="userHeaderProfile" onclick="BoneApp.openUserProfileModal()">
+          <button class="avatar-btn" id="loginHeaderBtn" aria-label="Open profile" title="My profile">
+            <i class="fa-solid fa-user"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-container" id="mainContent" style="flex: 1; padding-bottom: 110px;">
+
+    <!-- =========================================================================
+         VIEW 1: ASSESSMENT WIZARD (rendered by app.js)
+         ========================================================================= -->
+    <section id="view-assessment" class="view-section active">
+      <div class="assessment-container-card" id="assessmentStageContainer"></div>
+
+      <!-- Height & Weight quick edit -->
+      <div class="modal-backdrop" id="heightWeightModal" style="display: none;">
+        <div class="modal-card sheet-sm">
+          <div class="sheet-head">
+            <h3>Height &amp; weight</h3>
+            <button class="modal-close-btn" onclick="BoneApp.closeHeightWeightModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="range-row">
+            <div class="range-label"><span><i class="fa-solid fa-ruler-vertical"></i> Height</span><b id="heightDisplayValue">165 cm</b></div>
+            <input type="range" id="heightRangeInput" min="130" max="210" value="165" class="slider-input" oninput="BoneApp.onHeightChange(this.value)">
+          </div>
+          <div class="range-row">
+            <div class="range-label"><span><i class="fa-solid fa-weight-scale"></i> Weight</span><b id="weightDisplayValue">62 kg</b></div>
+            <input type="range" id="weightRangeInput" min="35" max="140" value="62" class="slider-input" oninput="BoneApp.onWeightChange(this.value)">
+          </div>
+
+          <button class="cta-btn btn-full" onclick="BoneApp.saveHeightWeightModal()">Save</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         VIEW 2: MOBILE VERIFICATION
+         ========================================================================= -->
+    <section id="view-auth" class="view-section">
+      <div class="auth-card">
+        <div class="auth-illus" aria-hidden="true">
+          <span class="auth-glow"></span>
+          <img class="i3d i3d-xl float" src="assets/icons3d/phone.webp" alt="" width="120" height="120">
+          <span class="auth-bubble"><i class="fa-solid fa-comment-sms"></i> 6-digit code</span>
+          <img class="i3d i3d-sm auth-lock" src="assets/icons3d/lock.webp" alt="" width="40" height="40">
+        </div>
+
+        <span class="step-chip build"><i class="fa-solid fa-circle-check"></i> Build plan ready</span>
+        <h2 class="auth-title">Save your plan</h2>
+        <p class="auth-sub">Verify your mobile to keep your progress and unlock <b>Protect</b>.</p>
+
+        <!-- Step 1: phone -->
+        <div id="inlineAuthPhoneStep">
+          <label class="field-label" for="inlineMobileNumberInput">Mobile number</label>
+          <div class="phone-field">
+            <span class="phone-cc">+91</span>
+            <input type="tel" id="inlineMobileNumberInput" inputmode="numeric" autocomplete="tel-national" placeholder="10-digit number" maxlength="10">
+          </div>
+
+          <label class="consent-row" for="inlineAgreeTermsCheck">
+            <input type="checkbox" id="inlineAgreeTermsCheck" checked>
+            <span>I agree to the Terms and to receive daily bone-health reminders.</span>
+          </label>
+
+          <button class="cta-btn btn-full" onclick="BoneApp.sendInlineOTP()">
+            Send OTP <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- Step 2: OTP -->
+        <div id="inlineAuthOtpStep" style="display: none;">
+          <p class="otp-sent" id="inlineOtpSentPhoneText">Enter the 6-digit code</p>
+
+          <div class="sms-sim-bubble" id="inlineSmsSimBubble" style="display: none;">
+            <i class="fa-solid fa-flask"></i>
+            <span>Demo mode — your code is <b id="inlineSimulatedOtpCodeText">849201</b></span>
+          </div>
+
+          <div class="otp-box-grid">
+            <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="otp-digit-input inline-otp" aria-label="Digit 1" oninput="BoneApp.handleInlineOtpInput(this, 0, event)" onkeydown="BoneApp.handleInlineOtpInput(this, 0, event)">
+            <input type="text" inputmode="numeric" maxlength="1" class="otp-digit-input inline-otp" aria-label="Digit 2" oninput="BoneApp.handleInlineOtpInput(this, 1, event)" onkeydown="BoneApp.handleInlineOtpInput(this, 1, event)">
+            <input type="text" inputmode="numeric" maxlength="1" class="otp-digit-input inline-otp" aria-label="Digit 3" oninput="BoneApp.handleInlineOtpInput(this, 2, event)" onkeydown="BoneApp.handleInlineOtpInput(this, 2, event)">
+            <input type="text" inputmode="numeric" maxlength="1" class="otp-digit-input inline-otp" aria-label="Digit 4" oninput="BoneApp.handleInlineOtpInput(this, 3, event)" onkeydown="BoneApp.handleInlineOtpInput(this, 3, event)">
+            <input type="text" inputmode="numeric" maxlength="1" class="otp-digit-input inline-otp" aria-label="Digit 5" oninput="BoneApp.handleInlineOtpInput(this, 4, event)" onkeydown="BoneApp.handleInlineOtpInput(this, 4, event)">
+            <input type="text" inputmode="numeric" maxlength="1" class="otp-digit-input inline-otp" aria-label="Digit 6" oninput="BoneApp.handleInlineOtpInput(this, 5, event)" onkeydown="BoneApp.handleInlineOtpInput(this, 5, event)">
+          </div>
+
+          <div class="otp-actions">
+            <button class="btn btn-sm btn-outline" id="otpAutofillBtn" style="display: none;" onclick="BoneApp.autofillInlineOTP()"><i class="fa-solid fa-bolt"></i> Auto-fill</button>
+            <button class="btn btn-sm btn-outline" onclick="BoneApp.sendInlineOTP()"><i class="fa-solid fa-rotate-right"></i> Resend</button>
+          </div>
+
+          <button class="cta-btn btn-full" onclick="BoneApp.verifyInlineOTP()">
+            <i class="fa-solid fa-shield-halved"></i> Verify &amp; continue
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         VIEW 3: BUILD (Diet + Exercise)
+         ========================================================================= -->
+    <section id="view-build" class="view-section">
+
+      <div class="seg-tabs" role="tablist">
+        <button class="seg-tab active" id="btnBuildSubDiet" role="tab" onclick="BoneApp.switchBuildSubTab('diet')">
+          <img src="assets/icons3d/salad.webp" alt="" width="24" height="24"> Diet
+        </button>
+        <button class="seg-tab" id="btnBuildSubExercise" role="tab" onclick="BoneApp.switchBuildSubTab('exercise')">
+          <img src="assets/icons3d/running.webp" alt="" width="24" height="24"> Exercise
+        </button>
+      </div>
+
+      <!-- DIET -->
+      <div id="buildSubViewDiet">
+
+        <!-- Today hero: score ring + streak -->
+        <div class="today-hero">
+          <div class="score-ring" id="scoreRing" style="--p: 0;" role="img" aria-label="Today's bone score">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-track" cx="60" cy="60" r="52"/>
+              <circle class="ring-fill" cx="60" cy="60" r="52" stroke="url(#gradBrandRing)"/>
+            </svg>
+            <div class="score-ring-label">
+              <b id="dailyStreakScoreDisplay">0</b>
+              <span>/ 100</span>
+            </div>
+          </div>
+
+          <div class="today-hero-body">
+            <span class="step-chip build" id="dietDayThemeBadge">3-2-1 Plan</span>
+            <h2 id="dietDayTitle">Today</h2>
+            <p id="dietDaySubtitle">Tick off your 5 bone boosters.</p>
+            <div class="hero-stats">
+              <span class="stat-pill fire"><img src="assets/icons3d/fire.webp" alt="" width="20" height="20"> <b id="dietActiveStreakDisplay">0</b>&nbsp;day streak</span>
+              <span class="stat-pill"><img src="assets/icons3d/check.webp" alt="" width="20" height="20"> <b id="dietDayProgressDisplay">0 / 5</b></span>
+            </div>
+            <div class="hero-tier">
+              <span id="scoreTierBadge" class="badge badge-gold">Building baseline</span>
+              <button class="link-btn" onclick="BoneApp.openProgressiveReportModal()">Report <i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <span id="scoreBreakdownSummary" class="sr-only"></span>
+          </div>
+        </div>
+
+        <!-- Week calendar -->
+        <div class="calendar-date-nav-bar">
+          <div class="calendar-month-heading">
+            <img src="assets/icons3d/calendar.webp" alt="" width="22" height="22">
+            <span id="calendarMonthYearText">This week</span>
+          </div>
+          <div class="calendar-nav-controls">
+            <button class="cal-nav-btn" onclick="BoneApp.prevCalendarWeek()" aria-label="Previous week"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="cal-today-pill" onclick="BoneApp.jumpToTodayCalendar()">Today</button>
+            <button class="cal-nav-btn" onclick="BoneApp.nextCalendarWeek()" aria-label="Next week"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+        <div class="calendar-day-selector date-wise" id="dietDayTabs"></div>
+
+        <!-- Nutrient rings -->
+        <div class="nutri-card">
+          <div class="nutri-head">
+            <h3>Today's nutrients</h3>
+            <span class="muted-xs">Fills as you tick meals</span>
+          </div>
+          <div class="nutri-grid">
+            <div class="nutri">
+              <div class="nutri-ring" id="liveDietCalciumBar" style="--p: 0; --c: #D6265A;"><img src="assets/icons3d/milk.webp" alt="" width="34" height="34"></div>
+              <b>Calcium</b><span id="liveDietCalciumVal">0 mg</span>
+            </div>
+            <div class="nutri">
+              <div class="nutri-ring" id="liveDietProteinBar" style="--p: 0; --c: #8E2C6A;"><img src="assets/icons3d/egg.webp" alt="" width="34" height="34"></div>
+              <b>Protein</b><span id="liveDietProteinVal">0 g</span>
+            </div>
+            <div class="nutri">
+              <div class="nutri-ring" id="liveDietD3Bar" style="--p: 0; --c: #D97706;"><img src="assets/icons3d/sun.webp" alt="" width="34" height="34"></div>
+              <b>Vitamin D3</b><span id="liveDietD3Val">0 IU</span>
+            </div>
+            <div class="nutri">
+              <div class="nutri-ring" id="liveDietK2Bar" style="--p: 0; --c: #4A3F7A;"><img src="assets/icons3d/leafy.webp" alt="" width="34" height="34"></div>
+              <b>Vitamin K2</b><span id="liveDietK2Val">0 mcg</span>
+            </div>
+            <div class="nutri">
+              <div class="nutri-ring" id="liveDietMgBar" style="--p: 0; --c: #6D28D9;"><img src="assets/icons3d/peanuts.webp" alt="" width="34" height="34"></div>
+              <b>Magnesium</b><span id="liveDietMgVal">0 mg</span>
+            </div>
+            <div class="nutri">
+              <div class="nutri-ring" id="liveDietVitCBar" style="--p: 0; --c: #1E9E62;"><img src="assets/icons3d/lemon.webp" alt="" width="34" height="34"></div>
+              <b>Vitamin C</b><span id="liveDietVitCVal">0 mg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meal filter -->
+        <div class="meal-slot-filter-strip" id="dietSlotFilterPills">
+          <button class="slot-filter-pill active" data-slot="all" onclick="BoneApp.filterMealSlotView('all')">All</button>
+          <button class="slot-filter-pill" data-slot="m_sun_d3" onclick="BoneApp.filterMealSlotView('m_sun_d3')"><img src="assets/icons3d/sunrise.webp" alt="" width="18" height="18"> Sun</button>
+          <button class="slot-filter-pill" data-slot="m_breakfast" onclick="BoneApp.filterMealSlotView('m_breakfast')"><img src="assets/icons3d/coffee.webp" alt="" width="18" height="18"> Breakfast</button>
+          <button class="slot-filter-pill" data-slot="m_lunch" onclick="BoneApp.filterMealSlotView('m_lunch')"><img src="assets/icons3d/curry.webp" alt="" width="18" height="18"> Lunch</button>
+          <button class="slot-filter-pill" data-slot="m_snack" onclick="BoneApp.filterMealSlotView('m_snack')"><img src="assets/icons3d/peanuts.webp" alt="" width="18" height="18"> Snack</button>
+          <button class="slot-filter-pill" data-slot="m_dinner" onclick="BoneApp.filterMealSlotView('m_dinner')"><img src="assets/icons3d/bowl.webp" alt="" width="18" height="18"> Dinner</button>
+        </div>
+
+        <!-- Meals -->
+        <div class="diet-milestones-container" id="dietMilestonesList"></div>
+
+        <!-- Tips -->
+        <div class="tips-row">
+          <div class="tip-card">
+            <img class="i3d i3d-md" src="assets/icons3d/sunrise.webp" alt="" width="44" height="44">
+            <div><b>15 min morning sun</b><span>Before 10 AM — helps absorb calcium.</span></div>
+          </div>
+          <div class="tip-card">
+            <img class="i3d i3d-md" src="assets/icons3d/peanuts.webp" alt="" width="44" height="44">
+            <div><b>Snack smart</b><span>Nuts, seeds, makhana, til laddoo.</span></div>
+          </div>
+        </div>
+
+        <div class="ask-ai-card" onclick="BoneApp.toggleChatDrawer()" role="button" tabindex="0">
+          <img class="i3d i3d-md" src="assets/icons3d/robot.webp" alt="" width="44" height="44">
+          <div><b>Questions about your plan?</b><span>Ask Dr. Bone, your bone-health guide</span></div>
+          <i class="fa-solid fa-chevron-right"></i>
+        </div>
+
+        <div class="yesterday-feedback-bar">
+          <span class="feedback-question">Did you follow yesterday's plan?</span>
+          <div class="feedback-btn-group">
+            <button class="feedback-btn yes" onclick="BoneApp.recordYesterdayFeedback(true)" aria-label="Yes"><i class="fa-solid fa-thumbs-up"></i> Yes</button>
+            <button class="feedback-btn no" onclick="BoneApp.recordYesterdayFeedback(false)" aria-label="No"><i class="fa-solid fa-thumbs-down"></i> No</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXERCISE (rendered by renderBuildExerciseView) -->
+      <div id="buildSubViewExercise" class="wk" style="display: none;"></div>
+    </section>
+
+    <!-- =========================================================================
+         VIEW 4: PROTECT
+         ========================================================================= -->
+    <section id="view-protect" class="view-section">
+      <div class="pillar-hero protect">
+        <img class="i3d i3d-lg float" src="assets/icons3d/shield.webp" alt="" width="72" height="72">
+        <div>
+          <span class="step-chip protect">Protect</span>
+          <h2>Fall-proof your home</h2>
+          <p>Most hip fractures start with a fall.</p>
+        </div>
+        <div class="risk-tag">
+          <span id="protectRiskStatusBadge">Low risk</span>
+          <small>Your risk</small>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-head">
+          <h3><img src="assets/icons3d/house.webp" alt="" width="28" height="28"> Room check</h3>
+          <span class="badge badge-blue" id="hubHomeScoreBadge">0 safe</span>
+        </div>
+        <div class="room-audit-tabs" id="hubRoomTabs"></div>
+        <div class="qa-list" id="hubRoomQuestionsList"></div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         VIEW 5: STRENGTHEN
+         ========================================================================= -->
+    <section id="view-strengthen" class="view-section">
+      <div class="pillar-hero strengthen">
+        <img class="i3d i3d-lg float" src="assets/icons3d/stethoscope.webp" alt="" width="72" height="72">
+        <div>
+          <span class="step-chip strengthen">Strengthen</span>
+          <h2>Talk to your doctor</h2>
+          <p>Take these questions to your next visit.</p>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-head">
+          <h3><img src="assets/icons3d/clipboard.webp" alt="" width="28" height="28"> Ask your doctor</h3>
+          <div class="card-head-actions">
+            <button class="btn btn-sm btn-outline" onclick="BoneApp.shareDoctorReviewWhatsApp()" aria-label="Share on WhatsApp"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> <span class="hide-mobile">WhatsApp</span></button>
+            <button class="btn btn-sm btn-primary" onclick="window.print()" aria-label="Save as PDF"><i class="fa-solid fa-file-arrow-down"></i> <span class="hide-mobile">PDF</span></button>
+          </div>
+        </div>
+        <div class="qa-list" id="hubDoctorChecklist"></div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-head">
+          <h3><img src="assets/icons3d/xray.webp" alt="" width="28" height="28"> Your DXA T-score</h3>
+        </div>
+        <div class="tscore-scale" aria-hidden="true">
+          <div class="tscore-zone danger"><b>Osteoporosis</b><span>below −2.5</span></div>
+          <div class="tscore-zone warn"><b>Osteopenia</b><span>−1 to −2.5</span></div>
+          <div class="tscore-zone ok"><b>Normal</b><span>above −1</span></div>
+        </div>
+        <div class="dxa-list" id="hubDxaRangesList"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- =========================================================================
+       BOTTOM NAV
+       ========================================================================= -->
+  <nav class="pillar-bottom-nav" id="pillarBottomNav" aria-label="Pillars">
+    <button class="pillar-nav-btn active pillar-build" id="pillarBtnBuild" onclick="BoneApp.navigatePillar('build')">
+      <span class="pillar-nav-icon" id="iconPillarBuild"></span>
+      <span class="pillar-nav-label">Build</span>
+    </button>
+    <button class="pillar-nav-btn locked pillar-protect" id="pillarBtnProtect" onclick="BoneApp.navigatePillar('protect')">
+      <span class="pillar-nav-icon" id="iconPillarProtect"></span>
+      <span class="pillar-nav-label">Protect</span>
+    </button>
+    <button class="pillar-nav-btn locked pillar-strengthen" id="pillarBtnStrengthen" onclick="BoneApp.navigatePillar('strengthen')">
+      <span class="pillar-nav-icon" id="iconPillarStrengthen"></span>
+      <span class="pillar-nav-label">Strengthen</span>
+    </button>
+  </nav>
+
+  <!-- =========================================================================
+       EXERCISE DETAIL SHEET
+       ========================================================================= -->
+  <div class="modal-backdrop exd-backdrop" id="exDetailSheet" style="display: none;">
+    <div class="modal-card exd-card" role="dialog" aria-label="Exercise details">
+      <div id="exDetailBody"></div>
+      <div class="exd-footer">
+        <button class="btn btn-outline" onclick="BoneApp.startDetailExercise('group')"><i class="fa-solid fa-list"></i> Whole group</button>
+        <button class="cta-btn" onclick="BoneApp.startDetailExercise('one')"><i class="fa-solid fa-play"></i> Start</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       FULL-SCREEN WORKOUT PLAYER (ready → move → rest → … → done)
+       ========================================================================= -->
+  <div class="player" id="workoutPlayer" hidden role="dialog" aria-label="Workout player">
+    <div class="pl-top">
+      <button class="pl-icon" onclick="BoneApp.closePlayer()" aria-label="End workout"><i class="fa-solid fa-xmark"></i></button>
+      <div class="pl-segs" id="plSegs"></div>
+      <button class="pl-icon" id="plVoiceBtn" onclick="BoneApp.toggleVoice()" aria-label="Voice guide"><i class="fa-solid fa-volume-high"></i></button>
+    </div>
+
+    <div class="pl-stage">
+      <div class="pl-media" id="plMedia"></div>
+      <div class="pl-ready" id="plReady" hidden>
+        <span class="pl-ready-label">Get ready</span>
+        <b id="plReadyNum">10</b>
+        <span class="pl-ready-name" id="plReadyName"></span>
+        <button class="pl-ready-btn" onclick="BoneApp.playerSkip()">Start now <i class="fa-solid fa-arrow-right"></i></button>
+      </div>
+    </div>
+
+    <div class="pl-info">
+      <span class="pl-count" id="plCount"></span>
+      <h2 class="pl-name" id="plName"></h2>
+      <span class="pl-reps" id="plReps"></span>
+      <div class="pl-timer" id="plTimer" aria-live="off">00:00</div>
+      <div class="pl-bar"><i id="plBar"></i></div>
+      <div class="pl-controls">
+        <button class="cta-btn pl-main" id="plPauseBtn" onclick="BoneApp.playerTogglePause()"><i class="fa-solid fa-pause"></i> Pause</button>
+        <button class="pl-skip" onclick="BoneApp.playerSkip()"><i class="fa-solid fa-forward-step"></i> Skip</button>
+      </div>
+      <p class="pl-safety"><i class="fa-solid fa-shield-heart"></i> <span id="plSafety"></span></p>
+      <p class="pl-next" id="plNext"></p>
+    </div>
+
+    <div class="pl-rest" id="plRest" hidden>
+      <div class="pl-rest-top">
+        <span class="pl-rest-label">Rest</span>
+        <div class="pl-rest-timer" id="plRestTimer">00:10</div>
+        <div class="pl-bar light"><i id="plRestBar"></i></div>
+        <div class="pl-rest-actions">
+          <button onclick="BoneApp.playerAddRest()"><i class="fa-solid fa-plus"></i> 10 s</button>
+          <button class="solid" onclick="BoneApp.playerSkip()">Skip rest <i class="fa-solid fa-forward"></i></button>
+        </div>
+        <p class="pl-rest-tip"><i class="fa-solid fa-mug-hot"></i> Breathe slowly. Sip some water if you need it.</p>
+      </div>
+      <div class="pl-rest-next">
+        <div class="pl-rest-next-head">
+          <div><span id="plRestNextLabel">Next</span><b id="plRestNextName"></b></div>
+          <span class="pl-rest-time" id="plRestNextTime"></span>
+        </div>
+        <div class="pl-rest-preview" id="plRestPreview"></div>
+      </div>
+    </div>
+
+    <div class="pl-done" id="plDone" hidden>
+      <img class="i3d float" src="assets/icons3d/trophy.webp" alt="" width="120" height="120">
+      <h2 id="plDoneTitle">Well done!</h2>
+      <p>Every move is a deposit in your bone bank.</p>
+      <div class="pl-done-stats">
+        <div><b id="plDoneMoves">0</b><span>Moves</span></div>
+        <div><b id="plDoneMinutes">0</b><span>Minutes</span></div>
+        <div><b id="plDoneStreak">0</b><span>Day streak</span></div>
+      </div>
+      <ul class="pl-done-list" id="plDoneList"></ul>
+      <button class="cta-btn cta-lg" onclick="BoneApp.closePlayer(true)">Done</button>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MEAL SWAP
+       ========================================================================= -->
+  <div class="modal-backdrop" id="mealSwapModal" style="display: none;">
+    <div class="modal-card modal-wide sheet">
+      <div class="bottom-sheet-handle"></div>
+      <div class="sheet-head">
+        <h3>Swap meal <span class="badge badge-green" id="mealSwapSlotBadge">Breakfast</span></h3>
+        <button class="modal-close-btn" onclick="BoneApp.closeMealSwapModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="search-field">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" id="mealSwapSearchInput" placeholder="Search: paneer, ragi, dal…" oninput="BoneApp.filterMealSwapCatalog()">
+      </div>
+
+      <div class="pill-scroll" id="mealSwapRegionPills">
+        <button class="filter-pill active" data-region="all" onclick="BoneApp.setMealSwapRegionFilter('all')">All regions</button>
+        <button class="filter-pill" data-region="north" onclick="BoneApp.setMealSwapRegionFilter('north')">North</button>
+        <button class="filter-pill" data-region="south" onclick="BoneApp.setMealSwapRegionFilter('south')">South</button>
+        <button class="filter-pill" data-region="west" onclick="BoneApp.setMealSwapRegionFilter('west')">West</button>
+        <button class="filter-pill" data-region="east" onclick="BoneApp.setMealSwapRegionFilter('east')">East</button>
+        <button class="filter-pill" data-region="continental" onclick="BoneApp.setMealSwapRegionFilter('continental')">Global</button>
+      </div>
+      <div class="pill-scroll" id="mealSwapDietPills">
+        <button class="filter-pill active" data-diet="all" onclick="BoneApp.setMealSwapDietFilter('all')">All diets</button>
+        <button class="filter-pill" data-diet="veg" onclick="BoneApp.setMealSwapDietFilter('veg')"><img src="assets/icons3d/salad.webp" alt="" width="16" height="16"> Veg</button>
+        <button class="filter-pill" data-diet="eggetarian" onclick="BoneApp.setMealSwapDietFilter('eggetarian')"><img src="assets/icons3d/egg.webp" alt="" width="16" height="16"> Egg</button>
+        <button class="filter-pill" data-diet="non_veg" onclick="BoneApp.setMealSwapDietFilter('non_veg')"><img src="assets/icons3d/poultry.webp" alt="" width="16" height="16"> Non-veg</button>
+        <button class="filter-pill" data-diet="vegan" onclick="BoneApp.setMealSwapDietFilter('vegan')"><img src="assets/icons3d/seedling.webp" alt="" width="16" height="16"> Vegan</button>
+      </div>
+
+      <div id="mealSwapOptionsGrid" class="clean-options-list sheet-scroll"></div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       EXERCISE SWAP
+       ========================================================================= -->
+  <div class="modal-backdrop" id="exerciseSwapModal" style="display: none;">
+    <div class="modal-card modal-wide sheet">
+      <div class="sheet-head">
+        <h3>Swap exercise</h3>
+        <button class="modal-close-btn" onclick="BoneApp.closeExerciseSwapModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="pill-scroll" id="exerciseSwapCatPills">
+        <button class="filter-pill active" data-excat="all" onclick="BoneApp.setExerciseSwapCatFilter('all')">All</button>
+        <button class="filter-pill" data-excat="Lower Body" onclick="BoneApp.setExerciseSwapCatFilter('Lower Body')">Legs</button>
+        <button class="filter-pill" data-excat="Balance" onclick="BoneApp.setExerciseSwapCatFilter('Balance')">Balance</button>
+        <button class="filter-pill" data-excat="Spine" onclick="BoneApp.setExerciseSwapCatFilter('Spine')">Spine</button>
+        <button class="filter-pill" data-excat="Impact" onclick="BoneApp.setExerciseSwapCatFilter('Impact')">Impact</button>
+      </div>
+      <div id="exerciseSwapOptionsGrid" class="sheet-scroll swap-grid"></div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       HEALTH REPORT
+       ========================================================================= -->
+  <div class="modal-backdrop" id="progressiveReportModal" style="display: none;">
+    <div class="modal-card modal-wide sheet report-sheet">
+      <div class="sheet-head">
+        <div class="report-title">
+          <img class="i3d i3d-md" src="assets/icons3d/barchart.webp" alt="" width="44" height="44">
+          <div>
+            <h3>My bone report</h3>
+            <span class="badge badge-gold" id="reportDateBadge">This month</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="BoneApp.closeProgressiveReportModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="report-disclaimer"><i class="fa-solid fa-circle-info"></i> An estimate from your daily habits — not a medical diagnosis.</p>
+
+      <div id="progressiveReportContainer"></div>
+
+      <div class="sheet-actions">
+        <button class="btn btn-outline" onclick="BoneApp.shareProgressiveReportWhatsApp()"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> Share</button>
+        <button class="cta-btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Save PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       PROFILE & PREFERENCES
+       ========================================================================= -->
+  <div class="modal-backdrop" id="userProfileModal" style="display: none;">
+    <div class="modal-card sheet profile-sheet">
+      <div class="sheet-head">
+        <h3><img src="assets/icons3d/hearts.webp" alt="" width="28" height="28"> My profile</h3>
+        <button class="modal-close-btn" onclick="BoneApp.closeUserProfileModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="pref-section">
+        <div class="pref-section-header">
+          <h4 class="pref-section-title">Height &amp; weight</h4>
+          <div class="unit-capsule-toggle">
+            <button class="unit-capsule-btn" id="unitToggleFt" onclick="BoneApp.setHeightUnit('ft')">ft/in</button>
+            <button class="unit-capsule-btn active" id="unitToggleCm" onclick="BoneApp.setHeightUnit('cm')">cm</button>
+          </div>
+        </div>
+        <div class="two-col">
+          <input type="number" id="profInputHeight" class="pref-input-box" placeholder="Height (cm)" value="165" aria-label="Height">
+          <input type="number" id="profInputWeight" class="pref-input-box" placeholder="Weight (kg)" value="62" aria-label="Weight">
+        </div>
+      </div>
+
+      <div class="pref-section">
+        <h4 class="pref-section-title">Diet</h4>
+        <div class="pref-pill-group" id="profDietPills">
+          <button class="pref-pill active" data-diet="veg" onclick="BoneApp.selectPrefDiet('veg')"><img src="assets/icons3d/salad.webp" alt="" width="18" height="18"> Veg</button>
+          <button class="pref-pill" data-diet="eggetarian" onclick="BoneApp.selectPrefDiet('eggetarian')"><img src="assets/icons3d/egg.webp" alt="" width="18" height="18"> Egg</button>
+          <button class="pref-pill" data-diet="non_veg" onclick="BoneApp.selectPrefDiet('non_veg')"><img src="assets/icons3d/poultry.webp" alt="" width="18" height="18"> Non-veg</button>
+          <button class="pref-pill" data-diet="vegan" onclick="BoneApp.selectPrefDiet('vegan')"><img src="assets/icons3d/seedling.webp" alt="" width="18" height="18"> Vegan</button>
+        </div>
+        <select id="profSelectDiet" hidden>
+          <option value="veg">Vegetarian</option>
+          <option value="eggetarian">Eggetarian</option>
+          <option value="non_veg">Non-Vegetarian</option>
+          <option value="vegan">Vegan</option>
+        </select>
+      </div>
+
+      <div class="pref-section">
+        <h4 class="pref-section-title">Activity</h4>
+        <div class="pref-pill-group" id="profActivityPills">
+          <button class="pref-pill" data-activity="sedentary" onclick="BoneApp.selectPrefActivity('sedentary')"><img src="assets/icons3d/laptop.webp" alt="" width="18" height="18"> Sitting</button>
+          <button class="pref-pill active" data-activity="light" onclick="BoneApp.selectPrefActivity('light')"><img src="assets/icons3d/walking.webp" alt="" width="18" height="18"> Light</button>
+          <button class="pref-pill" data-activity="moderate" onclick="BoneApp.selectPrefActivity('moderate')"><img src="assets/icons3d/running.webp" alt="" width="18" height="18"> Moderate</button>
+          <button class="pref-pill" data-activity="very_active" onclick="BoneApp.selectPrefActivity('very_active')"><img src="assets/icons3d/weights.webp" alt="" width="18" height="18"> Very active</button>
+        </div>
+      </div>
+
+      <div class="pref-section">
+        <h4 class="pref-section-title">Regional food</h4>
+        <div class="pref-pill-group" id="profRegionPills">
+          <button class="pref-pill active" data-region="north" onclick="BoneApp.selectPrefRegion('north')">North</button>
+          <button class="pref-pill" data-region="south" onclick="BoneApp.selectPrefRegion('south')">South</button>
+          <button class="pref-pill" data-region="west" onclick="BoneApp.selectPrefRegion('west')">West</button>
+          <button class="pref-pill" data-region="east" onclick="BoneApp.selectPrefRegion('east')">East</button>
+          <button class="pref-pill" data-region="continental" onclick="BoneApp.selectPrefRegion('continental')">Global</button>
+        </div>
+        <select id="profSelectRegion" hidden>
+          <option value="north">North Indian</option>
+          <option value="south">South Indian</option>
+          <option value="west">West Indian</option>
+          <option value="east">East Indian</option>
+          <option value="continental">Continental</option>
+        </select>
+      </div>
+
+      <div class="pref-section">
+        <h4 class="pref-section-title">Health</h4>
+        <div class="pref-pill-group" id="profHealthPills">
+          <button class="pref-pill" data-cond="sugar" onclick="BoneApp.togglePrefCondition('sugar')">High sugar</button>
+          <button class="pref-pill" data-cond="cholesterol" onclick="BoneApp.togglePrefCondition('cholesterol')">High cholesterol</button>
+          <button class="pref-pill active" data-cond="bone" onclick="BoneApp.togglePrefCondition('bone')">Osteopenia / osteoporosis</button>
+          <button class="pref-pill" data-cond="healthy" onclick="BoneApp.togglePrefCondition('healthy')">None</button>
+        </div>
+      </div>
+
+      <div class="pref-section">
+        <h4 class="pref-section-title">About you</h4>
+        <div class="two-col">
+          <input type="text" id="profInputName" class="pref-input-box" placeholder="Your name" autocomplete="name" maxlength="60" aria-label="Full name">
+          <input type="tel" id="profInputPhone" class="pref-input-box" placeholder="Mobile" inputmode="numeric" maxlength="10" aria-label="Mobile number">
+        </div>
+      </div>
+
+      <button class="cta-btn btn-full" onclick="BoneApp.saveUserProfileModal()"><i class="fa-solid fa-check"></i> Save</button>
+      <div class="profile-data-actions">
+        <button class="link-btn" onclick="BoneApp.exportDatabaseJSON()"><i class="fa-solid fa-download"></i> Export my data</button>
+        <button class="link-btn danger" onclick="BoneApp.resetDatabase()"><i class="fa-solid fa-trash-can"></i> Reset</button>
+      </div>
+      <p class="privacy-note"><i class="fa-solid fa-lock"></i> Your data stays on this device.</p>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       DR. BONE ASSISTANT
+       ========================================================================= -->
+  <button class="bone-ai-fab" id="boneAiFab" onclick="BoneApp.toggleChatDrawer()" aria-label="Chat with Dr. Bone">
+    <span class="fab-pulse-aura"></span>
+    <img src="assets/icons3d/robot.webp" alt="" width="34" height="34">
+    <span class="fab-label">Dr. Bone</span>
+  </button>
+
+  <div class="bone-chat-drawer" id="boneChatDrawer" style="display: none;" role="dialog" aria-label="Dr. Bone assistant">
+    <div class="chat-header">
+      <div class="chat-header-id">
+        <div class="chat-bot-avatar">
+          <img src="assets/icons3d/robot.webp" alt="" width="30" height="30">
+          <span class="avatar-online-dot"></span>
+        </div>
+        <div>
+          <h4>Dr. Bone</h4>
+          <small>Bone &amp; nutrition guide</small>
+        </div>
+      </div>
+      <div class="chat-header-actions">
+        <button class="chat-header-icon-btn" onclick="BoneApp.clearChatHistory()" aria-label="Clear chat"><i class="fa-solid fa-trash-can"></i></button>
+        <button class="chat-header-icon-btn" onclick="BoneApp.closeChatDrawer()" aria-label="Close chat"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div class="chat-context-strip" id="chatContextStrip"></div>
+    <div class="chat-quick-chips" id="chatQuickChips"></div>
+    <div class="chat-messages-container" id="chatMessagesContainer" aria-live="polite"></div>
+    <div class="chat-input-bar">
+      <input type="text" id="chatTextInput" placeholder="Ask about meals, exercises, DXA…" maxlength="300" onkeydown="if(event.key==='Enter') BoneApp.sendChatMessage()">
+      <button class="chat-send-btn" onclick="BoneApp.sendChatMessage()" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+    <p class="chat-disclaimer">General guidance only — not medical advice.</p>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-notification" id="appToast" role="status" aria-live="polite">
+    <span id="toastMessage"></span>
+  </div>
+
+  <noscript><div class="noscript">BONE SIP needs JavaScript to run.</div></noscript>
+
+  <script src="js/vendor/confetti.browser.min.js" defer></script>
+  <script src="js/config.js?v=3.0"></script>
+  <script src="js/data.js?v=3.0"></script>
+  <script src="js/character.js?v=3.1"></script>
+  <script src="js/app.js?v=3.0"></script>
+</body>
+</html>

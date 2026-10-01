@@ -1,0 +1,14 @@
+scratch
+tests
+.agents
+.claude
+deploy
+*.pptx
+~$*
+*.bak
+Dockerfile
+nginx.conf
+netlify.toml
+README.md
+DESIGN.md
+CREDITS.md

@@ -1,0 +1,13 @@
+scratch
+.agents
+.git
+*.pptx
+~$*
+README.md
+DESIGN.md
+CREDITS.md
+netlify.toml
+vercel.json
+Dockerfile
+tests
+.claude

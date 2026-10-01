@@ -1,0 +1,161 @@
+// BONE SIP service worker — offline app shell + runtime caching.
+// Bump CACHE_VERSION whenever you deploy changed files (or let your build step do it).
+const CACHE_VERSION = 'bonesip-v3.2.0';
+const SHELL_CACHE = `${CACHE_VERSION}-shell`;
+const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
+
+const APP_SHELL = [
+  "./",
+  "index.html",
+  "manifest.webmanifest",
+  "css/style.css?v=3.0",
+  "css/brand.css?v=3.0",
+  "js/config.js?v=3.0",
+  "js/data.js?v=3.0",
+  "js/app.js?v=3.0",
+  "js/character.js?v=3.1",
+  "js/vendor/confetti.browser.min.js",
+  "assets/images/bonesip_logo_720.webp",
+  "assets/icons/icon-192.png",
+  "assets/icons/icon-512.png",
+  "assets/icons/favicon-32.png",
+  "assets/icons/apple-touch-icon.png",
+  "assets/icons3d/airplane.webp",
+  "assets/icons3d/balance.webp",
+  "assets/icons3d/bandage.webp",
+  "assets/icons3d/barchart.webp",
+  "assets/icons3d/bathtub.webp",
+  "assets/icons3d/bed.webp",
+  "assets/icons3d/bell.webp",
+  "assets/icons3d/biceps.webp",
+  "assets/icons3d/bone.webp",
+  "assets/icons3d/bowl.webp",
+  "assets/icons3d/bulb.webp",
+  "assets/icons3d/calendar.webp",
+  "assets/icons3d/cane.webp",
+  "assets/icons3d/chair.webp",
+  "assets/icons3d/chart.webp",
+  "assets/icons3d/check.webp",
+  "assets/icons3d/cheese.webp",
+  "assets/icons3d/clipboard.webp",
+  "assets/icons3d/coffee.webp",
+  "assets/icons3d/cooking.webp",
+  "assets/icons3d/couch.webp",
+  "assets/icons3d/curry.webp",
+  "assets/icons3d/dizzy.webp",
+  "assets/icons3d/door.webp",
+  "assets/icons3d/egg.webp",
+  "assets/icons3d/family.webp",
+  "assets/icons3d/fearful.webp",
+  "assets/icons3d/fire.webp",
+  "assets/icons3d/fish.webp",
+  "assets/icons3d/flamingo.webp",
+  "assets/icons3d/flatbread.webp",
+  "assets/icons3d/glasses.webp",
+  "assets/icons3d/globe.webp",
+  "assets/icons3d/hearts.webp",
+  "assets/icons3d/hourglass.webp",
+  "assets/icons3d/house.webp",
+  "assets/icons3d/hug.webp",
+  "assets/icons3d/ladder.webp",
+  "assets/icons3d/laptop.webp",
+  "assets/icons3d/leafy.webp",
+  "assets/icons3d/leg.webp",
+  "assets/icons3d/lemon.webp",
+  "assets/icons3d/lock.webp",
+  "assets/icons3d/lotus.webp",
+  "assets/icons3d/milk.webp",
+  "assets/icons3d/money.webp",
+  "assets/icons3d/party.webp",
+  "assets/icons3d/peanuts.webp",
+  "assets/icons3d/phone.webp",
+  "assets/icons3d/pill.webp",
+  "assets/icons3d/poultry.webp",
+  "assets/icons3d/robot.webp",
+  "assets/icons3d/running.webp",
+  "assets/icons3d/salad.webp",
+  "assets/icons3d/seedling.webp",
+  "assets/icons3d/shield.webp",
+  "assets/icons3d/shoe.webp",
+  "assets/icons3d/sparkles.webp",
+  "assets/icons3d/standing.webp",
+  "assets/icons3d/stethoscope.webp",
+  "assets/icons3d/stopwatch.webp",
+  "assets/icons3d/stuffed.webp",
+  "assets/icons3d/sun.webp",
+  "assets/icons3d/sunrise.webp",
+  "assets/icons3d/target.webp",
+  "assets/icons3d/trophy.webp",
+  "assets/icons3d/walking.webp",
+  "assets/icons3d/warning.webp",
+  "assets/icons3d/weights.webp",
+  "assets/icons3d/xray.webp",
+  "assets/exercises/posters/femal_rise_hills.webp",
+  "assets/exercises/posters/female_band_pull.webp",
+  "assets/exercises/posters/female_chair_sit_down_up.webp",
+  "assets/exercises/posters/female_one_leg_balance.webp",
+  "assets/exercises/posters/female_stair_climbing.webp",
+  "assets/exercises/posters/male_band_pull.webp",
+  "assets/exercises/posters/male_chair_sit_down_up.webp",
+  "assets/exercises/posters/male_one_leg_balance.webp",
+  "assets/exercises/posters/male_rise_heels.webp",
+  "assets/exercises/posters/male_stair_climbing.webp"
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(SHELL_CACHE).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => !k.startsWith(CACHE_VERSION)).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+
+  // Exercise videos use range requests; let the browser/CDN handle them directly.
+  if (url.pathname.endsWith('.mp4') || request.headers.has('range')) return;
+
+  // Page navigations: network first so new deploys show up, fall back to the cached shell offline.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(SHELL_CACHE).then((c) => c.put('index.html', copy));
+          return res;
+        })
+        .catch(() => caches.match('index.html'))
+    );
+    return;
+  }
+
+  // Everything else (own assets, fonts, icon CSS, confetti): stale-while-revalidate.
+  const cacheable = url.origin === self.location.origin ||
+    /(^|\.)(googleapis|gstatic)\.com$/.test(url.hostname) ||
+    url.hostname === 'cdnjs.cloudflare.com';
+  if (!cacheable) return;
+
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      const network = fetch(request)
+        .then((res) => {
+          if (res && (res.ok || res.type === 'opaque')) {
+            const copy = res.clone();
+            caches.open(RUNTIME_CACHE).then((c) => c.put(request, copy));
+          }
+          return res;
+        })
+        .catch(() => cached);
+      return cached || network;
+    })
+  );
+});
