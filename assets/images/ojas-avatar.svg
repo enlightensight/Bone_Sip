@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Ojas">
+  <defs>
+    <linearGradient id="ojasBg" x1="8" y1="6" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8E2C6A"/>
+      <stop offset="1" stop-color="#E5305F"/>
+    </linearGradient>
+    <linearGradient id="ojasBone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FCE4EC"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="32" fill="url(#ojasBg)"/>
+  <!-- bone -->
+  <g transform="rotate(-38 31 34)" fill="url(#ojasBone)">
+    <rect x="17" y="30.5" width="28" height="7" rx="3.5"/>
+    <circle cx="17" cy="29.5" r="5.6"/>
+    <circle cx="17" cy="38.5" r="5.6"/>
+    <circle cx="45" cy="29.5" r="5.6"/>
+    <circle cx="45" cy="38.5" r="5.6"/>
+  </g>
+  <!-- friendly face on the bone -->
+  <g transform="rotate(-38 31 34)" fill="#8E2C6A">
+    <circle cx="28" cy="33" r="1.5"/>
+    <circle cx="34" cy="33" r="1.5"/>
+  </g>
+  <!-- AI sparkle -->
+  <path d="M48 7.5l1.9 4.6 4.6 1.9-4.6 1.9L48 20.5l-1.9-4.6-4.6-1.9 4.6-1.9z" fill="#FFD27A"/>
+  <path d="M54.5 20l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="#FFFFFF" opacity=".9"/>
+</svg>

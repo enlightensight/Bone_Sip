@@ -85,7 +85,8 @@ assert(exCategories.size >= 3, `Exercises cover ${exCategories.size} diverse cli
 console.log('\n--- 1b. Testing Guided Workout Library ---');
 const WL = BONE_DATA.workoutLibrary || [];
 const WG = (BONE_DATA.exerciseGroups || []).map(g => g.id);
-assert(['strength', 'balance', 'flexibility', 'posture'].every(g => WG.includes(g)), 'Exercise groups are Strength, Balance, Flexibility and Posture');
+assert(['strength', 'balance', 'posture'].every(g => WG.includes(g)) && WG.length === 3, 'Exercise groups are Strength, Balance and Posture');
+assert(WL.length === 5 && WL.every(e => e.video && e.video.male && e.video.female), 'Every exercise has a filmed coach video (male and female)');
 assert(WG.every(g => WL.some(e => e.group === g)), 'Every exercise group has at least one move');
 assert(new Set(WL.map(e => e.id)).size === WL.length, 'Workout move IDs are unique');
 assert(WL.every(e => Array.isArray(e.how) && e.how.length >= 3 && e.safety && (e.benefits || []).length && e.durationSec >= 15),
@@ -97,33 +98,6 @@ const clipOwners = {};
 WL.filter(e => e.video).forEach(e => [e.video.male, e.video.female].forEach(f => { clipOwners[f] = (clipOwners[f] || 0) + 1; }));
 assert(Object.values(clipOwners).every(n => n === 1), 'No coach video is reused for a different exercise');
 assert(WL.every(e => fs.existsSync(path.join(__dirname, '..', 'assets', 'icons3d', `${e.img}.webp`))), 'Every move has an illustration icon');
-
-// Animated coach characters for moves without a filmed video
-console.log('\n--- 1c. Testing Animated Coach Characters ---');
-global.window = global.window || globalThis;
-require('../js/character.js');
-const BC = globalThis.BoneCharacter;
-const needAnim = WL.filter(e => !e.video).map(e => e.id);
-assert(needAnim.every(id => BC.has(id)), `Every move without a video has an animation (${needAnim.length} moves)`);
-let badFrames = 0;
-let worstHand = 0;
-let worstFoot = 0;
-BC.ids().forEach(id => {
-  const d = BC.duration(id);
-  for (let i = 0; i <= 24; i++) {
-    const t = (d * i) / 24;
-    ['male', 'female'].forEach(g => { if (/NaN|undefined|Infinity/.test(BC.renderFrame(id, t, g))) badFrames++; });
-    const { pose, fig } = BC.figureAt(id, t);
-    [['nHand', 'nArm'], ['fHand', 'fArm'], ['rHand', 'rArm'], ['lHand', 'lArm']].forEach(([k, arm]) => {
-      if (pose[k] && fig[arm]) worstHand = Math.max(worstHand, Math.hypot(fig[arm].hand[0] - pose[k][0], fig[arm].hand[1] - pose[k][1]));
-    });
-    const soles = fig.view === 'front' ? [fig.rLeg.bottom, fig.lLeg.bottom] : [fig.nLeg.heel[1], fig.nLeg.toe[1], fig.fLeg.heel[1], fig.fLeg.toe[1]];
-    worstFoot = Math.max(worstFoot, Math.max(...soles) - 328);
-  }
-});
-assert(badFrames === 0, 'Every animation frame renders valid SVG (male and female coach)');
-assert(worstHand < 3, `Hands holding a chair, wall or counter stay on it (worst miss ${worstHand.toFixed(1)}px)`);
-assert(worstFoot < 1, `Feet never sink through the floor (worst ${worstFoot.toFixed(1)}px)`);
 
 // -----------------------------------------------------------------------------
 // STEP 2: Mock Browser Environment & Load js/app.js Logic
@@ -181,7 +155,11 @@ const elementIds = [
   'chatMessagesContainer', 'chatTextInput', 'inlineAuthPhoneStep', 'inlineAuthOtpStep',
   'inlineMobileNumberInput', 'inlineOtpSentPhoneText', 'mealSwapModal', 'mealSwapOptionsGrid',
   'exerciseSwapModal', 'exerciseSwapOptionsGrid', 'assessmentStageContainer', 'calendarMonthYearText',
-  'dietDayTabs'
+  'dietDayTabs', 'lifeAssetGrid', 'goalsContinueBtn', 'assetSelectedCount', 'healthConditionsList',
+  'clinicalDietGuidanceContainer', 'dietMilestonesList', 'protectSuggestionBannerContainer',
+  'protectSafetyAnalysisCard', 'protectRiskStatusBadge', 'hubHomeScoreBadge', 'hubRoomTabs', 'hubRoomQuestionsList',
+  'strengthenContentContainer', 'printDoc', 'stTab_dxa_risk', 'stTab_labs_biomarkers', 'stTab_meds_timing', 'stTab_spine_safety', 'stTab_doctor_brief',
+  'view-assessment', 'view-auth', 'view-build', 'view-protect', 'view-strengthen'
 ];
 
 elementIds.forEach(id => {
@@ -190,7 +168,10 @@ elementIds.forEach(id => {
 
 const mockDocument = {
   readyState: 'complete',
-  getElementById: (id) => mockElements[id] || createMockElement(id),
+  getElementById: (id) => {
+    if (!mockElements[id]) mockElements[id] = createMockElement(id);
+    return mockElements[id];
+  },
   querySelectorAll: (selector) => [],
   querySelector: (selector) => null,
   createElement: (tag) => createMockElement('temp_' + Date.now(), tag),
@@ -238,7 +219,9 @@ const initialChatHtml = chatMessagesContainer.innerHTML;
 assert(!initialChatHtml.includes('Sunita'), 'Initial chat greeting contains ZERO references to "Sunita"');
 assert(!initialChatHtml.includes('Sharma'), 'Initial chat greeting contains ZERO references to "Sharma"');
 assert(!initialChatHtml.includes('9876543210'), 'Initial chat greeting contains ZERO references to dummy phone "9876543210"');
-assert(initialChatHtml.includes('Guest'), 'Initial chat greeting clearly recognizes user as "Guest"');
+assert(initialChatHtml.includes('Namaste! I'), 'Initial chat greeting uses no name for a new guest');
+assert(initialChatHtml.includes('Ojas'), 'Chat assistant introduces itself as Ojas');
+assert(mockElements['chatContextStrip'].innerHTML.includes('Guest'), 'Chat context strip clearly shows the user as "Guest"');
 
 // Inspect Chat Context Strip
 const chatStrip = mockElements['chatContextStrip'];
@@ -365,8 +348,236 @@ setTimeout(() => {
   assert(parsedDB.activeExerciseRoutine.includes('ex_prone_cobra'), 'BoneDB persisted custom exercise routine');
 
   // ---------------------------------------------------------------------------
-  // STEP 6: Test Backward Migration (Sanitizing Legacy Dummy Cache)
+  // STEP 6b: Testing Goal Selection Gate, Metabolic Conditions & Personalized Diets
   // ---------------------------------------------------------------------------
+  console.log('\n--- 6b. Testing Goal Selection Gate, Metabolic Conditions & Personalized Diets ---');
+
+  // 1. Verify all metabolic diseases/conditions and allergies in BONE_DATA with accurate 3D icons
+  const expectedMetabolicConditions = [
+    { id: 'diabetes', title: 'Diabetes', img: 'glucose' },
+    { id: 'hypertension', title: 'Hypertension', img: 'bp_cuff' },
+    { id: 'obesity', title: 'Obesity', img: 'scale' },
+    { id: 'dyslipidemia', title: 'High Cholesterol (Dyslipidemia)', img: 'cholesterol' },
+    { id: 'thyroid', title: 'Thyroid Disorders', img: 'thyroid' },
+    { id: 'kidney', title: 'Kidney Impairment/Disease', img: 'kidney' },
+    { id: 'lactose_intolerance', title: 'Lactose Intolerance', img: 'lactose' },
+    { id: 'nuts_allergy', title: 'Nuts Allergy', img: 'nut_allergy' }
+  ];
+  expectedMetabolicConditions.forEach(cond => {
+    const found = (BONE_DATA.healthConditionOptions || []).find(o => o.id === cond.id);
+    assert(!!found && found.title === cond.title, `Condition "${cond.title}" (${cond.id}) is present in healthConditionOptions`);
+    assert(!!found && found.img === cond.img, `Condition "${cond.title}" uses accurate medical icon "${cond.img}"`);
+  });
+
+  // 2. Test Goal Selection Gate (Must select at least one before continuing)
+  BoneApp.setBuildAssessmentStep('goals');
+  // Attempting to proceed to plan_overview with 0 selected assets must stay on goals screen
+  BoneApp.setBuildAssessmentStep('plan_overview');
+  assert(mockElements['assessmentStageContainer'].innerHTML.includes('What would you never want to lose?'),
+    'Goal selection gate: setBuildAssessmentStep refuses to advance to plan_overview when 0 goals are selected');
+  assert(mockElements['assessmentStageContainer'].innerHTML.includes('id="goalsContinueBtn" disabled'),
+    'Goal selection gate: Continue button is explicitly rendered with disabled attribute when 0 goals are selected');
+
+  // Selecting a goal enables Continue and allows progression
+  BoneApp.toggleLifeAsset('asset_travel');
+  assert(mockElements['goalsContinueBtn'].disabled === false,
+    'Goal selection gate: selecting a goal immediately enables Continue button');
+  BoneApp.setBuildAssessmentStep('plan_overview');
+  assert(mockElements['assessmentStageContainer'].innerHTML.includes('Your plan') || mockElements['assessmentStageContainer'].innerHTML.includes('The 3-2-1 rule'),
+    'Goal selection gate: successfully advanced to plan_overview after selecting at least one goal');
+
+  // 3. Test Condition Selection & Clinical Guidance Banner in Diet View
+  BoneApp.toggleHealthCondition('diabetes');
+  BoneApp.toggleHealthCondition('hypertension');
+  BoneApp.toggleHealthCondition('lactose_intolerance');
+  BoneApp.toggleHealthCondition('nuts_allergy');
+  BoneApp.renderBuildDietView();
+  const guidanceHTML = mockElements['clinicalDietGuidanceContainer'].innerHTML;
+  assert(guidanceHTML.includes('Diabetes') && guidanceHTML.includes('Hypertension'),
+    'Clinical diet view renders guidance chips for selected conditions (Diabetes, Hypertension)');
+  assert(guidanceHTML.includes('Lactose Intolerance') && guidanceHTML.includes('Nuts Allergy'),
+    'Clinical diet view renders guidance chips for Lactose Intolerance and Nuts Allergy');
+  assert(guidanceHTML.includes('Glycemic') && guidanceHTML.includes('DASH'),
+    'Clinical guidance contains disease-specific clinical rationales (Glycemic control & DASH low-sodium)');
+
+  // 4. Test Offline AI Chatbot Personalized Metabolic Diet Chart
+  const dietChartResp = BoneApp.generateBotResponse('personalized_diet_chart');
+  assert(dietChartResp.includes('Your Personalized Bone & Metabolic Diet Plan'),
+    'AI Chatbot generates structured Personalized Bone & Metabolic Diet Plan');
+  assert(dietChartResp.includes('Breakfast') && dietChartResp.includes('Lunch') && dietChartResp.includes('Dinner'),
+    'AI Chatbot diet plan includes 4 daily milestone meal slots with authentic regional dishes');
+  assert(dietChartResp.includes('Diabetes') && dietChartResp.includes('Hypertension'),
+    'AI Chatbot diet plan includes clinical directives for user active conditions');
+  assert(dietChartResp.includes('AGEs') || dietChartResp.includes('hypercalciuria'),
+    'AI Chatbot includes deep clinical mechanisms (AGEs collagen protection / hypercalciuria avoidance)');
+
+  // 5. Test Condition-specific queries in AI Chatbot
+  const thyroidResp = BoneApp.generateBotResponse('What should I eat with thyroid disorder?');
+  assert(thyroidResp.includes('Thyroid 4-Hour Rule') && thyroidResp.includes('empty stomach'),
+    'AI Chatbot provides critical 4-Hour Calcium Spacing Rule for thyroid disorder');
+
+  const kidneyResp = BoneApp.generateBotResponse('What diet advice for kidney disease?');
+  assert(kidneyResp.includes('Kidney Health') && kidneyResp.includes('protein'),
+    'AI Chatbot provides renal-balanced mineral & protein guidance for kidney impairment');
+
+  const lipidResp = BoneApp.generateBotResponse('diet advice for high cholesterol and obesity');
+  assert(lipidResp.includes('High Cholesterol') && lipidResp.includes('Obesity'),
+    'AI Chatbot provides targeted guidance for combined cholesterol & obesity profiles');
+
+  const lactoseResp = BoneApp.generateBotResponse('What can I eat with lactose intolerance?');
+  assert(lactoseResp.includes('Lactose Intolerance') && lactoseResp.includes('plant milks'),
+    'AI Chatbot provides plant calcium guidance for lactose intolerance');
+
+  const nutResp = BoneApp.generateBotResponse('safe calcium diet for nuts allergy');
+  assert(nutResp.includes('Nuts Allergy') && nutResp.includes('pumpkin seeds'),
+    'AI Chatbot provides nut-free seed-powered guidance for nuts allergy');
+
+  // 6. Test Login Transition to Build Home Page & Protect Precaution Suggestion
+  BoneApp.completeBuildPillar();
+  BoneApp.renderBuildDietView();
+  const protectBannerHTML = mockElements['protectSuggestionBannerContainer'].innerHTML;
+  assert(protectBannerHTML.includes('Protect is unlocked: Guard your bones from falls'),
+    'Build Home Page renders Protect precaution suggestion banner for unlocked Protect pillar');
+  assert(protectBannerHTML.includes('Check fall risk'),
+    'Protect precaution suggestion banner provides direct action button to take the check');
+
+  // Test dismissing the suggestion banner
+  BoneApp.dismissProtectBanner();
+  assert(mockElements['protectSuggestionBannerContainer'].innerHTML === '',
+    'User can dismiss the Protect suggestion banner anytime without forced redirection');
+
+  // ---------------------------------------------------------------------------
+  // STEP 6c: Testing Protect Safety Risk & Clinical Fix Suggestions
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 6c. Testing Protect Safety Risk & Clinical Suggestions ---');
+
+  // Setup answers for bedroom (one hazard) and bathroom (one hazard)
+  BoneApp.setHubRoomAnswer('room_bedroom', 'bed_path', 'no');
+  BoneApp.setHubRoomAnswer('room_bedroom', 'bed_lamp', 'yes');
+  BoneApp.setHubRoomAnswer('room_bedroom', 'bed_height', 'yes');
+  BoneApp.setHubRoomAnswer('room_bathroom', 'bath_mats', 'no');
+  BoneApp.setHubRoomAnswer('room_bathroom', 'bath_grab', 'yes');
+  BoneApp.setHubRoomAnswer('room_bathroom', 'bath_light', 'yes');
+
+  BoneApp.renderProtectHubView();
+
+  const protectSafetyHtml = mockElements['protectSafetyAnalysisCard'].innerHTML;
+  assert(protectSafetyHtml.includes('psx-ring') && protectSafetyHtml.includes('6/15') && protectSafetyHtml.includes('answered'),
+    'Unfinished home check: the ring shows how many questions are answered');
+  assert(!protectSafetyHtml.includes('Your home is safe') && protectSafetyHtml.includes('9 questions not answered yet.') && protectSafetyHtml.includes('scrollToRoomCheck'),
+    'Unfinished home check never says "safe" and offers to continue the check');
+  assert(protectSafetyHtml.includes('Fix these') && (protectSafetyHtml.match(/class="psx-fix"/g) || []).length === 2,
+    'Protect results list exactly the 2 hazards answered "No"');
+  assert(protectSafetyHtml.includes('Clear rugs & cables') && protectSafetyHtml.includes('Use non-slip mats'),
+    'Each hazard shows a short, plain fix');
+  assert(protectSafetyHtml.includes('Remove loose throw rugs'),
+    'The full how-to stays available behind a tap');
+  assert(['Wear grip shoes', 'Night lights on', 'Yearly eye check', 'Review medicines', 'Balance practice', 'Phone within reach'].every(h => protectSafetyHtml.includes(h)),
+    'Protect results show the 6 daily safety habits');
+  assert(protectSafetyHtml.includes('askAiAboutFallSafety') && protectSafetyHtml.includes('shareProtectSafetyWhatsApp'),
+    'Protect results offer Ask Ojas and WhatsApp sharing');
+
+  BoneApp.markHazardFixed('room_bedroom', 'bed_path');
+  const afterFix = mockElements['protectSafetyAnalysisCard'].innerHTML;
+  assert((afterFix.match(/class="psx-fix"/g) || []).length === 1 && !afterFix.includes('Clear rugs & cables'),
+    '"Fixed" removes the hazard from the list and saves the answer');
+
+  // ---------------------------------------------------------------------------
+  // STEP 7: Test Backward Migration (Sanitizing Legacy Dummy Cache)
+  // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // 6d. Strengthen Clinical Medical & Bone Care Portal Tests
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 6d. Testing Strengthen Clinical Medical & Bone Care Portal ---');
+
+  appSandbox.confirm = () => true;
+  const html = () => mockElements['strengthenContentContainer'].innerHTML;
+
+  // Subtab 1: Bone scan: nothing invented before the user adds a result
+  BoneApp.switchStrengthenSubTab('dxa_risk');
+  assert(html().includes('No scan saved yet') && !html().includes('-2.6') && !html().includes('Osteoporosis'), 'No sample T-scores: a new user sees "No scan saved yet", not a diagnosis');
+  assert(html().includes('Who should get a scan?') && html().includes('Tell your doctor'), 'Without a scan it explains who needs one and lists fracture risk factors');
+  assert(!/\d+%/.test(html()), 'No invented fracture-risk percentage is shown');
+
+  BoneApp.openStrengthenForm('scan');
+  mockDocument.getElementById('sxScanDate').value = '2025-03-01';
+  mockDocument.getElementById('sxScan_spine').value = '-2.2';
+  mockDocument.getElementById('sxScan_neck').value = '-1.9';
+  mockDocument.getElementById('sxScan_hip').value = '';
+  BoneApp.saveScan();
+  BoneApp.openStrengthenForm('scan');
+  mockDocument.getElementById('sxScanDate').value = '2026-03-01';
+  mockDocument.getElementById('sxScan_spine').value = '-2.8';
+  mockDocument.getElementById('sxScan_neck').value = '-2.4';
+  mockDocument.getElementById('sxScan_hip').value = '-1.9';
+  BoneApp.saveScan();
+  assert(html().includes('<b>-2.8</b>') && html().includes('Osteoporosis'), 'Saved scan shows the lowest T-score and what it means');
+  assert(html().includes('Lower than your last scan (-0.6)'), 'Two scans: shows the change since the last scan');
+  assert(html().includes('Next scan due'), 'Shows when the next scan is due');
+  BoneApp.openStrengthenForm('scan');
+  mockDocument.getElementById('sxScan_spine').value = '-12';
+  BoneApp.saveScan();
+  assert(html().includes('class="sx-form"'), 'An impossible T-score is refused and the form stays open');
+  BoneApp.closeStrengthenForm();
+
+  BoneApp.toggleFraxFactor('prior_fracture');
+  assert(html().includes('sx-toggle on'), 'Risk factors can be ticked for the doctor');
+
+  // Subtab 2: Blood tests
+  BoneApp.switchStrengthenSubTab('labs_biomarkers');
+  assert(html().includes('No blood test saved yet') && html().includes('Ask your doctor for these tests:'), 'No sample lab values: lists which tests to ask for');
+  BoneApp.openStrengthenForm('lab');
+  mockDocument.getElementById('sxLabDate').value = '2026-03-02';
+  mockDocument.getElementById('sxLab_vit_d').value = '18';
+  mockDocument.getElementById('sxLab_calcium').value = '9.4';
+  mockDocument.getElementById('sxLab_alp').value = '';
+  mockDocument.getElementById('sxLab_egfr').value = '';
+  BoneApp.saveLab();
+  assert(html().includes('Very low. Ask your doctor about D3 doses.') && html().includes('Normal. Keep your 3-2-1 diet.'), 'Saved blood test shows a plain status for each value');
+  assert(html().includes('Not tested yet'), 'Tests that were not done are marked "Not tested yet"');
+
+  // Subtab 3: Medicines with a daily tick and a thyroid/calcium check
+  BoneApp.switchStrengthenSubTab('meds_timing');
+  assert(html().includes('No medicines added yet'), 'Medicines start empty');
+  BoneApp.openStrengthenForm('med');
+  BoneApp.pickMedKind('thyroid');
+  mockDocument.getElementById('sxMedName').value = 'Thyronorm';
+  mockDocument.getElementById('sxMedTime').value = '07:00';
+  mockDocument.getElementById('sxMedWeekly').checked = false;
+  BoneApp.saveMed();
+  BoneApp.openStrengthenForm('med');
+  BoneApp.pickMedKind('calcium');
+  mockDocument.getElementById('sxMedName').value = 'Shelcal';
+  mockDocument.getElementById('sxMedTime').value = '08:00';
+  BoneApp.saveMed();
+  assert(html().includes('Thyronorm') && html().includes('Shelcal') && html().includes('0 of 2 taken today'), 'Added medicines are listed for today');
+  assert(html().includes('Your calcium at 08:00 is too close to your thyroid pill. Take it at 11:00 or later.'), 'Warns when calcium is scheduled too close to the thyroid pill');
+  const thyroidId = /toggleMedTaken\('([^']+)'\)/.exec(html())[1];
+  BoneApp.toggleMedTaken(thyroidId);
+  assert(html().includes('1 of 2 taken today') && html().includes('sx-taken on'), 'Ticking a medicine marks it taken today');
+
+  // Subtab 4: Spine: no invented height loss
+  BoneApp.switchStrengthenSubTab('spine_safety');
+  assert(html().includes('Height check') && html().includes('Enter your height at age 25') && !html().includes('cm lost'), 'Height check waits for the user\'s real heights');
+  BoneApp.setSpineHeight('heightAge25', 170);
+  BoneApp.setSpineHeight('heightCurrent', 164);
+  assert(html().includes('<b>6</b>') && html().includes('spine X-ray'), 'Height loss >= 4 cm advises a spine X-ray');
+  assert(html().includes('Move safely') && html().includes('tel:108'), 'Spine tab shows safe moves and an ambulance call button');
+
+  // Subtab 5: Doctor visit built from the user's real records
+  BoneApp.switchStrengthenSubTab('doctor_brief');
+  assert(html().includes('Should I start bone medicine? (T-score -2.8)') && html().includes('My vitamin D is 18. Do I need D3 doses?'), 'Doctor questions come from the saved scan and blood test');
+  assert(html().includes('What is my 10-year fracture risk?') && html().includes('How far apart should I take my thyroid pill and calcium?'), 'Risk factors and medicines add the right questions');
+  mockDocument.getElementById('sxOwnQuestion').value = 'Can I keep doing yoga?';
+  BoneApp.addDoctorQuestion();
+  assert(html().includes('Can I keep doing yoga?'), 'The user can add their own question');
+  BoneApp.setDoctorVisitDate(new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10));
+  assert(/In [34] days/.test(html()), 'Next visit date shows how many days are left');
+
+  BoneApp.printDocument('doctor');
+  const printDocHtml = mockElements['printDoc'].innerHTML;
+  assert(printDocHtml.includes('Doctor Visit Summary') && printDocHtml.includes('-2.8') && printDocHtml.includes('Thyronorm') && printDocHtml.includes('Can I keep doing yoga?'), 'Printed doctor summary includes the saved scans, medicines and own questions');
+
   console.log('\n--- 7. Testing Backward Compatibility & Stale Cache Sanitization ---');
 
   // Simulate a visitor having old V2 cache with hardcoded Sunita Sharma
@@ -416,7 +627,7 @@ setTimeout(() => {
   reloadedApp.toggleChatDrawer();
   const migratedChat = mockElements['chatMessagesContainer'].innerHTML;
   assert(!migratedChat.includes('Sunita Sharma'), 'Migration test: Stale chat history containing Sunita Sharma was discarded and reset');
-  assert(migratedChat.includes('Guest'), 'Migration test: Platform cleanly defaulted to Guest state');
+  assert(migratedChat.includes('Namaste! I') && mockElements['chatContextStrip'].innerHTML.includes('Guest'), 'Migration test: Platform cleanly defaulted to Guest state');
 
   // ---------------------------------------------------------------------------
   // FINAL SUMMARY

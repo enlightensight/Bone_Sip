@@ -7,8 +7,12 @@ deploy
 ~$*
 *.bak
 Dockerfile
-nginx.conf
+
 netlify.toml
 README.md
 DESIGN.md
 CREDITS.md
+.env
+.env.*
+
+data/

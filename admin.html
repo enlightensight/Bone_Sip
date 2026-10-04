@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>BONE SIP Admin</title>
+  <link rel="icon" href="assets/icons3d/bone.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css?v=3.2.4">
+  <link rel="stylesheet" href="css/admin.css?v=1.0.1">
+</head>
+<body class="admin">
+  <!-- Login: Admin ID + Password / PIN (or optional OTP) -->
+  <main class="ad-login" id="adLogin" hidden>
+    <div class="ad-login-card">
+      <img src="assets/images/bonesip_logo_720.webp" alt="BONE SIP" class="ad-logo" width="720" height="289">
+      <h1>Super Admin Portal</h1>
+      <p class="ad-muted">Sign in with your Admin ID and Password to manage BONE SIP users & clinical data.</p>
+
+      <!-- Primary ID & Password Login Form -->
+      <form id="adLoginForm" autocomplete="on">
+        <label for="adId"><i class="fa-solid fa-user-shield" style="color: var(--strengthen); margin-right: 4px;"></i> Super Admin ID</label>
+        <div class="ad-input-group">
+          <i class="fa-solid fa-user-gear input-icon"></i>
+          <input id="adId" type="text" autocomplete="username" placeholder="Enter Super Admin ID" required>
+        </div>
+
+        <label for="adPassword"><i class="fa-solid fa-key" style="color: var(--strengthen); margin-right: 4px;"></i> Password</label>
+        <div class="ad-input-group">
+          <i class="fa-solid fa-lock input-icon"></i>
+          <input id="adPassword" type="password" autocomplete="current-password" placeholder="Enter Password" required>
+          <button type="button" class="ad-eye-btn" id="togglePassBtn" aria-label="Toggle password visibility">
+            <i class="fa-solid fa-eye" id="togglePassIcon"></i>
+          </button>
+        </div>
+
+        <button type="submit" class="ad-btn primary" id="adLoginSubmitBtn">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to Super Admin
+        </button>
+      </form>
+
+      <p class="ad-error" id="adLoginError" role="alert"></p>
+    </div>
+  </main>
+
+  <!-- Dashboard -->
+  <div class="ad-app" id="adApp" hidden>
+    <header class="ad-header">
+      <img src="assets/images/bonesip_logo_720.webp" alt="BONE SIP" class="ad-logo-sm" width="720" height="289">
+      <span class="ad-tag">Admin</span>
+      <nav class="ad-tabs" role="tablist">
+        <button class="ad-tab active" data-tab="users" role="tab" aria-selected="true">Users</button>
+        <button class="ad-tab" data-tab="audit" role="tab" aria-selected="false">Access log</button>
+      </nav>
+      <button class="ad-btn ghost" id="adLogoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Log out</button>
+    </header>
+
+    <div class="ad-banner" id="adTestBanner" hidden>
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span><b>Test login is on.</b> Anyone who knows a phone number can open that account with the test code. Turn off <code>OTP_TEST_MODE</code> once SMS is set up.</span>
+    </div>
+
+    <main class="ad-main">
+      <section id="adUsersTab">
+        <div class="ad-kpis" id="adKpis"></div>
+
+        <div class="ad-card">
+          <div class="ad-card-head">
+            <h2>Active users, last 14 days</h2>
+            <span class="ad-muted">Users who ticked at least one meal or move</span>
+          </div>
+          <div class="ad-chart" id="adActiveChart"></div>
+        </div>
+
+        <div class="ad-card">
+          <div class="ad-card-head">
+            <h2>Users</h2>
+            <a class="ad-btn" href="/api/admin/users.csv" id="adCsvBtn"><i class="fa-solid fa-file-csv"></i> Export CSV</a>
+          </div>
+          <div class="ad-filters">
+            <input type="search" id="adSearch" placeholder="Search name or number" aria-label="Search users">
+            <div class="ad-chips" role="group" aria-label="Filter users">
+              <button class="ad-chip active" data-filter="all">All</button>
+              <button class="ad-chip" data-filter="today">Active today</button>
+              <button class="ad-chip" data-filter="inactive">Inactive 7+ days</button>
+              <button class="ad-chip" data-filter="lowdiet">Diet under 50%</button>
+            </div>
+            <select id="adSort" aria-label="Sort users">
+              <option value="recent">Newest first</option>
+              <option value="active">Last active</option>
+              <option value="diet">Diet follow-through</option>
+              <option value="streak">Streak</option>
+              <option value="name">Name</option>
+            </select>
+          </div>
+          <div class="ad-table-wrap">
+            <table class="ad-table">
+              <thead>
+                <tr><th>User</th><th>Joined</th><th>Last active</th><th>Today</th><th>Streak</th><th>Diet · 7 days</th><th>Moves · 7 days</th><th>Diet · 30 days</th></tr>
+              </thead>
+              <tbody id="adUserRows"></tbody>
+            </table>
+            <p class="ad-empty" id="adNoUsers" hidden>No users match.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="adAuditTab" hidden>
+        <div class="ad-card">
+          <div class="ad-card-head">
+            <h2>Access log</h2>
+            <span class="ad-muted">Every admin login, user view and export (last 100)</span>
+          </div>
+          <div class="ad-table-wrap">
+            <table class="ad-table">
+              <thead><tr><th>When</th><th>Action</th><th>User</th></tr></thead>
+              <tbody id="adAuditRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- User detail drawer -->
+  <div class="ad-drawer-back" id="adDrawer" hidden>
+    <aside class="ad-drawer" role="dialog" aria-labelledby="adDrawerTitle">
+      <button class="ad-close" id="adDrawerClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      <div id="adDrawerBody"></div>
+    </aside>
+  </div>
+
+  <div class="ad-tooltip" id="adTooltip" role="tooltip" hidden></div>
+
+  <script src="js/admin.js?v=1.0.1"></script>
+</body>
+</html>

@@ -4,6 +4,19 @@
 (function () {
   'use strict';
 
+  // Display language (js/i18n.js). Falls back to English when it isn't loaded (e.g. tests).
+  const I18N = window.BoneI18n || {
+    LANGS: [{ code: 'en', name: 'English', native: 'English', glyph: 'Aa' }],
+    t: (k, v) => (v ? k.replace(/\{(\w+)\}/g, (m, n) => (v[n] !== undefined ? v[n] : m)) : k),
+    tr: x => x,
+    current: () => 'en',
+    language: () => null,
+    saved: () => 'en',
+    setLanguage: () => Promise.resolve('en'),
+    date: (d, o) => d.toLocaleDateString('en-IN', o)
+  };
+  const { t, tr } = I18N;
+
   // --------------------------------------------------------------------------
   // APPLICATION STATE STORE
   // --------------------------------------------------------------------------
@@ -63,13 +76,33 @@
     // Intelligent AI Chatbot
     isChatDrawerOpen: false,
     chatHistory: [],
+    chatLanguage: 'auto', // Ojas reply language: 'auto' or a code from CHAT_LANGUAGES
 
     // Protect assessment choices (Images 2, 3, 4) - default unchecked
     protectRiskChecked: new Set(),
     protectHomeAuditAnswers: {},
     selectedAuditRoom: 'room_bathroom',
 
-    // Strengthen assessment choices (Image 5) - default unchecked
+    // Strengthen Clinical Medical & Bone Care Portal State (V3.5)
+    strengthenActiveSubTab: 'dxa_risk',
+    // The user's bone health file: only what they enter (no sample values).
+    scans: [],      // [{ id, date, spine, neck, hip }] DXA T-scores
+    labs: [],       // [{ id, date, vit_d, calcium, alp, egfr }]
+    meds: [],       // [{ id, name, kind, time, weekly, weekday }]
+    medTaken: {},   // { 'YYYY-MM-DD': [medId] }
+    doctorVisit: { date: '', questions: [] },
+    strengthenForm: null,
+    medDraft: null,
+    fraxInputs: {
+      prior_fracture: false,
+      parent_hip: false,
+      steroid_use: false,
+      rheumatoid: false
+    },
+    spineInputs: {
+      heightAge25: '',
+      heightCurrent: ''
+    },
     strengthenDoctorChecked: new Set(),
 
     // Unlocked Dashboard Tracking & Date-Wise Continuous Streaks
@@ -317,9 +350,9 @@
   function riskInfoHtml(count) {
     const r = getRiskLevel(count);
     return `
-      <b>${count} of 6</b>
+      <b>${t('{0} of {1}', { 0: count, 1: 6 })}</b>
       <span>${r.msg}</span><br>
-      <span class="lvl" style="background: ${r.color};">${r.label} risk</span>`;
+      <span class="lvl" style="background: ${r.color};">${tr(`${r.label} risk`)}</span>`;
   }
 
   function riskGaugeHtml(count, startAngle) {
@@ -419,6 +452,11 @@
     playSound('tap');
     const splash = document.getElementById('appSplashScreen');
     if (splash) splash.classList.add('dismissed');
+    // First visit: choose a language before anything else.
+    if (window.BoneI18n && !I18N.saved()) {
+      openLanguagePicker({ firstRun: true, then: startOnboardingTour });
+      return;
+    }
     if (hasExistingJourney()) {
       resumeJourney();
       return;
@@ -436,21 +474,9 @@
   // Sends a returning user to wherever they left off.
   function resumeJourney() {
     if (state.completedPillars.build && state.auth.isVerified) {
-      if (state.completedPillars.protect && state.completedPillars.strengthen) {
-        state.activePillar = 'build';
-        showView('build');
-        switchBuildSubTab(state.activeBuildSubTab || 'diet', true);
-      } else if (state.completedPillars.protect) {
-        state.assessmentPhase = 'strengthen';
-        state.activePillar = 'strengthen';
-        showView('assessment');
-        renderAssessmentStage();
-      } else {
-        state.assessmentPhase = 'protect';
-        state.activePillar = 'protect';
-        showView('assessment');
-        renderAssessmentStage();
-      }
+      state.activePillar = 'build';
+      showView('build');
+      switchBuildSubTab(state.activeBuildSubTab || 'diet', true);
     } else {
       state.assessmentPhase = 'build';
       state.activePillar = 'build';
@@ -633,7 +659,7 @@
         renderAssessmentStage();
       } else {
         showView('protect');
-        renderProtectHubView();
+        renderProtectHubView(true);
       }
     } else if (pillarId === 'strengthen') {
       if (!state.completedPillars.strengthen) {
@@ -642,7 +668,7 @@
         renderAssessmentStage();
       } else {
         showView('strengthen');
-        renderStrengthenHubView();
+        renderStrengthenHubView(true);
       }
     }
   }
@@ -702,8 +728,8 @@
         </div>
         <p class="wiz-note"><i class="fa-solid fa-bone" style="color: var(--brand-pink);"></i> All of these rest on strong bones.</p>
         <div class="wiz-footer">
-          <span class="wiz-count ${state.selectedAssets.length ? 'on' : ''}" id="assetSelectedCount"><i class="fa-solid fa-circle-check"></i> ${state.selectedAssets.length} selected</span>
-          <button class="cta-btn" onclick="BoneApp.setBuildAssessmentStep('plan_overview')">Continue <i class="fa-solid fa-arrow-right"></i></button>
+          <span class="wiz-count ${state.selectedAssets.length ? 'on' : ''}" id="assetSelectedCount"><i class="fa-solid ${state.selectedAssets.length ? 'fa-circle-check' : 'fa-circle-info'}"></i> ${state.selectedAssets.length ? `${state.selectedAssets.length} selected` : 'Select at least 1 goal'}</span>
+          <button class="cta-btn" id="goalsContinueBtn" ${state.selectedAssets.length === 0 ? 'disabled' : ''} onclick="BoneApp.setBuildAssessmentStep('plan_overview')">Continue <i class="fa-solid fa-arrow-right"></i></button>
         </div>`;
     }
     else if (step === 'plan_overview') {
@@ -842,7 +868,7 @@
 
     if (step === 1) {
       container.innerHTML = `
-        ${wizTop({ total: 3, done: 1, color: 'var(--protect)', label: 'Protect · 1 of 3' })}
+        ${wizTop({ back: "BoneApp.navigatePillar('build')", total: 3, done: 1, color: 'var(--protect)', label: 'Protect · 1 of 3' })}
         <div class="unlock-banner protect pop">
           ${img3d('party', '', 40)}
           <div><b>Build complete!</b><span>Protect is now unlocked.</span></div>
@@ -913,67 +939,46 @@
   }
 
   // 3. STRENGTHEN ASSESSMENT STEPS (IMAGE 5)
+  // Strengthen intro: one screen about what the portal does, then straight in.
   function renderStrengthenAssessmentStep(container) {
-    const step = state.strengthenAssessmentStep;
-
-    if (step === 1) {
-      container.innerHTML = `
-        ${wizTop({ total: 2, done: 1, color: 'var(--strengthen)', label: 'Strengthen · 1 of 2' })}
-        <div class="unlock-banner strengthen pop">
-          ${img3d('party', '', 40)}
-          <div><b>Protect complete!</b><span>Strengthen is now unlocked.</span></div>
+    container.innerHTML = `
+      ${wizTop({ total: 1, done: 1, color: 'var(--strengthen)', label: t('Strengthen') })}
+      <div class="unlock-banner strengthen pop">
+        ${img3d('party', '', 40)}
+        <div><b>${t('Protect complete!')}</b><span>${t('Strengthen is now unlocked.')}</span></div>
+      </div>
+      <div class="wiz-hero">
+        ${img3d('stethoscope', 'i3d-lg float', 72)}
+        <div>
+          <span class="step-chip strengthen">${t('Strengthen')}</span>
+          <h2 class="wiz-title">${t('Your bone health file')}</h2>
+          <p class="wiz-sub">${t('Keep your scans, tests and medicines in one place.')}</p>
         </div>
-        <div class="wiz-hero">
-          ${img3d('stethoscope', 'i3d-lg float', 72)}
-          <div>
-            <span class="step-chip strengthen">Strengthen</span>
-            <h2 class="wiz-title">Know your numbers</h2>
-            <p class="wiz-sub">Three checks to review with your doctor.</p>
-          </div>
-        </div>
-        <div class="pillar-stack">
-          ${pillarRow({ img: 'xray', title: 'DXA bone scan', sub: 'Measures bone density at hip & spine', i: 1 })}
-          ${pillarRow({ img: 'barchart', title: 'FRAX® score', sub: 'Your 10-year fracture risk', i: 2 })}
-          ${pillarRow({ img: 'clipboard', title: 'Doctor review', sub: 'Questions for your next visit', i: 3 })}
-        </div>
-        <div class="wiz-footer">
-          <button class="cta-btn strengthen" onclick="BoneApp.setStrengthenAssessmentStep(2)">See my doctor checklist <i class="fa-solid fa-arrow-right"></i></button>
-        </div>`;
-    }
-    else if (step === 2) {
-      container.innerHTML = `
-        ${wizTop({ back: 'BoneApp.setStrengthenAssessmentStep(1)', total: 2, done: 2, color: 'var(--strengthen)', label: '2 of 2' })}
-        <div class="wiz-hero">
-          ${img3d('clipboard', 'i3d-lg', 72)}
-          <div>
-            <h2 class="wiz-title">Ask your doctor</h2>
-            <p class="wiz-sub">Tick the questions to take to your next visit.</p>
-          </div>
-        </div>
-        <div class="choice-rows strengthen" id="strengthenDoctorList">
-          ${BONE_SIP_DATA.doctorReviewChecklist.map((q, i) => choiceRow({
-            id: q.id, img: q.img, title: q.text, i,
-            selected: state.strengthenDoctorChecked.has(q.id),
-            onclick: `BoneApp.toggleStrengthenDoctor('${q.id}')`
-          })).join('')}
-        </div>
-        <div class="share-row">
-          <button class="btn btn-outline" onclick="BoneApp.shareDoctorReviewWhatsApp()"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> WhatsApp</button>
-          <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-file-arrow-down"></i> Save PDF</button>
-        </div>
-        <div class="motto-card">
-          ${img3d('trophy', '', 48)}
-          <div><b>Know your risk. Protect your investment.</b><span>The best investments are reviewed regularly.</span></div>
-        </div>
-        <div class="wiz-footer">
-          <button class="cta-btn strengthen" onclick="BoneApp.completeStrengthenAssessment()">Open my BONE SIP <i class="fa-solid fa-arrow-right"></i></button>
-        </div>`;
-    }
+      </div>
+      <div class="pillar-stack">
+        ${pillarRow({ img: 'xray', title: t('Scan results'), sub: t('See if your bones are getting stronger'), i: 1 })}
+        ${pillarRow({ img: 'barchart', title: t('Blood tests'), sub: t('Vitamin D, calcium and more'), i: 2 })}
+        ${pillarRow({ img: 'pill', title: t('Medicines'), sub: t('Tick each tablet so you never miss one'), i: 3 })}
+        ${pillarRow({ img: 'clipboard', title: t('Doctor visit'), sub: t('A one-page summary to show your doctor'), i: 4 })}
+      </div>
+      <div class="wiz-footer">
+        <button class="cta-btn strengthen" onclick="BoneApp.completeStrengthenAssessment()">${t('Open Strengthen')} <i class="fa-solid fa-arrow-right"></i></button>
+      </div>`;
   }
 
   // Helper Setters for Assessment
   function setBuildAssessmentStep(step) {
     playSound('tap');
+    if (step === 'plan_overview' && state.selectedAssets.length === 0) {
+      showToast('Please select at least one goal to continue', 'fa-circle-info');
+      const grid = document.getElementById('lifeAssetGrid');
+      if (grid) {
+        grid.classList.remove('shake');
+        void grid.offsetWidth;
+        grid.classList.add('shake');
+      }
+      return;
+    }
     state.buildAssessmentStep = step;
     renderAssessmentStage();
   }
@@ -999,8 +1004,12 @@
     setTileSelected('#lifeAssetGrid', assetId, state.selectedAssets.includes(assetId));
     const countEl = document.getElementById('assetSelectedCount');
     if (countEl) {
-      countEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${state.selectedAssets.length} selected`;
+      countEl.innerHTML = `<i class="fa-solid ${state.selectedAssets.length ? 'fa-circle-check' : 'fa-circle-info'}"></i> ${state.selectedAssets.length ? `${state.selectedAssets.length} selected` : 'Select at least 1 goal'}`;
       countEl.classList.toggle('on', state.selectedAssets.length > 0);
+    }
+    const continueBtn = document.getElementById('goalsContinueBtn');
+    if (continueBtn) {
+      continueBtn.disabled = state.selectedAssets.length === 0;
     }
     BoneDB.save();
   }
@@ -1206,21 +1215,20 @@
   // Progression from Build Assessment to Login Gate
   function proceedToLogin() {
     playSound('tap');
+    if (!state.userProfile.healthConditions || state.userProfile.healthConditions.length === 0) {
+      state.userProfile.healthConditions = ['none'];
+    }
     // Someone who already verified (e.g. redoing Build) shouldn't need a new OTP.
     if (state.auth.isVerified && state.auth.phone) {
       completeBuildPillar();
       return;
     }
+    state.authMode = 'save';
+    setAuthCopy();
     showView('auth');
-    const phoneStep = document.getElementById('inlineAuthPhoneStep');
-    const otpStep = document.getElementById('inlineAuthOtpStep');
-    if (phoneStep) phoneStep.style.display = 'block';
-    if (otpStep) otpStep.style.display = 'none';
+    showAuthPhoneStep();
     const input = document.getElementById('inlineMobileNumberInput');
-    if (input) {
-      if (!input.value && state.userProfile.phone) input.value = state.userProfile.phone;
-      setTimeout(() => input.focus(), 300);
-    }
+    if (input && !input.value && state.userProfile.phone) input.value = state.userProfile.phone;
     BoneDB.save();
   }
 
@@ -1230,6 +1238,11 @@
     card.classList.remove('shake');
     void card.offsetWidth;
     card.classList.add('shake');
+  }
+
+  // The code to show on screen when there is no real SMS yet (demo or server test mode).
+  function onScreenOtpCode() {
+    return state.auth.pendingMode === 'cloud' ? cloud.testCode : ((window.BONE_SIP_CONFIG || {}).demoOtpCode || '849201');
   }
 
   async function sendInlineOTP() {
@@ -1250,7 +1263,34 @@
     }
 
     const cfg = window.BONE_SIP_CONFIG || {};
-    if (!isDemoMode()) {
+    let mode = isDemoMode() ? 'demo' : 'custom';
+    cloud.testCode = '';
+    if (accountsApi()) {
+      let r = null;
+      try { r = await apiCall('POST', '/auth/otp/send', { phone: cleanPhone }); } catch (err) { r = null; }
+      if (!r) {
+        showToast(t('Could not send the code. Please check your internet and try again.'), 'fa-triangle-exclamation');
+        return;
+      }
+      if (r.status === 429) {
+        showToast(t('Too many tries. Please wait an hour and try again.'), 'fa-triangle-exclamation');
+        return;
+      }
+      if (r.status === 503) {
+        showToast(t('Phone login is not switched on yet. Please try later.'), 'fa-triangle-exclamation');
+        return;
+      }
+      if (r.ok) {
+        mode = 'cloud';
+        cloud.testCode = r.json.testMode ? String(r.json.testCode || '') : '';
+      } else if (r.status !== 404 && r.status !== 405) {
+        showToast(t('Could not send the code. Please check your internet and try again.'), 'fa-triangle-exclamation');
+        return;
+      }
+      // 404/405: this host has no accounts API, so fall back to the on-device login below.
+    }
+
+    if (mode === 'custom') {
       if (!cfg.otp || !cfg.otp.sendUrl) {
         showToast('OTP service is not configured yet', 'fa-triangle-exclamation');
         return;
@@ -1270,35 +1310,43 @@
     }
 
     state.auth.pendingPhone = cleanPhone;
+    state.auth.pendingMode = mode;
 
     const phoneStep = document.getElementById('inlineAuthPhoneStep');
     const otpStep = document.getElementById('inlineAuthOtpStep');
     if (phoneStep) phoneStep.style.display = 'none';
     if (otpStep) otpStep.style.display = 'block';
+    const back = document.getElementById('authBackBtn');
+    if (back) back.hidden = false;
 
     const sentText = document.getElementById('inlineOtpSentPhoneText');
-    if (sentText) sentText.textContent = `Code sent to +91 ${cleanPhone.slice(0, 5)} ${cleanPhone.slice(5)}`;
+    if (sentText) sentText.textContent = t('Code sent to {phone}', { phone: `+91 ${cleanPhone.slice(0, 5)} ${cleanPhone.slice(5)}` });
 
-    const demo = isDemoMode();
+    const showCode = mode === 'demo' || (mode === 'cloud' && !!cloud.testCode);
     const bubble = document.getElementById('inlineSmsSimBubble');
     const autofill = document.getElementById('otpAutofillBtn');
     const codeText = document.getElementById('inlineSimulatedOtpCodeText');
-    if (bubble) bubble.style.display = demo ? 'flex' : 'none';
-    if (autofill) autofill.style.display = demo ? 'inline-flex' : 'none';
-    if (codeText) codeText.textContent = cfg.demoOtpCode || '849201';
+    const codeLabel = document.getElementById('inlineSmsSimLabel');
+    if (bubble) bubble.style.display = showCode ? 'flex' : 'none';
+    if (autofill) autofill.style.display = showCode ? 'inline-flex' : 'none';
+    if (codeText) codeText.textContent = onScreenOtpCode();
+    if (codeLabel) codeLabel.textContent = mode === 'cloud' ? t('Test login — your code is') : t('Demo mode — your code is');
 
     const boxes = document.querySelectorAll('.inline-otp');
     boxes.forEach(b => { b.value = ''; });
     if (boxes[0]) setTimeout(() => boxes[0].focus(), 150);
 
-    showToast(demo ? 'Demo mode: use the code shown on screen' : `Code sent to +91 ${cleanPhone}`, 'fa-comment-sms');
+    showToast(showCode ? t('Use the code shown on screen') : t('Code sent to {phone}', { phone: `+91 ${cleanPhone}` }), 'fa-comment-sms');
   }
 
   function autofillInlineOTP() {
-    if (!isDemoMode()) return;
+    const code = onScreenOtpCode();
+    if (!code || !(state.auth.pendingMode === 'demo' || cloud.testCode)) return;
     playSound('check');
-    const code = ((window.BONE_SIP_CONFIG || {}).demoOtpCode || '849201').split('');
-    document.querySelectorAll('.inline-otp').forEach((input, index) => { input.value = code[index] || ''; });
+    code.split('').forEach((d, index) => {
+      const input = document.querySelectorAll('.inline-otp')[index];
+      if (input) input.value = d;
+    });
     verifyInlineOTP();
   }
 
@@ -1344,8 +1392,16 @@
 
     otpVerifyInFlight = true;
     let verified = false;
+    let failNote = t('That code didn’t match. Please try again.');
+    let account = null;
     try {
-      if (isDemoMode()) {
+      if (state.auth.pendingMode === 'cloud') {
+        const r = await apiCall('POST', '/auth/otp/verify', { phone, code });
+        verified = r.ok;
+        if (r.ok) account = r.json;
+        else if (r.json.error === 'expired') failNote = t('That code has expired. Tap Resend for a new one.');
+        else if (r.json.error === 'too_many_attempts') failNote = t('Too many wrong tries. Tap Resend for a new code.');
+      } else if (state.auth.pendingMode === 'demo' || isDemoMode()) {
         verified = code === ((window.BONE_SIP_CONFIG || {}).demoOtpCode || '849201');
       } else {
         const cfg = window.BONE_SIP_CONFIG || {};
@@ -1359,13 +1415,14 @@
       }
     } catch (err) {
       console.warn('OTP verify failed:', err);
+      failNote = t('Could not check the code. Please check your internet and try again.');
     } finally {
       otpVerifyInFlight = false;
     }
 
     if (!verified) {
       playSound('tap');
-      showToast('That code didn’t match. Please try again.', 'fa-triangle-exclamation');
+      showToast(failNote, 'fa-triangle-exclamation');
       shakeAuthCard();
       boxes.forEach(b => { b.value = ''; });
       if (boxes[0]) boxes[0].focus();
@@ -1374,12 +1431,38 @@
 
     state.auth.isVerified = true;
     state.auth.phone = phone;
+    state.auth.cloud = !!account;
+    if (account && account.user) state.auth.createdAt = account.user.createdAt;
     state.userProfile.phone = phone;
     delete state.auth.pendingPhone;
+    delete state.auth.pendingMode;
 
     playSound('success');
     celebrate('big');
     updateHeaderProfileBadge();
+
+    // Returning user: bring back their saved plan and history.
+    const remote = account && account.state;
+    if (remote && remote.completedPillars && remote.completedPillars.build) {
+      adoptCloudState(remote);
+      cloud.fullUpload = true;
+      BoneDB.save();
+      showToast(t('Welcome back! Your plan and history are restored.'), 'fa-cloud-arrow-down');
+      state.authMode = 'save';
+      resumeJourney();
+      return;
+    }
+
+    cloud.fullUpload = true;
+    if (state.authMode === 'login' && !state.completedPillars.build) {
+      // New number on the login screen: start the short setup, already logged in.
+      state.authMode = 'save';
+      BoneDB.save();
+      showToast(t('You’re logged in. Let’s set up your plan.'), 'fa-circle-check');
+      resumeJourney();
+      return;
+    }
+    state.authMode = 'save';
     completeBuildPillar();
   }
 
@@ -1387,24 +1470,11 @@
     state.completedPillars.build = true;
     state.unlockedPillars.protect = true;
 
-    if (state.completedPillars.protect && state.completedPillars.strengthen) {
-      state.activePillar = 'build';
-      showView('build');
-      switchBuildSubTab('diet', true);
-      showToast('Plan updated', 'fa-circle-check');
-    } else if (state.completedPillars.protect) {
-      state.assessmentPhase = 'strengthen';
-      state.activePillar = 'strengthen';
-      showView('assessment');
-      renderAssessmentStage();
-    } else {
-      state.assessmentPhase = 'protect';
-      state.protectAssessmentStep = 1;
-      state.activePillar = 'protect';
-      showToast('Verified! Protect is unlocked.', 'fa-shield-halved');
-      showView('assessment');
-      renderAssessmentStage();
-    }
+    state.activePillar = 'build';
+    state.activeBuildSubTab = 'diet';
+    showToast('Verified! Welcome to your Build plan. Protect is unlocked.', 'fa-shield-halved');
+    showView('build');
+    switchBuildSubTab('diet', true);
     renderPillarBottomNav();
     BoneDB.save();
   }
@@ -1415,17 +1485,9 @@
     state.completedPillars.protect = true;
     state.unlockedPillars.strengthen = true;
 
-    if (state.completedPillars.strengthen) {
-      state.activePillar = 'protect';
-      showView('protect');
-      renderProtectHubView();
-    } else {
-      state.assessmentPhase = 'strengthen';
-      state.strengthenAssessmentStep = 1;
-      state.activePillar = 'strengthen';
-      showView('assessment');
-      renderAssessmentStage();
-    }
+    state.activePillar = 'protect';
+    showView('protect');
+    renderProtectHubView();
     showToast('Protect complete! Strengthen is unlocked.', 'fa-arrow-trend-up');
     renderPillarBottomNav();
     BoneDB.save();
@@ -1435,13 +1497,12 @@
     playSound('success');
     celebrate('big');
     state.completedPillars.strengthen = true;
+    state.unlockedPillars.strengthen = true;
     state.assessmentPhase = 'completed';
-    state.activePillar = 'build';
-    state.activeBuildSubTab = 'diet';
-
-    showToast('All 3 pillars unlocked. Welcome to your plan!', 'fa-trophy');
-    showView('build');
-    switchBuildSubTab('diet', true);
+    state.activePillar = 'strengthen';
+    showToast(t('All 3 pillars unlocked. Welcome to your plan!'), 'fa-trophy');
+    showView('strengthen');
+    renderStrengthenHubView(true);
     renderPillarBottomNav();
     BoneDB.save();
   }
@@ -1516,9 +1577,10 @@
       const isToday = d.toDateString() === now.toDateString();
       const dateNum = d.getDate();
       const dayName = dayNames[i];
-      const dayShort = dayName.slice(0, 3).toUpperCase();
-      const monthShort = monthNames[d.getMonth()];
-      const monthFull = fullMonthNames[d.getMonth()];
+      const english = I18N.current() === 'en';
+      const dayShort = english ? dayName.slice(0, 3).toUpperCase() : I18N.date(d, { weekday: 'short' });
+      const monthShort = english ? monthNames[d.getMonth()] : I18N.date(d, { month: 'short' });
+      const monthFull = english ? fullMonthNames[d.getMonth()] : I18N.date(d, { month: 'long' });
 
       days.push({
         date: d,
@@ -1538,46 +1600,77 @@
   // --------------------------------------------------------------------------
   // MODULE: PRODUCTION DATABASE & LOCAL PERSISTENCE LAYER (BoneDB)
   // --------------------------------------------------------------------------
+  // Before v3.7 Strengthen showed sample values (T-score -2.6, vitamin D 24…).
+  // Keep only numbers the user actually changed, as dated-unknown records.
+  function migrateOldStrengthenInputs(data) {
+    const dxa = data.dxaInputs;
+    if (!Array.isArray(data.scans) && dxa && !(dxa.spineTScore === -2.6 && dxa.hipTScore === -1.8 && dxa.neckTScore === -2.2)) {
+      const n = v => (typeof v === 'number' && !isNaN(v) ? v : null);
+      state.scans = [{ id: 'old_scan', date: dxa.scanDate || '', spine: n(dxa.spineTScore), neck: n(dxa.neckTScore), hip: n(dxa.hipTScore) }];
+    }
+    const lab = data.labInputs;
+    if (!Array.isArray(data.labs) && lab && !(lab.vit_d === 24 && lab.calcium === 9.4 && lab.alp === 85 && lab.egfr === 75)) {
+      state.labs = [{ id: 'old_lab', date: '', vit_d: lab.vit_d, calcium: lab.calcium, alp: lab.alp, egfr: lab.egfr }];
+    }
+    const sp = data.spineInputs;
+    if (sp && sp.heightAge25 === 168 && sp.heightCurrent === 165) state.spineInputs = { heightAge25: '', heightCurrent: '' };
+  }
+
   const BoneDB = {
     KEY: 'BONE_SIP_PRODUCTION_DB_V3',
 
+    // Everything worth keeping, as plain JSON (saved on the phone and, when logged in, to the account).
+    payload() {
+      return {
+        version: 4,
+        lastUpdated: new Date().toISOString(),
+        auth: state.auth,
+        unlockedPillars: state.unlockedPillars,
+        completedPillars: state.completedPillars,
+        assessmentPhase: state.assessmentPhase,
+        buildAssessmentStep: state.buildAssessmentStep,
+        protectAssessmentStep: state.protectAssessmentStep,
+        strengthenAssessmentStep: state.strengthenAssessmentStep,
+        selectedAssets: state.selectedAssets,
+        userProfile: state.userProfile,
+        protectRiskChecked: Array.from(state.protectRiskChecked || []),
+        protectHomeAuditAnswers: state.protectHomeAuditAnswers || {},
+        strengthenDoctorChecked: Array.from(state.strengthenDoctorChecked || []),
+        customMealSwaps: state.customMealSwaps || {},
+        itemSwaps: state.itemSwaps || {},
+        activeExerciseRoutine: state.activeExerciseRoutine || [],
+        selectedCoach: state.selectedCoach,
+        exerciseGroup: state.exerciseGroup,
+        exerciseDurations: state.exerciseDurations || {},
+        selectedAuditRoom: state.selectedAuditRoom,
+        activeBuildSubTab: state.activeBuildSubTab,
+        activeStreakDays: state.activeStreakDays || 0,
+        chatHistory: (state.chatHistory || []).slice(-60),
+        chatLanguage: state.chatLanguage,
+        checkedDietMilestones: Object.keys(state.checkedDietMilestones || {}).reduce((acc, k) => {
+          acc[k] = Array.from(state.checkedDietMilestones[k] || []);
+          return acc;
+        }, {}),
+        checkedExerciseMilestones: Object.keys(state.checkedExerciseMilestones || {}).reduce((acc, k) => {
+          acc[k] = Array.from(state.checkedExerciseMilestones[k] || []);
+          return acc;
+        }, {}),
+        protectBannerDismissed: !!state.protectBannerDismissed,
+        strengthenActiveSubTab: state.strengthenActiveSubTab || 'dxa_risk',
+        fraxInputs: state.fraxInputs || {},
+        spineInputs: state.spineInputs || {},
+        scans: state.scans || [],
+        labs: state.labs || [],
+        meds: state.meds || [],
+        medTaken: state.medTaken || {},
+        doctorVisit: state.doctorVisit || { date: '', questions: [] }
+      };
+    },
+
     save() {
       try {
-        const payload = {
-          version: 4,
-          lastUpdated: new Date().toISOString(),
-          auth: state.auth,
-          unlockedPillars: state.unlockedPillars,
-          completedPillars: state.completedPillars,
-          assessmentPhase: state.assessmentPhase,
-          buildAssessmentStep: state.buildAssessmentStep,
-          protectAssessmentStep: state.protectAssessmentStep,
-          strengthenAssessmentStep: state.strengthenAssessmentStep,
-          selectedAssets: state.selectedAssets,
-          userProfile: state.userProfile,
-          protectRiskChecked: Array.from(state.protectRiskChecked || []),
-          protectHomeAuditAnswers: state.protectHomeAuditAnswers || {},
-          strengthenDoctorChecked: Array.from(state.strengthenDoctorChecked || []),
-          customMealSwaps: state.customMealSwaps || {},
-          itemSwaps: state.itemSwaps || {},
-          activeExerciseRoutine: state.activeExerciseRoutine || [],
-          selectedCoach: state.selectedCoach,
-          exerciseGroup: state.exerciseGroup,
-          exerciseDurations: state.exerciseDurations || {},
-          selectedAuditRoom: state.selectedAuditRoom,
-          activeBuildSubTab: state.activeBuildSubTab,
-          activeStreakDays: state.activeStreakDays || 0,
-          chatHistory: state.chatHistory || [],
-          checkedDietMilestones: Object.keys(state.checkedDietMilestones || {}).reduce((acc, k) => {
-            acc[k] = Array.from(state.checkedDietMilestones[k] || []);
-            return acc;
-          }, {}),
-          checkedExerciseMilestones: Object.keys(state.checkedExerciseMilestones || {}).reduce((acc, k) => {
-            acc[k] = Array.from(state.checkedExerciseMilestones[k] || []);
-            return acc;
-          }, {})
-        };
-        localStorage.setItem(this.KEY, JSON.stringify(payload));
+        localStorage.setItem(this.KEY, JSON.stringify(this.payload()));
+        scheduleCloudSync();
       } catch (err) {
         console.warn('BoneDB save error:', err);
       }
@@ -1635,6 +1728,17 @@
         }
         if (typeof data.activeStreakDays === 'number') state.activeStreakDays = data.activeStreakDays;
         if (Array.isArray(data.chatHistory)) state.chatHistory = data.chatHistory;
+        if (typeof data.chatLanguage === 'string' && /^[a-z]{2,4}$/.test(data.chatLanguage)) state.chatLanguage = data.chatLanguage;
+        if (typeof data.protectBannerDismissed === 'boolean') state.protectBannerDismissed = data.protectBannerDismissed;
+        if (data.strengthenActiveSubTab) state.strengthenActiveSubTab = data.strengthenActiveSubTab;
+        if (data.fraxInputs) state.fraxInputs = Object.assign(state.fraxInputs, data.fraxInputs);
+        if (data.spineInputs) state.spineInputs = Object.assign(state.spineInputs, data.spineInputs);
+        if (Array.isArray(data.scans)) state.scans = data.scans;
+        if (Array.isArray(data.labs)) state.labs = data.labs;
+        if (Array.isArray(data.meds)) state.meds = data.meds;
+        if (data.medTaken && typeof data.medTaken === 'object') state.medTaken = data.medTaken;
+        if (data.doctorVisit && typeof data.doctorVisit === 'object') state.doctorVisit = Object.assign({ date: '', questions: [] }, data.doctorVisit);
+        migrateOldStrengthenInputs(data);
 
         if (Array.isArray(data.protectRiskChecked)) {
           state.protectRiskChecked = new Set(data.protectRiskChecked);
@@ -1717,6 +1821,423 @@
       vegan: 'Vegan'
     };
     return map[d] || 'Healthy';
+  }
+
+  // --------------------------------------------------------------------------
+  // MODULE: ACCOUNT, CLOUD SAVE & HISTORY
+  // --------------------------------------------------------------------------
+  // On our server (server/accounts.js) the phone login is real: the user's data
+  // and one record per day (meals eaten, moves done) are saved to their account,
+  // so they come back on any phone. On hosting without the accounts API (static
+  // sites, file://) the app falls back to the on-device demo login.
+  const PENDING_DAYS_KEY = 'bonesip_pending_days';
+  const cloud = { timer: null, syncing: false, fullUpload: false, testCode: '', warnedExpired: false };
+
+  function accountsApi() {
+    const cfg = window.BONE_SIP_CONFIG || {};
+    return typeof location !== 'undefined' && /^https?:$/.test(location.protocol) && cfg.accountsApi ? String(cfg.accountsApi).replace(/\/$/, '') : '';
+  }
+
+  async function apiCall(method, path, body) {
+    const res = await fetch(accountsApi() + path, {
+      method,
+      credentials: 'same-origin',
+      headers: body ? { 'Content-Type': 'application/json' } : {},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    let json = {};
+    try { json = await res.json(); } catch (e) { /* empty body */ }
+    return { status: res.status, ok: res.ok, json };
+  }
+
+  function isCloudUser() {
+    return !!(state.auth.isVerified && state.auth.cloud && accountsApi());
+  }
+
+  function readPendingDays() {
+    try { return new Set(JSON.parse(localStorage.getItem(PENDING_DAYS_KEY) || '[]')); } catch (e) { return new Set(); }
+  }
+
+  function writePendingDays(set) {
+    try { localStorage.setItem(PENDING_DAYS_KEY, JSON.stringify(Array.from(set).slice(-200))); } catch (e) { /* storage full */ }
+  }
+
+  // Remembers that a day changed so its record is sent even if the date rolls over first.
+  function markDayForSync(day) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day || '')) return;
+    const set = readPendingDays();
+    set.add(day);
+    writePendingDays(set);
+  }
+
+  // The day's planned moves: one per group, rotating by date (same rule as todaysMix).
+  function movesPlannedFor(iso) {
+    const dayNumber = Math.floor(new Date(`${iso}T00:00:00`).getTime() / 86400000);
+    return (BONE_SIP_DATA.exerciseGroups || []).map(g => {
+      const list = workoutLib().filter(e => e.group === g.id);
+      return list.length ? list[dayNumber % list.length] : null;
+    }).filter(Boolean);
+  }
+
+  // One day's record: what was planned and eaten, which moves were done.
+  function dayLogFor(day) {
+    const dietSet = state.checkedDietMilestones[day] instanceof Set ? state.checkedDietMilestones[day] : new Set(state.checkedDietMilestones[day] || []);
+    const exSet = state.checkedExerciseMilestones[day] instanceof Set ? state.checkedExerciseMilestones[day] : new Set(state.checkedExerciseMilestones[day] || []);
+    const meals = resolveDailyMilestones(day, null).map(m => ({ slot: m.id, name: (m.meal && m.meal.name) || m.slot, done: dietSet.has(m.id) }));
+    const lib = workoutLib();
+    const moves = Array.from(exSet).map(id => ({ id, name: (lib.find(e => e.id === id) || {}).name || id, done: true }));
+    const target = getDailyExerciseTarget();
+    movesPlannedFor(day).forEach(ex => {
+      if (moves.length < target && !exSet.has(ex.id)) moves.push({ id: ex.id, name: ex.name, done: false });
+    });
+    return { day, meals, moves, score: calculateDailyScore100(day).total };
+  }
+
+  function localDataDays() {
+    const days = new Set();
+    ['checkedDietMilestones', 'checkedExerciseMilestones'].forEach(k => {
+      Object.keys(state[k] || {}).forEach(d => {
+        const v = state[k][d];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d) && v && (v.size || v.length)) days.add(d);
+      });
+    });
+    return days;
+  }
+
+  function scheduleCloudSync(delay = 2500) {
+    if (!isCloudUser()) return;
+    clearTimeout(cloud.timer);
+    cloud.timer = setTimeout(syncToCloud, delay);
+  }
+
+  async function syncToCloud() {
+    if (!isCloudUser() || cloud.syncing || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
+    cloud.syncing = true;
+    const today = getTodayISODate();
+    const pending = readPendingDays();
+    const days = new Set(pending);
+    days.add(today);
+    if (cloud.fullUpload) localDataDays().forEach(d => days.add(d));
+    const list = Array.from(days).filter(d => d <= today).sort().slice(-120);
+    try {
+      const saved = await apiCall('PUT', '/me/state', { data: BoneDB.payload() });
+      if (saved.status === 401) { cloudSessionEnded(); return; }
+      const sent = await apiCall('PUT', '/me/days', { days: list.map(dayLogFor) });
+      if (saved.ok && sent.ok) {
+        const left = readPendingDays();
+        list.forEach(d => left.delete(d));
+        writePendingDays(left);
+        cloud.fullUpload = false;
+      }
+    } catch (err) {
+      // Offline or server busy: the pending days stay queued for the next try.
+    } finally {
+      cloud.syncing = false;
+    }
+  }
+
+  function cloudSessionEnded() {
+    state.auth.cloud = false;
+    state.auth.isVerified = false;
+    try { localStorage.setItem(BoneDB.KEY, JSON.stringify(BoneDB.payload())); } catch (e) { /* ignore */ }
+    updateHeaderProfileBadge();
+    if (!cloud.warnedExpired) {
+      cloud.warnedExpired = true;
+      showToast(t('Please log in again to keep saving to your account'), 'fa-circle-info');
+    }
+  }
+
+  // A returning user logged in on this phone: take their saved account data,
+  // keeping any ticks made here before logging in.
+  function adoptCloudState(remote) {
+    const local = BoneDB.payload();
+    const merged = Object.assign({}, remote);
+    ['checkedDietMilestones', 'checkedExerciseMilestones'].forEach(k => {
+      const out = Object.assign({}, remote[k] || {});
+      Object.entries(local[k] || {}).forEach(([day, ids]) => {
+        out[day] = Array.from(new Set([].concat(out[day] || [], ids || [])));
+      });
+      merged[k] = out;
+    });
+    merged.auth = Object.assign({}, state.auth);
+    merged.chatHistory = local.chatHistory;
+    localStorage.setItem(BoneDB.KEY, JSON.stringify(merged));
+    BoneDB.load();
+    updateActiveStreak();
+    calculateBMI();
+    renderPillarBottomNav();
+    updateHeaderProfileBadge();
+    syncCoachToggle();
+  }
+
+  // Login for someone who already has an account (new phone, after logging out…).
+  function openLogin() {
+    playSound('tap');
+    const tour = document.getElementById('appOnboardingOverlay');
+    const splash = document.getElementById('appSplashScreen');
+    if (splash) splash.classList.add('dismissed');
+    if (tour && tour.style.display !== 'none') {
+      tour.classList.add('dismissed');
+      setTimeout(() => { tour.style.display = 'none'; }, 400);
+    }
+    const profileModal = document.getElementById('userProfileModal');
+    if (profileModal) profileModal.style.display = 'none';
+    state.authMode = 'login';
+    setAuthCopy();
+    showView('auth');
+    showAuthPhoneStep();
+    const input = document.getElementById('inlineMobileNumberInput');
+    if (input && !input.value) input.value = state.auth.phone || state.userProfile.phone || '';
+  }
+
+  function cancelLogin() {
+    playSound('tap');
+    state.authMode = 'save';
+    if (hasExistingJourney()) resumeJourney();
+    else {
+      showView('assessment');
+      renderAssessmentStage();
+    }
+  }
+
+  function changeAuthPhone() {
+    playSound('tap');
+    showAuthPhoneStep();
+  }
+
+  function handleAuthBack() {
+    const otpStep = document.getElementById('inlineAuthOtpStep');
+    if (otpStep && otpStep.style.display !== 'none') {
+      changeAuthPhone();
+      return;
+    }
+    if (state.authMode === 'login') {
+      cancelLogin();
+    }
+  }
+
+  function setAuthCopy() {
+    const login = state.authMode === 'login';
+    const chip = document.getElementById('authStepChip');
+    const title = document.getElementById('authTitle');
+    const sub = document.getElementById('authSub');
+    const back = document.getElementById('authBackBtn');
+    if (chip) chip.hidden = login;
+    if (back) back.hidden = !login;
+    if (title) title.textContent = login ? t('Welcome back') : t('Save your plan');
+    if (sub) sub.textContent = login ? t('Log in with your mobile number to get your plan and history back.') : t('Verify your mobile to keep your progress and unlock Protect.');
+  }
+
+  function showAuthPhoneStep() {
+    const phoneStep = document.getElementById('inlineAuthPhoneStep');
+    const otpStep = document.getElementById('inlineAuthOtpStep');
+    if (phoneStep) phoneStep.style.display = 'block';
+    if (otpStep) otpStep.style.display = 'none';
+    const back = document.getElementById('authBackBtn');
+    if (back) back.hidden = state.authMode !== 'login';
+    const input = document.getElementById('inlineMobileNumberInput');
+    if (input) {
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 150);
+    }
+  }
+
+  async function logout() {
+    playSound('tap');
+    if (!confirm(t('Log out of this phone? Your data stays safe in your account.'))) return;
+    clearTimeout(cloud.timer);
+    await syncToCloud();
+    try { await apiCall('POST', '/auth/logout', {}); } catch (e) { /* offline: the session just expires */ }
+    clearLocalAccountData();
+    showToast(t('Logged out'), 'fa-right-from-bracket');
+    setTimeout(() => window.location.reload(), 600);
+  }
+
+  async function deleteAccount() {
+    playSound('tap');
+    if (!confirm(t('Delete your account and all your saved data? This cannot be undone.'))) return;
+    let r;
+    try { r = await apiCall('DELETE', '/me'); } catch (e) { r = { ok: false }; }
+    if (!r.ok) {
+      showToast(t('Could not delete right now. Please check your internet and try again.'), 'fa-triangle-exclamation');
+      return;
+    }
+    clearLocalAccountData();
+    showToast(t('Your account has been deleted'), 'fa-circle-check');
+    setTimeout(() => window.location.reload(), 900);
+  }
+
+  function clearLocalAccountData() {
+    try {
+      localStorage.removeItem(BoneDB.KEY);
+      localStorage.removeItem('BONE_SIP_PRODUCTION_DB_V2');
+      localStorage.removeItem(PENDING_DAYS_KEY);
+    } catch (e) { /* ignore */ }
+  }
+
+  // ---------------- My history: month calendar of past days ----------------
+  const historyView = { month: '', selected: '', remote: {}, loading: false };
+
+  function openHistoryModal() {
+    playSound('tap');
+    const today = getTodayISODate();
+    historyView.month = today.slice(0, 7);
+    historyView.selected = today;
+    const modal = document.getElementById('historyModal');
+    if (modal) modal.style.display = 'flex';
+    renderHistory();
+    loadHistoryMonth();
+  }
+
+  function closeHistoryModal() {
+    playSound('tap');
+    const modal = document.getElementById('historyModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function historyMonthBounds(month) {
+    const [y, m] = month.split('-').map(Number);
+    const last = new Date(y, m, 0).getDate();
+    return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, '0')}`, days: last, firstWeekday: (new Date(y, m - 1, 1).getDay() + 6) % 7 };
+  }
+
+  async function loadHistoryMonth() {
+    if (!isCloudUser()) return;
+    const { from, to } = historyMonthBounds(historyView.month);
+    const today = getTodayISODate();
+    historyView.loading = true;
+    renderHistory();
+    try {
+      const r = await apiCall('GET', `/me/days?from=${from}&to=${to < today ? to : today}`);
+      if (r.status === 401) cloudSessionEnded();
+      if (r.ok) (r.json.days || []).forEach(d => { historyView.remote[d.day] = d; });
+    } catch (e) { /* offline: show what this phone has */ }
+    historyView.loading = false;
+    renderHistory();
+  }
+
+  function shiftHistoryMonth(delta) {
+    playSound('tap');
+    const [y, m] = historyView.month.split('-').map(Number);
+    const d = new Date(y, m - 1 + delta, 1);
+    const next = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (next > getTodayISODate().slice(0, 7)) return;
+    historyView.month = next;
+    const { to } = historyMonthBounds(next);
+    historyView.selected = to < getTodayISODate() ? to : getTodayISODate();
+    renderHistory();
+    loadHistoryMonth();
+  }
+
+  function selectHistoryDay(day) {
+    playSound('tap');
+    historyView.selected = day;
+    renderHistory();
+  }
+
+  function historyStartDay() {
+    const local = Array.from(localDataDays()).sort()[0];
+    const joined = state.auth.createdAt ? toISODate(new Date(state.auth.createdAt)) : '';
+    const remote = Object.keys(historyView.remote).sort()[0];
+    return [local, joined, remote].filter(Boolean).sort()[0] || getTodayISODate();
+  }
+
+  // Server records win for past days (they hold what was planned that day); today is always live.
+  function historyDay(day) {
+    const today = getTodayISODate();
+    if (day > today) return { status: 'future' };
+    let rec = day !== today && historyView.remote[day];
+    if (!rec) {
+      if (day !== today && !localDataDays().has(day)) {
+        return { status: day < historyStartDay() ? 'none' : 'missed', meals: [], moves: [] };
+      }
+      const log = dayLogFor(day);
+      rec = { meals: log.meals, moves: log.moves, score: log.score };
+    }
+    const dietDone = rec.meals.filter(m => m.done).length;
+    const movesDone = rec.moves.filter(m => m.done).length;
+    const allDone = rec.meals.length && dietDone >= rec.meals.length && movesDone >= rec.moves.length;
+    return {
+      status: allDone ? 'complete' : (dietDone || movesDone ? 'partial' : (day === today ? 'today' : 'missed')),
+      meals: rec.meals, moves: rec.moves, score: rec.score || 0, dietDone, movesDone
+    };
+  }
+
+  function renderHistory() {
+    const body = document.getElementById('historyBody');
+    if (!body) return;
+    const { from, days, firstWeekday } = historyMonthBounds(historyView.month);
+    const today = getTodayISODate();
+    const monthLabel = I18N.date(new Date(`${from}T00:00:00`), { month: 'long', year: 'numeric' });
+    const isCurrent = historyView.month === today.slice(0, 7);
+
+    let complete = 0, partial = 0, missed = 0, dietDays = 0, movesDays = 0, counted = 0;
+    const cells = [];
+    for (let i = 0; i < firstWeekday; i++) cells.push('<span class="hx-cell empty"></span>');
+    for (let n = 1; n <= days; n++) {
+      const day = `${historyView.month}-${String(n).padStart(2, '0')}`;
+      const info = historyDay(day);
+      if (['complete', 'partial', 'missed'].includes(info.status)) {
+        counted++;
+        if (info.status === 'complete') complete++;
+        else if (info.status === 'partial') partial++;
+        else missed++;
+        if (info.meals.length && info.dietDone >= info.meals.length) dietDays++;
+        if (info.moves.length && info.movesDone >= info.moves.length) movesDays++;
+      }
+      const clickable = info.status !== 'future' && info.status !== 'none';
+      cells.push(`<button type="button" class="hx-cell ${info.status}${day === today ? ' is-today' : ''}${day === historyView.selected ? ' selected' : ''}" ${clickable ? `onclick="BoneApp.selectHistoryDay('${day}')"` : 'disabled'} aria-label="${escapeHtml(I18N.date(new Date(`${day}T00:00:00`), { day: 'numeric', month: 'long' }))}">${n}</button>`);
+    }
+    const weekLetters = Array.from({ length: 7 }, (_, i) => I18N.date(new Date(2024, 0, 1 + i), { weekday: 'narrow' }));
+
+    const sel = historyDay(historyView.selected);
+    const selLabel = I18N.date(new Date(`${historyView.selected}T00:00:00`), { weekday: 'long', day: 'numeric', month: 'long' });
+    const statusChip = {
+      complete: ['✅', t('Routine done')], partial: ['🌗', t('Partly done')], missed: ['⚪', t('Missed')], today: ['🕒', t('Not started yet')]
+    }[sel.status] || ['⚪', t('Missed')];
+    const listHtml = (items, emptyText) => items.length ? items.map(it => `
+      <li class="${it.done ? 'done' : ''}"><span class="hx-tick">${it.done ? '<i class="fa-solid fa-check"></i>' : ''}</span>${escapeHtml(tr(it.name))}</li>`).join('') : `<li class="hx-empty">${emptyText}</li>`;
+
+    body.innerHTML = `
+      <div class="hx-month">
+        <button type="button" class="cal-nav-btn" onclick="BoneApp.shiftHistoryMonth(-1)" aria-label="${escapeHtml(t('Previous month'))}"><i class="fa-solid fa-chevron-left"></i></button>
+        <b>${monthLabel}</b>
+        <button type="button" class="cal-nav-btn" onclick="BoneApp.shiftHistoryMonth(1)" ${isCurrent ? 'disabled' : ''} aria-label="${escapeHtml(t('Next month'))}"><i class="fa-solid fa-chevron-right"></i></button>
+      </div>
+      <div class="hx-stats">
+        <div><b>${complete}</b><span>${t('Routine done')}</span></div>
+        <div><b>${dietDays}</b><span>${t('All meals')}</span></div>
+        <div><b>${movesDays}</b><span>${t('All moves')}</span></div>
+      </div>
+      <div class="hx-grid" role="group" aria-label="${escapeHtml(monthLabel)}">
+        ${weekLetters.map(l => `<span class="hx-wd">${l}</span>`).join('')}
+        ${cells.join('')}
+      </div>
+      <div class="hx-legend">
+        <span><i class="complete"></i>${t('Routine done')}</span>
+        <span><i class="partial"></i>${t('Partly done')}</span>
+        <span><i class="missed"></i>${t('Missed')}</span>
+      </div>
+      ${historyView.loading ? `<p class="hx-note"><i class="fa-solid fa-spinner fa-spin"></i> ${t('Loading your history…')}</p>` : ''}
+      <div class="hx-detail">
+        <div class="hx-detail-head">
+          <b>${selLabel}</b>
+          <span class="hx-chip ${sel.status}">${statusChip[0]} ${statusChip[1]}</span>
+        </div>
+        <h5>🥗 ${t('Meals')} <em>${sel.dietDone || 0}/${(sel.meals || []).length}</em></h5>
+        <ul class="hx-list">${listHtml(sel.meals || [], t('Nothing recorded'))}</ul>
+        <h5>💪 ${t('Moves')} <em>${sel.movesDone || 0}/${(sel.moves || []).length}</em></h5>
+        <ul class="hx-list">${listHtml(sel.moves || [], t('Nothing recorded'))}</ul>
+      </div>
+      ${isCloudUser() ? '' : `
+        <div class="hx-guest">
+          <span>🔒</span>
+          <div><b>${t('Keep your history safe')}</b><span>${t('Log in so your history is saved to your account and works on any phone.')}</span></div>
+          <button type="button" class="btn btn-sm btn-outline" onclick="BoneApp.closeHistoryModal(); BoneApp.openLogin()">${t('Log in')}</button>
+        </div>`}
+    `;
   }
 
   // --------------------------------------------------------------------------
@@ -1828,8 +2349,8 @@
 
   // A short, friendly label for a food item (keyword-based, indicative only).
   function itemBenefit(name) {
-    const t = String(name).toLowerCase();
-    const has = words => words.some(w => t.includes(w));
+    const lower = String(name).toLowerCase();
+    const has = words => words.some(w => lower.includes(w));
     if (has(['sun', 'sunlight'])) return { text: 'Vitamin D boost', tag: 'Vitamin D', icon: 'fa-sun' };
     if (has(['ragi', 'milk', 'paneer', 'curd', 'dahi', 'til', 'sesame', 'cheese', 'tofu', 'chhena', 'yogurt', 'yoghurt', 'makhana', 'almond', 'raita', 'chaas', 'buttermilk', 'lassi'])) return { text: 'Calcium rich', tag: 'High calcium', icon: 'fa-bone' };
     if (has(['dal', 'egg', 'chicken', 'fish', 'sprout', 'chana', 'moong', 'rajma', 'soy', 'besan', 'sattu', 'matki', 'usal', 'peanut', 'lentil', 'pithla', 'sundal'])) return { text: 'High protein', tag: 'High protein', icon: 'fa-dumbbell' };
@@ -1855,6 +2376,243 @@
     return out.sort((a, b) => ((b.region === userReg) - (a.region === userReg)) || (b.calcium - a.calcium));
   }
 
+  function getMealMetabolicScore(meal, conditions, userDiet, userReg) {
+    let score = 0;
+    if (meal.region === userReg) score += 60;
+    if (meal.diet === userDiet) score += 25;
+
+    const activeConditions = (conditions || []).filter(c => c && c !== 'none');
+    if (!activeConditions.length) {
+      return score + (meal.calcium || 0) / 10;
+    }
+
+    const text = `${meal.name || ''} ${meal.desc || ''} ${(meal.conditions || []).join(' ')}`.toLowerCase();
+
+    activeConditions.forEach(cond => {
+      if (meal.conditions && meal.conditions.includes(cond)) {
+        score += 35;
+      }
+      if (cond === 'diabetes') {
+        if (/ragi|jowar|bajra|oats|quinoa|methi|fenugreek|palak|spinach|moong|chana|sprout|tofu|besan|chilla|egg|fish|chicken/i.test(text)) score += 20;
+        if (/sugar|jaggery|sweet|kheer|payasam|chikki|honey|ladoo|halwa|syrup/i.test(text)) score -= 50;
+      }
+      if (cond === 'hypertension') {
+        if (/drumstick|moringa|curd|chaas|buttermilk|spinach|palak|sesame|til|makhana|cucumber|salad|steamed|idli|pesarattu|potassium/i.test(text)) score += 20;
+        if (/papad|pickle|salted butter|deep fried|nihari/i.test(text)) score -= 35;
+      }
+      if (cond === 'obesity') {
+        if (/sprout|boiled egg|egg white|tofu|grilled|steamed|chilla|salad|chaas|clear|dalma|besan|cucumber/i.test(text)) score += 20;
+        if (/cream|butter|malai|fried|puris|pakora|rich|ladoo/i.test(text)) score -= 35;
+      }
+      if (cond === 'dyslipidemia') {
+        if (/oats|chia|flax|walnut|almond|fish|salmon|sardine|rohu|methi|steamed|trout/i.test(text)) score += 20;
+        if (/mutton|nalli|nihari|full cream|butter|tallow|deep fried/i.test(text)) score -= 40;
+      }
+      if (cond === 'thyroid') {
+        if (/almond|seed|egg|fish|mushroom|cooked|phulka|saag|selenium|zinc/i.test(text)) score += 15;
+      }
+      if (cond === 'kidney') {
+        if (/bottle gourd|lauki|cucumber|steamed rice|mild|khichdi|moong/i.test(text)) score += 20;
+        if (/nihari|high protein|mutton|processed cheese|purine/i.test(text)) score -= 35;
+      }
+      if (cond === 'lactose_intolerance') {
+        if (/tofu|soymilk|soy|ragi|sesame|til|leafy|moringa|sattu|chana|dalma/i.test(text) && !/paneer|curd|dahi|milk|chaas|buttermilk|cheese|ghee|kheer/i.test(text)) score += 35;
+        if (/paneer|curd|dahi|milk|chaas|buttermilk|cheese|malai|kheer|kadhi/i.test(text)) score -= 45;
+      }
+      if (cond === 'nuts_allergy') {
+        if (/sesame|til|pumpkin|sunflower|sprout|tofu|chana|dal|moong|sattu/i.test(text) && !/almond|badam|peanut|mungfali|cashew|kaju|walnut|akhrot|pista|nut/i.test(text)) score += 30;
+        if (/almond|badam|peanut|mungfali|cashew|kaju|walnut|akhrot|pista/i.test(text)) score -= 60;
+      }
+    });
+
+    score += Math.min(25, (meal.calcium || 0) / 20);
+    return score;
+  }
+
+  function getClinicalMealNote(meal, conditions) {
+    const active = (conditions || []).filter(c => c && c !== 'none');
+    if (!active.length) return null;
+    const text = `${meal.name || ''} ${meal.desc || ''}`.toLowerCase();
+    const notes = [];
+    if (active.includes('diabetes')) {
+      if (/ragi|jowar|bajra|oats|besan|chilla|moong|tofu/i.test(text)) {
+        notes.push('Low GI complex grain for glycemic stability');
+      } else {
+        notes.push('Diabetic-friendly portion: monitor glycemic load');
+      }
+    }
+    if (active.includes('hypertension')) {
+      notes.push('DASH-aligned / low-sodium & potassium-rich');
+    }
+    if (active.includes('obesity')) {
+      notes.push('High protein-to-calorie density for muscle retention');
+    }
+    if (active.includes('dyslipidemia')) {
+      notes.push('Heart-healthy fats & soluble fiber support');
+    }
+    if (active.includes('thyroid')) {
+      notes.push('Mineral rich (space 4h from thyroid medication)');
+    }
+    if (active.includes('kidney')) {
+      notes.push('Renal-balanced mineral filtration profile');
+    }
+    if (active.includes('lactose_intolerance')) {
+      if (/paneer|curd|dahi|milk|chaas|cheese|kheer/i.test(text)) {
+        notes.push('Contains dairy (choose lactose-free alternative)');
+      } else {
+        notes.push('100% Lactose-free plant calcium & protein');
+      }
+    }
+    if (active.includes('nuts_allergy')) {
+      if (/peanut|almond|cashew|walnut|pista/i.test(text)) {
+        notes.push('Contains nuts (swap with roasted sesame/seeds)');
+      } else {
+        notes.push('Nut-free mineral & protein safe source');
+      }
+    }
+    return notes.slice(0, 2).join(' · ');
+  }
+
+  function renderClinicalDietGuidance(userConditions, userDiet, userReg) {
+    const active = (userConditions || []).filter(c => c && c !== 'none');
+    if (!active.length) return '';
+
+    const condNames = active.map(c => {
+      const opt = (BONE_SIP_DATA.healthConditionOptions || []).find(o => o.id === c);
+      return opt ? opt.title : c;
+    });
+
+    const tips = [];
+    if (active.includes('diabetes')) {
+      tips.push({
+        icon: 'fa-chart-line',
+        title: 'Glycemic & Collagen Health',
+        desc: 'Prioritize low-GI millets (Ragi, Jowar) & sprouted pulses. Preventing sugar spikes preserves bone collagen flexibility.'
+      });
+    }
+    if (active.includes('hypertension')) {
+      tips.push({
+        icon: 'fa-heart-pulse',
+        title: 'Low Sodium & DASH Balance',
+        desc: 'Keep daily sodium low. High salt causes renal calcium excretion (hypercalciuria); potassium in moringa & curd protects your bones.'
+      });
+    }
+    if (active.includes('obesity')) {
+      tips.push({
+        icon: 'fa-weight-scale',
+        title: 'Lean Protein & Satiety',
+        desc: 'Aim for 1.0–1.2g protein/kg from steamed/grilled sources (sprouts, tofu, egg whites, fish) to maintain bone & muscle scaffolding.'
+      });
+    }
+    if (active.includes('dyslipidemia')) {
+      tips.push({
+        icon: 'fa-shield-halved',
+        title: 'Lipid Health & Soluble Fiber',
+        desc: 'Emphasize Omega-3 fatty acids and soluble beta-glucans (oats, flaxseeds, methi). Lowers osteoclast inflammatory signaling.'
+      });
+    }
+    if (active.includes('thyroid')) {
+      tips.push({
+        icon: 'fa-clock',
+        title: 'Critical 4-Hour Calcium Spacing',
+        desc: 'Take thyroid medicine with plain water on an empty stomach. Wait AT LEAST 4 HOURS before having milk, curd, paneer, or calcium supplements.'
+      });
+    }
+    if (active.includes('kidney')) {
+      tips.push({
+        icon: 'fa-droplet',
+        title: 'Renal-Mineral Equilibrium',
+        desc: 'Balanced moderate protein with monitored phosphorus & potassium. Protects renal filtration while maintaining bone density.'
+      });
+    }
+    if (active.includes('lactose_intolerance')) {
+      tips.push({
+        icon: 'fa-ban',
+        title: 'Lactose-Free & Plant Calcium',
+        desc: 'Meet calcium goals with fortified plant milks (soy, almond, oat), tofu, ragi, sesame seeds (til), and dark leafy greens without gut distress.'
+      });
+    }
+    if (active.includes('nuts_allergy')) {
+      tips.push({
+        icon: 'fa-seedling',
+        title: 'Nut-Free Seeds & Legumes',
+        desc: 'Swap nuts for pumpkin seeds, sunflower seeds, white sesame (til), roasted chana, and pulses to get concentrated magnesium, zinc, and protein safely.'
+      });
+    }
+    if (active.includes('fracture')) {
+      tips.push({
+        icon: 'fa-bone',
+        title: 'Fracture Recovery & Mineralization',
+        desc: 'Target 1,200 mg daily calcium paired with Vitamin D3 and gentle bone-loading movements to accelerate trabecular bone remodeling.'
+      });
+    }
+
+    return `
+      <div class="clinical-diet-banner fade-up" role="region" aria-label="${t('Clinical Guidance')}">
+        <div class="cdb-header">
+          <div class="cdb-badge"><i class="fa-solid fa-stethoscope"></i> ${t('Clinical Guidance')}</div>
+          <div class="cdb-conditions">
+            ${condNames.map(cn => `<span class="cdb-cond-chip">${escapeHtml(t(cn))}</span>`).join('')}
+          </div>
+        </div>
+        <div class="cdb-title">${t('Personalized for {region}', { region: formatRegionName(userReg) })} · ${formatDietName(userDiet)}</div>
+        <div class="cdb-desc">${t('Diet tailored to your selected metabolic profile to optimize bone mineralization while supporting overall systemic health.')}</div>
+        <div class="cdb-tips-grid">
+          ${tips.map(tItem => `
+            <div class="cdb-tip-item">
+              <i class="fa-solid ${tItem.icon}"></i>
+              <div>
+                <b>${escapeHtml(t(tItem.title))}</b>
+                <span>${escapeHtml(t(tItem.desc))}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function dismissProtectBanner() {
+    playSound('tap');
+    state.protectBannerDismissed = true;
+    const banner = document.getElementById('protectSuggestionBannerContainer');
+    if (banner) banner.innerHTML = '';
+    BoneDB.save();
+  }
+
+  function renderProtectSuggestionBanner() {
+    const container = document.getElementById('protectSuggestionBannerContainer');
+    if (!container) return;
+    if (!state.unlockedPillars.protect || state.completedPillars.protect || state.protectBannerDismissed) {
+      container.innerHTML = '';
+      return;
+    }
+    container.innerHTML = `
+      <div class="protect-suggestion-card fade-up" role="region" aria-label="${t('Protect Precaution Suggestion')}">
+        <div class="psc-top">
+          <div class="psc-badge"><img src="${ICON_BASE}shield.webp" alt="" width="20" height="20"> <span>${t('Precaution & Fall Safety')}</span></div>
+          <button class="psc-close-btn" onclick="BoneApp.dismissProtectBanner()" aria-label="${t('Dismiss')}">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="psc-content">
+          <div class="psc-text">
+            <h4 class="psc-title">${t('Protect is unlocked: Guard your bones from falls')}</h4>
+            <p class="psc-desc">${t('95% of hip fractures result from standing falls. Complete your quick 2-minute Fall Risk & Home Safety check whenever you are ready.')}</p>
+          </div>
+          <div class="psc-actions">
+            <button class="cta-btn psc-cta" onclick="BoneApp.navigatePillar('protect')">
+              ${t('Check fall risk')} <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            <button class="psc-later" onclick="BoneApp.dismissProtectBanner()">
+              ${t('Later')}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function resolveDailyMilestones(dateKey, dayData) {
     const slots = [
       { id: 'm_breakfast', slotId: 'breakfast', slotName: 'Breakfast Milestone', time: '07:30 AM' },
@@ -1867,28 +2625,35 @@
     const catalog = BONE_SIP_DATA.fullDietCatalog || [];
     const userReg = state.userProfile.regionalFood || 'north';
     const userDiet = state.userProfile.diet || 'veg';
+    const userConditions = state.userProfile.healthConditions || [];
 
     return slots.map(slot => {
       // 1. Check custom meal swap for this date & slot
       if (state.customMealSwaps[dateKey] && state.customMealSwaps[dateKey][slot.id]) {
+        const customMeal = Object.assign({}, state.customMealSwaps[dateKey][slot.id]);
+        customMeal.clinicalNote = getClinicalMealNote(customMeal, userConditions);
         return {
           id: slot.id,
           slot: slot.slotName,
           slotId: slot.id,
           time: slot.time,
-          meal: applyItemSwaps(dateKey, slot.id, state.customMealSwaps[dateKey][slot.id]),
+          meal: applyItemSwaps(dateKey, slot.id, customMeal),
           isCustomSwapped: true
         };
       }
 
-      // 2. Intelligent selection from 100+ catalog matching user's region and diet
-      let candidate = catalog.find(m => m.slot === slot.slotId && m.region === userReg && m.diet === userDiet);
-      if (!candidate && userDiet !== 'veg') {
-        candidate = catalog.find(m => m.slot === slot.slotId && m.region === userReg);
+      // 2. Intelligent selection from 100+ catalog matching user's region, diet, and metabolic conditions
+      let candidate = null;
+      if (slot.slotId === 'sun_d3') {
+        candidate = catalog.find(m => m.slot === 'sun_d3' && m.region === userReg) || catalog.find(m => m.slot === 'sun_d3');
+      } else {
+        const pool = catalog.filter(m => m.slot === slot.slotId && dietAllows(userDiet, m.diet));
+        if (pool.length) {
+          pool.sort((a, b) => getMealMetabolicScore(b, userConditions, userDiet, userReg) - getMealMetabolicScore(a, userConditions, userDiet, userReg));
+          candidate = pool[0];
+        }
       }
-      if (!candidate) {
-        candidate = catalog.find(m => m.slot === slot.slotId && m.diet === userDiet);
-      }
+
       if (!candidate && dayData && dayData.meals && dayData.meals[slot.slotId]) {
         candidate = dayData.meals[slot.slotId].options[0];
       }
@@ -1901,12 +2666,15 @@
         };
       }
 
+      const mealObj = Object.assign({}, candidate);
+      mealObj.clinicalNote = getClinicalMealNote(mealObj, userConditions);
+
       return {
         id: slot.id,
         slot: slot.slotName,
         slotId: slot.id,
         time: slot.time,
-        meal: applyItemSwaps(dateKey, slot.id, candidate),
+        meal: applyItemSwaps(dateKey, slot.id, mealObj),
         isCustomSwapped: false
       };
     });
@@ -2035,7 +2803,7 @@
     const meta = SLOT_META[slotId] || { name: 'Meal' };
     const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
     set('itemSwapSlot', meta.name);
-    set('itemSwapTitle', `Instead of ${current.name}`);
+    set('itemSwapTitle', t('Instead of {name}', { name: tr(current.name) }));
     const input = document.getElementById('itemSwapSearch');
     if (input) input.value = '';
     const reset = document.getElementById('itemSwapReset');
@@ -2088,10 +2856,11 @@
     if (!state.itemSwaps[dateKey]) state.itemSwaps[dateKey] = {};
     if (!state.itemSwaps[dateKey][slotId]) state.itemSwaps[dateKey][slotId] = {};
     state.itemSwaps[dateKey][slotId][index] = { name: opt.name, portion: opt.portion, calcium: opt.calcium, protein: opt.protein };
+    markDayForSync(dateKey);
     BoneDB.save();
     closeItemOptions();
     renderBuildDietView();
-    showToast(`Swapped to ${opt.name}`, 'fa-arrows-rotate');
+    showToast(t('Swapped to {name}', { name: tr(opt.name) }), 'fa-arrows-rotate');
   }
 
   function resetItemSwap() {
@@ -2115,12 +2884,13 @@
       state.customMealSwaps[dateKey] = {};
     }
     state.customMealSwaps[dateKey][slotId] = meal;
+    markDayForSync(dateKey);
     clearItemSwaps(dateKey, slotId);
 
     BoneDB.save();
     closeMealSwapModal();
     renderBuildDietView();
-    showToast(`🍽️ Meal updated to: ${meal.name.slice(0, 36)}...`, 'fa-circle-check');
+    showToast(t('Meal updated to: {name}', { name: tr(meal.name) }), 'fa-circle-check');
   }
 
   // --------------------------------------------------------------------------
@@ -2257,10 +3027,10 @@
     const streak = state.activeStreakDays || 0;
     const user = state.userProfile;
     const who = user.fullName || (state.auth.phone ? `+91 ••••••${state.auth.phone.slice(-4)}` : 'Guest');
-    const bmiInfo = bmi < 18.5 ? ['Underweight', '#D97706'] : bmi < 25 ? ['Healthy', '#1E9E62'] : bmi < 30 ? ['Overweight', '#D97706'] : ['High', '#DC2626'];
+    const bmiInfo = bmiCategory(bmi);
 
     const dateBadge = document.getElementById('reportDateBadge');
-    if (dateBadge) dateBadge.textContent = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    if (dateBadge) dateBadge.textContent = I18N.date(new Date(), { month: 'long', year: 'numeric' });
 
     const exTarget = getDailyExerciseTarget();
     const days = [];
@@ -2271,7 +3041,7 @@
       const diet = (state.checkedDietMilestones[iso] || new Set()).size;
       const ex = (state.checkedExerciseMilestones[iso] || new Set()).size;
       const pct = Math.round(Math.min(1, (Math.min(diet, 5) / 5) * 0.6 + (Math.min(ex, exTarget) / exTarget) * 0.4) * 100);
-      days.push({ pct, label: d.toLocaleDateString('en-IN', { weekday: 'narrow' }), today: i === 0 });
+      days.push({ pct, label: I18N.date(d, { weekday: 'narrow' }), today: i === 0 });
     }
 
     const bar = (label, val, max, color, img) => `
@@ -2462,7 +3232,41 @@
       btn.classList.toggle('active', userConds.includes(btn.dataset.cond));
     });
 
+    renderProfileAccountBox();
     if (modal) modal.style.display = 'flex';
+  }
+
+  // Login state at the bottom of the profile: log in, or log out / delete account.
+  function renderProfileAccountBox() {
+    const box = document.getElementById('profileAccountBox');
+    const note = document.getElementById('profilePrivacyNote');
+    const reset = document.getElementById('profileResetBtn');
+    const inCloud = isCloudUser();
+    if (reset) reset.hidden = inCloud;
+    if (note) note.innerHTML = `<i class="fa-solid fa-lock"></i> ${inCloud ? t('Saved safely to your account. Only you can see it.') : t('Your data stays on this device.')}`;
+    if (!box) return;
+    if (inCloud) {
+      box.innerHTML = `
+        <div class="pa-row">
+          <span class="pa-icon"><i class="fa-solid fa-cloud"></i></span>
+          <div><b>+91 ${escapeHtml(state.auth.phone.slice(0, 5))} ${escapeHtml(state.auth.phone.slice(5))}</b><span>${t('Logged in · saved to your account')}</span></div>
+        </div>
+        <div class="pa-actions">
+          <button type="button" class="btn btn-outline" onclick="BoneApp.logout()"><i class="fa-solid fa-right-from-bracket"></i> ${t('Log out')}</button>
+          <button type="button" class="link-btn danger" onclick="BoneApp.deleteAccount()"><i class="fa-solid fa-user-xmark"></i> ${t('Delete account')}</button>
+        </div>`;
+    } else if (accountsApi()) {
+      box.innerHTML = `
+        <div class="pa-row">
+          <span class="pa-icon guest"><i class="fa-solid fa-mobile-screen"></i></span>
+          ${state.auth.isVerified
+            ? `<div><b>${t('Save to your account')}</b><span>${t('Your number is verified on this phone only. Log in once to save your plan and history to your account.')}</span></div>`
+            : `<div><b>${t('Keep your data safe')}</b><span>${t('Log in with your mobile to save your plan and history to your account.')}</span></div>`}
+        </div>
+        <button type="button" class="cta-btn btn-full" onclick="BoneApp.openLogin()"><i class="fa-solid fa-right-to-bracket"></i> ${t('Log in')}</button>`;
+    } else {
+      box.innerHTML = '';
+    }
   }
 
   function closeUserProfileModal() {
@@ -2507,7 +3311,7 @@
   }
 
   function resetDatabase() {
-    if (confirm('Are you sure you want to clear your local bone records and reset the assessment?')) {
+    if (confirm(t('Are you sure you want to clear your local bone records and reset the assessment?'))) {
       BoneDB.reset();
     }
   }
@@ -2524,8 +3328,53 @@
   }
 
   // --------------------------------------------------------------------------
-  // MODULE: INTELLIGENT AI BONE HEALTH & NUTRITION CHATBOT
+  // MODULE: OJAS — AI ASSISTANT
   // --------------------------------------------------------------------------
+  // Ojas answers through our own /api/chat endpoint (server/assistant.js), which
+  // holds the Groq key, knows the whole platform and receives a short snapshot of
+  // this user's plan. With no network or endpoint it falls back to the built-in
+  // offline answers (generateBotResponse below).
+  const CHAT_LANGUAGES = [
+    ['auto', 'Auto'], ['en', 'English'], ['hi', 'हिन्दी'], ['bn', 'বাংলা'], ['mr', 'मराठी'], ['te', 'తెలుగు'],
+    ['ta', 'தமிழ்'], ['gu', 'ગુજરાતી'], ['kn', 'ಕನ್ನಡ'], ['ml', 'മലയാളം'], ['pa', 'ਪੰਜਾਬੀ'], ['or', 'ଓଡ଼ିଆ']
+  ];
+
+  // {name} becomes ", Asha" (or nothing for guests).
+  const CHAT_GREETINGS = {
+    en: "Namaste{name}! I'm **Ojas**, your bone-health AI assistant. Ask me about today's meals, your workout, your score or how to use BONE SIP, in English or any Indian language.",
+    hi: 'नमस्ते{name}! मैं **ओजस** हूँ, आपकी हड्डियों की सेहत का AI सहायक। आज के खाने, व्यायाम, स्कोर या BONE SIP ऐप के बारे में कुछ भी पूछिए।',
+    bn: 'নমস্কার{name}! আমি **ওজস**, আপনার হাড়ের স্বাস্থ্যের AI সহকারী। আজকের খাবার, ব্যায়াম, স্কোর বা BONE SIP অ্যাপ নিয়ে যা খুশি জিজ্ঞেস করুন।',
+    mr: 'नमस्कार{name}! मी **ओजस**, तुमच्या हाडांच्या आरोग्याचा AI सहाय्यक. आजचे जेवण, व्यायाम, स्कोअर किंवा BONE SIP ॲपबद्दल काहीही विचारा.',
+    te: 'నమస్కారం{name}! నేను **ఓజస్**, మీ ఎముకల ఆరోగ్య AI సహాయకుడు. ఈరోజు భోజనం, వ్యాయామం, స్కోర్ లేదా BONE SIP యాప్ గురించి ఏదైనా అడగండి.',
+    ta: 'வணக்கம்{name}! நான் **ஓஜஸ்**, உங்கள் எலும்பு ஆரோக்கிய AI உதவியாளர். இன்றைய உணவு, உடற்பயிற்சி, மதிப்பெண் அல்லது BONE SIP செயலி பற்றி எதையும் கேளுங்கள்.',
+    gu: 'નમસ્તે{name}! હું **ઓજસ** છું, તમારા હાડકાંના સ્વાસ્થ્યનો AI સહાયક. આજનું ભોજન, કસરત, સ્કોર કે BONE SIP એપ વિશે કંઈ પણ પૂછો.',
+    kn: 'ನಮಸ್ಕಾರ{name}! ನಾನು **ಓಜಸ್**, ನಿಮ್ಮ ಮೂಳೆ ಆರೋಗ್ಯದ AI ಸಹಾಯಕ. ಇಂದಿನ ಊಟ, ವ್ಯಾಯಾಮ, ಸ್ಕೋರ್ ಅಥವಾ BONE SIP ಆ್ಯಪ್ ಬಗ್ಗೆ ಏನು ಬೇಕಾದರೂ ಕೇಳಿ.',
+    ml: 'നമസ്കാരം{name}! ഞാൻ **ഓജസ്**, നിങ്ങളുടെ അസ്ഥി ആരോഗ്യ AI സഹായി. ഇന്നത്തെ ഭക്ഷണം, വ്യായാമം, സ്കോർ അല്ലെങ്കിൽ BONE SIP ആപ്പ് എന്നിവയെക്കുറിച്ച് എന്തും ചോദിക്കൂ.',
+    pa: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ{name}! ਮੈਂ **ਓਜਸ** ਹਾਂ, ਤੁਹਾਡੀਆਂ ਹੱਡੀਆਂ ਦੀ ਸਿਹਤ ਦਾ AI ਸਹਾਇਕ। ਅੱਜ ਦੇ ਖਾਣੇ, ਕਸਰਤ, ਸਕੋਰ ਜਾਂ BONE SIP ਐਪ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ।',
+    or: 'ନମସ୍କାର{name}! ମୁଁ **ଓଜସ**, ଆପଣଙ୍କ ହାଡ଼ ସ୍ୱାସ୍ଥ୍ୟର AI ସହାୟକ। ଆଜିର ଖାଦ୍ୟ, ବ୍ୟାୟାମ, ସ୍କୋର କିମ୍ବା BONE SIP ଆପ୍ ବିଷୟରେ ଯାହା ବି ପଚାରନ୍ତୁ।'
+  };
+
+  // Buttons Ojas can offer under a reply (ids come from server/assistant.js).
+  const ASSISTANT_ACTIONS = {
+    open_diet: { label: "Today's diet", icon: 'fa-bowl-food', run: () => { navigatePillar('build'); if (state.completedPillars.build) switchBuildSubTab('diet'); } },
+    open_exercise: { label: 'Exercises', icon: 'fa-person-walking', run: () => { navigatePillar('build'); if (state.completedPillars.build) switchBuildSubTab('exercise'); } },
+    start_workout: { label: "Start today's workout", icon: 'fa-play', run: () => startWorkout('today') },
+    open_report: { label: 'My bone report', icon: 'fa-chart-column', run: () => openProgressiveReportModal() },
+    open_protect: { label: 'Open Protect', icon: 'fa-shield-halved', run: () => navigatePillar('protect') },
+    open_strengthen: { label: 'Open Strengthen', icon: 'fa-user-doctor', run: () => navigatePillar('strengthen') },
+    open_profile: { label: 'My profile', icon: 'fa-user', run: () => openUserProfileModal() },
+    save_doctor_pdf: { label: 'Save doctor PDF', icon: 'fa-file-arrow-down', run: () => printDocument('doctor') }
+  };
+
+  const MEAL_SLOT_LABEL = { m_breakfast: 'Breakfast', m_lunch: 'Lunch', m_snack: 'Evening snack', m_dinner: 'Dinner', m_sun_d3: 'Sunlight + water' };
+
+  let chatBusy = false;
+
+  function assistantEndpoint() {
+    const cfg = (window.BONE_SIP_CONFIG && window.BONE_SIP_CONFIG.assistant) || {};
+    return typeof fetch === 'function' && cfg.endpoint ? cfg.endpoint : '';
+  }
+
   function toggleChatDrawer() {
     playSound('tap');
     state.isChatDrawerOpen = !state.isChatDrawerOpen;
@@ -2534,6 +3383,7 @@
 
     if (state.isChatDrawerOpen) {
       drawer.style.display = 'flex';
+      renderChatLanguageSelect();
       renderChatContextStrip();
       renderQuickChips();
       if (!state.chatHistory || state.chatHistory.length === 0) {
@@ -2561,6 +3411,24 @@
     showToast('Chat history cleared', 'fa-trash-can');
   }
 
+  function renderChatLanguageSelect() {
+    const sel = document.getElementById('chatLangSelect');
+    if (!sel) return;
+    sel.innerHTML = CHAT_LANGUAGES.map(([code, label]) => `<option value="${code}"${code === state.chatLanguage ? ' selected' : ''}>${label}</option>`).join('');
+    sel.value = state.chatLanguage;
+  }
+
+  function setChatLanguage(code) {
+    if (!CHAT_LANGUAGES.some(([c]) => c === code)) return;
+    state.chatLanguage = code;
+    BoneDB.save();
+    renderChatLanguageSelect();
+    // A fresh chat greets again in the new language; an ongoing one just continues in it.
+    const onlyGreeting = (state.chatHistory || []).every(m => m.greeting);
+    if (onlyGreeting) initChatbotGreeting();
+    else showToast(t('Ojas will reply in {lang}', { lang: (CHAT_LANGUAGES.find(([c]) => c === code) || [, code])[1] }), 'fa-language');
+  }
+
   function renderChatContextStrip() {
     const strip = document.getElementById('chatContextStrip');
     if (!strip) return;
@@ -2577,41 +3445,24 @@
   function renderQuickChips() {
     const container = document.getElementById('chatQuickChips');
     if (!container) return;
-
-    const chips = (BONE_SIP_DATA.botKnowledge && BONE_SIP_DATA.botKnowledge.quickSuggestions) || [
-      { text: "🥗 High-calcium meals for my region", query: "meal_suggestion" },
-      { text: "📊 Check my 100-point Score & Streak", query: "streak_score" },
-      { text: "🦴 Explain DXA T-Score", query: "dxa_explanation" },
-      { text: "🦵 Best exercises for hip strength", query: "exercise_advice" },
-      { text: "🛡️ Bathroom fall precautions", query: "fall_prevention" },
-      { text: "👤 Show my Profile & Database", query: "user_profile" }
-    ];
-
+    const chips = ((BONE_SIP_DATA.botKnowledge && BONE_SIP_DATA.botKnowledge.quickSuggestions) || []).slice();
+    const activeConds = (state.userProfile.healthConditions || []).filter(c => c && c !== 'none');
+    if (activeConds.length) {
+      chips.unshift({ text: '🥗 My metabolic diet chart', query: 'personalized_diet_chart' });
+    }
     container.innerHTML = chips.map(c => `
-      <button class="quick-chip-btn" onclick="BoneApp.sendChatMessage('${c.query}')">
-        ${c.text}
-      </button>
+      <button class="quick-chip-btn" onclick="BoneApp.sendChatMessage('${c.query}')">${escapeHtml(c.text)}</button>
     `).join('');
   }
 
   function initChatbotGreeting() {
-    const user = state.userProfile;
-    const score = calculateDailyScore100();
-    const bmi = calculateBMI();
-
-    let greetingText = '';
-    if (user.fullName) {
-      greetingText = `Hello **${user.fullName}**! 👋 I am your **BONE SIP Clinical Bone & Nutrition Coach**.\n\nI have loaded your live profile:\n• **Phone:** ${state.auth.phone ? '+91 ' + state.auth.phone : 'Not verified yet'}\n• **BMI:** ${bmi} kg/m²\n• **Regional Diet:** ${formatRegionName(user.regionalFood)} (${formatDietName(user.diet)})\n• **Today's Score:** ${score.total}/100 (${score.tier})\n• **Active Streak:** ${state.activeStreakDays} day(s)\n\nAsk me anything about regional meals, bridging your 1,200 mg calcium gap, bone-loading exercises, DXA scans, or home fall safety!`;
-    } else if (state.auth.phone) {
-      greetingText = `Hello! 👋 I am your **BONE SIP Clinical Bone & Nutrition Coach**.\n\nI have loaded your profile for **+91 ${state.auth.phone}**:\n• **BMI:** ${bmi} kg/m²\n• **Regional Diet:** ${formatRegionName(user.regionalFood)} (${formatDietName(user.diet)})\n• **Today's Score:** ${score.total}/100 (${score.tier})\n• **Active Streak:** ${state.activeStreakDays} day(s)\n\nAsk me anything about regional meals, bridging your 1,200 mg calcium gap, bone-loading exercises, DXA scans, or home fall safety!`;
-    } else {
-      greetingText = `Hello! 👋 I am your **BONE SIP Clinical Bone & Nutrition Coach**.\n\nWelcome to your bone investment journey! You are currently browsing as a **Guest**.\n\n• **Status:** Guest Session (Not logged in)\n• **Today's Score:** ${score.total}/100 (${score.tier})\n• **Active Streak:** ${state.activeStreakDays} day(s)\n\nAsk me anything about regional meals, bridging your 1,200 mg calcium gap, bone-loading exercises, DXA scans, or home fall safety! *(You can complete the assessment & verify your mobile anytime to save your records)*`;
-    }
-
+    const first = String(state.userProfile.fullName || '').trim().split(/\s+/)[0];
+    const template = CHAT_GREETINGS[chatReplyLanguage()] || CHAT_GREETINGS.en;
     state.chatHistory = [{
       sender: 'bot',
-      text: greetingText,
-      time: getCurrentTimeStr()
+      text: template.replace('{name}', first ? `, ${first}` : ''),
+      time: getCurrentTimeStr(),
+      greeting: true
     }];
     renderChatHistory();
     BoneDB.save();
@@ -2626,20 +3477,44 @@
     return `${hh}:${mm} ${ampm}`;
   }
 
+  // Escape first so nothing typed (or generated) can become markup, then apply a
+  // small markdown subset: paragraphs, "-"/"1." lists, **bold** and *italic*.
+  function formatChatText(text) {
+    const inline = s => s
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*([^*\s][^*]*?)\*(?!\*)/g, '$1<em>$2</em>');
+    let html = '';
+    let listType = null;
+    escapeHtml(text).split('\n').forEach(line => {
+      const bullet = /^\s*[-*•]\s+(.*)$/.exec(line);
+      const numbered = !bullet && /^\s*\d+[.)]\s+(.*)$/.exec(line);
+      const type = bullet ? 'ul' : numbered ? 'ol' : null;
+      if (type !== listType) {
+        if (listType) html += `</${listType}>`;
+        if (type) html += `<${type}>`;
+        listType = type;
+      }
+      if (type) html += `<li>${inline((bullet || numbered)[1])}</li>`;
+      else if (line.trim()) html += `<p>${inline(line.trim())}</p>`;
+    });
+    if (listType) html += `</${listType}>`;
+    return html;
+  }
+
   function renderChatHistory() {
     const container = document.getElementById('chatMessagesContainer');
     if (!container) return;
 
     container.innerHTML = (state.chatHistory || []).map(msg => {
-      // Escape first so typed text can never become markup, then apply the tiny markdown subset.
-      const formattedText = escapeHtml(msg.text)
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/\n/g, '<br>');
       const sender = msg.sender === 'user' ? 'user' : 'bot';
+      const actions = sender === 'bot' && Array.isArray(msg.actions)
+        ? msg.actions.filter(id => ASSISTANT_ACTIONS[id]).map(id => `
+            <button type="button" class="chat-action-btn" onclick="BoneApp.runAssistantAction('${id}')"><i class="fa-solid ${ASSISTANT_ACTIONS[id].icon}"></i> ${ASSISTANT_ACTIONS[id].label}</button>`).join('')
+        : '';
       return `
         <div class="chat-msg-row ${sender}">
-          <div class="chat-bubble ${sender}">${formattedText}</div>
+          <div class="chat-bubble ${sender}">${formatChatText(msg.text)}</div>
+          ${actions ? `<div class="chat-actions">${actions}</div>` : ''}
           <span class="chat-msg-time">${escapeHtml(msg.time)}</span>
         </div>`;
     }).join('');
@@ -2647,68 +3522,167 @@
     container.scrollTop = container.scrollHeight;
   }
 
+  function showChatTyping(on) {
+    const container = document.getElementById('chatMessagesContainer');
+    if (!container) return;
+    const old = document.getElementById('chatTypingRow');
+    if (old) old.remove();
+    if (!on) return;
+    const typingEl = document.createElement('div');
+    typingEl.id = 'chatTypingRow';
+    typingEl.className = 'chat-msg-row bot';
+    typingEl.innerHTML = `
+      <div class="chat-typing-indicator" aria-label="Ojas is typing">
+        <div class="chat-typing-dot"></div>
+        <div class="chat-typing-dot"></div>
+        <div class="chat-typing-dot"></div>
+      </div>`;
+    container.appendChild(typingEl);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function setChatBusy(busy) {
+    chatBusy = busy;
+    const input = document.getElementById('chatTextInput');
+    const status = document.getElementById('chatStatusText');
+    const drawer = document.getElementById('boneChatDrawer');
+    if (input) input.disabled = busy;
+    if (status) status.textContent = busy ? 'Typing…' : 'Your bone-health assistant';
+    if (drawer) drawer.classList.toggle('is-busy', busy);
+    if (!busy && input && state.isChatDrawerOpen) input.focus();
+  }
+
+  // A short, privacy-minded snapshot so Ojas can answer about *this* user's plan.
+  // Never includes the phone number or the full name.
+  function buildAssistantContext() {
+    const u = state.userProfile;
+    const today = getTodayISODate();
+    const score = calculateDailyScore100(today);
+    const dayData = (BONE_SIP_DATA.weeklyDietCalendar || []).find(d => d.day === getTodayDayName());
+    const dietSet = state.checkedDietMilestones[today] || new Set();
+    const meals = resolveDailyMilestones(today, dayData).map(m => ({
+      done: dietSet.has(m.id),
+      text: `${MEAL_SLOT_LABEL[m.id] || m.slot}: ${m.meal && m.meal.name}`
+    }));
+    const exSet = getExerciseSetFor(today);
+    const mix = todaysMix();
+    const home = homeSafetySummary();
+    const bmi = parseFloat(calculateBMI());
+    return {
+      today,
+      screen: state.activePillar === 'build' ? `build/${state.activeBuildSubTab || 'diet'}` : state.activePillar,
+      firstName: String(u.fullName || '').trim().split(/\s+/)[0],
+      age: u.age,
+      heightCm: u.heightCm,
+      weightKg: u.weightKg,
+      bmi: isNaN(bmi) ? null : bmi,
+      diet: u.diet,
+      region: u.regionalFood,
+      activity: optionTitle(BONE_SIP_DATA.activityLevelOptions, u.activityLevel),
+      conditions: (u.healthConditions || []).filter(c => c !== 'none').map(c => optionTitle(BONE_SIP_DATA.healthConditionOptions, c)).filter(Boolean),
+      unlocked: ['build'].concat(state.unlockedPillars.protect ? ['protect'] : [], state.unlockedPillars.strengthen ? ['strengthen'] : []),
+      score: { total: score.total, tier: score.tier, diet: score.dietPts, exercise: score.exPts, safety: score.safePts, streak: score.streakPts },
+      streakDays: state.activeStreakDays || 0,
+      mealsDone: meals.filter(m => m.done).map(m => m.text),
+      mealsPending: meals.filter(m => !m.done).map(m => m.text),
+      workout: { done: mix.filter(e => exSet.has(e.id)).length, target: getDailyExerciseTarget(), remaining: mix.filter(e => !exSet.has(e.id)).map(e => e.name) },
+      riskSigns: (BONE_SIP_DATA.boneRiskAuditFactors || []).filter(f => state.protectRiskChecked.has(f.id)).map(f => f.text),
+      homeSafety: home.answered ? `${home.safe} of ${home.total} checks safe` : 'not checked yet',
+      homeFixes: home.rows.flatMap(r => r.fixes.map(f => `${r.name}: ${f}`)),
+      doctorQuestions: autoDoctorQuestions().map(([, q]) => q).concat(state.doctorVisit.questions || [])
+    };
+  }
+
+  async function askAssistant(endpoint) {
+    const messages = (state.chatHistory || [])
+      .filter(m => !m.greeting && !m.offline)
+      .slice(-12)
+      .map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: String(m.text || '') }));
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, language: chatReplyLanguage(), context: buildAssistantContext() }),
+      signal: typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(40000) : undefined
+    });
+    let data = null;
+    try { data = await res.json(); } catch (e) { /* non-JSON error page */ }
+    if (res.ok && data && data.reply) return { text: data.reply, actions: Array.isArray(data.actions) ? data.actions : [] };
+    throw new Error((data && data.error) || `http_${res.status}`);
+  }
+
+  function addBotReply(reply) {
+    showChatTyping(false);
+    state.chatHistory.push(Object.assign({ sender: 'bot', time: getCurrentTimeStr() }, reply));
+    renderChatHistory();
+    BoneDB.save();
+    playSound('success');
+  }
+
   function sendChatMessage(overrideQuery) {
     const input = document.getElementById('chatTextInput');
     const query = overrideQuery || (input ? input.value.trim() : '');
-    if (!query) return;
+    if (!query || chatBusy) return;
 
     if (input) input.value = '';
     playSound('tap');
 
     state.chatHistory.push({
       sender: 'user',
-      text: overrideQuery ? getQuickChipLabel(overrideQuery) : query,
+      text: overrideQuery ? tr(getQuickChipLabel(overrideQuery)) : query,
       time: getCurrentTimeStr()
     });
     renderChatHistory();
+    showChatTyping(true);
 
-    const container = document.getElementById('chatMessagesContainer');
-    const typingId = 'typing_' + Date.now();
-    if (container) {
-      const typingEl = document.createElement('div');
-      typingEl.id = typingId;
-      typingEl.className = 'chat-msg-row bot';
-      typingEl.innerHTML = `
-        <div class="chat-typing-indicator">
-          <div class="chat-typing-dot"></div>
-          <div class="chat-typing-dot"></div>
-          <div class="chat-typing-dot"></div>
-        </div>
-      `;
-      container.appendChild(typingEl);
-      container.scrollTop = container.scrollHeight;
+    const endpoint = assistantEndpoint();
+    if (!endpoint) {
+      setTimeout(() => addBotReply({ text: generateBotResponse(query) }), 400);
+      return;
     }
 
-    setTimeout(() => {
-      const typingEl = document.getElementById(typingId);
-      if (typingEl) typingEl.remove();
+    setChatBusy(true);
+    askAssistant(endpoint)
+      .then(reply => addBotReply(reply))
+      .catch(err => {
+        addBotReply({ text: `*${assistantErrorNote(err)}*\n\n${generateBotResponse(query)}`, offline: true });
+      })
+      .finally(() => setChatBusy(false));
+  }
 
-      const botReply = generateBotResponse(query);
-      state.chatHistory.push({
-        sender: 'bot',
-        text: botReply,
-        time: getCurrentTimeStr()
-      });
-      renderChatHistory();
-      BoneDB.save();
-      playSound('success');
-    }, 400);
+  // Say why the AI answer failed, so it can be fixed (wrong server, missing key, limits, offline).
+  function assistantErrorNote(err) {
+    const code = String(err && err.message);
+    if (location.protocol === 'file:') return 'Ojas AI needs the BONE SIP server: open http://localhost:5510 (start it with "node server/server.js 5510") instead of opening index.html as a file. Here is a quick answer for now.';
+    if (/busy|too_many/.test(code)) return t("I'm answering a lot of questions right now. Here is a quick answer; please ask again in a minute for a personal one.");
+    if (/not_configured/.test(code)) return 'Ojas AI is not set up on this server yet (GROQ_API_KEY is missing). Here is a quick answer.';
+    if (/http_(404|405|501)/.test(code)) return 'This server has no AI endpoint (/api/chat). Run the app with "node server/server.js" or deploy it to Netlify/Vercel. Here is a quick answer.';
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return t("You're offline, so here is a quick answer. Ojas will give personal answers again when you're back online.");
+    return t("I couldn't reach my AI service just now. Here is a quick answer; please try again in a moment.");
+  }
+
+  function runAssistantAction(id) {
+    const action = ASSISTANT_ACTIONS[id];
+    if (!action) return;
+    closeChatDrawer();
+    action.run();
   }
 
   function getQuickChipLabel(q) {
     const map = {
-      meal_suggestion: 'Suggest high-calcium meals for my region',
-      calcium_gap: 'How to reach 1200mg calcium today?',
-      exercise_advice: 'Best exercises for hip and spine strength?',
-      dxa_explanation: 'Explain DXA scan T-score results',
-      streak_score: 'What is my Daily Streak Score?',
-      d3_mechanism: 'How does Vitamin D3 unlock calcium?',
-      fall_prevention: 'What precautions prevent hip fractures at home?',
-      user_profile: 'Show my Profile and Database Information'
+      personalized_diet_chart: 'What is my personalized metabolic diet plan?',
+      meal_suggestion: 'What should I eat today for strong bones?',
+      calcium_gap: 'How do I reach 1,200 mg of calcium today?',
+      exercise_advice: 'Which exercises should I do today?',
+      dxa_explanation: 'What does a DXA T-score mean?',
+      streak_score: 'Explain my bone score and streak.',
+      d3_mechanism: 'How do I get enough vitamin D?',
+      fall_prevention: 'How can I prevent falls at home?',
+      user_profile: 'Show my profile.'
     };
     return map[q] || q;
   }
 
+  // Offline answers: used when there is no network or no assistant endpoint.
   function generateBotResponse(raw) {
     const text = (raw || '').toLowerCase();
     const user = state.userProfile;
@@ -2718,13 +3692,125 @@
     const diet = user.diet || 'veg';
     const catalog = BONE_SIP_DATA.fullDietCatalog || [];
 
+    // 0. PERSONALIZED METABOLIC DIET CHART
+    const isMetabolicDietQuery =
+      raw === 'personalized_diet_chart' ||
+      text.includes('personalized_diet_chart') ||
+      text.includes('metabolic diet') || text.includes('diet chart') ||
+      text.includes('diet plan') || text.includes('customized diet') ||
+      text.includes('personalized diet') ||
+      text.includes('diabet') || text.includes('hypertens') ||
+      text.includes('high bp') || text.includes('blood pressure') ||
+      text.includes('obes') || text.includes('cholesterol') ||
+      text.includes('dyslipidemia') || text.includes('lipid') ||
+      text.includes('thyroid') || text.includes('kidney') ||
+      text.includes('renal') || text.includes('lactose') ||
+      text.includes('dairy') || text.includes('nut') ||
+      text.includes('peanut') || text.includes('allergy');
+
+    if (isMetabolicDietQuery) {
+      const activeConds = new Set((user.healthConditions || []).filter(c => c && c !== 'none'));
+      if (text.includes('diabet')) activeConds.add('diabetes');
+      if (text.includes('hypertens') || text.includes('bp') || text.includes('pressure')) activeConds.add('hypertension');
+      if (text.includes('obes') || text.includes('weight')) activeConds.add('obesity');
+      if (text.includes('cholesterol') || text.includes('dyslipidemia') || text.includes('lipid')) activeConds.add('dyslipidemia');
+      if (text.includes('thyroid')) activeConds.add('thyroid');
+      if (text.includes('kidney') || text.includes('renal')) activeConds.add('kidney');
+      if (text.includes('lactose') || text.includes('dairy')) activeConds.add('lactose_intolerance');
+      if (text.includes('nut') || text.includes('peanut') || text.includes('allergy')) activeConds.add('nuts_allergy');
+      if (text.includes('fracture')) activeConds.add('fracture');
+
+      const condList = Array.from(activeConds);
+      const condNames = condList.map(c => {
+        const opt = (BONE_SIP_DATA.healthConditionOptions || []).find(o => o.id === c);
+        return opt ? opt.title : c;
+      });
+
+      const milestones = resolveDailyMilestones(getTodayISODate(), null);
+      const mealSlots = milestones.filter(m => m.id !== 'm_sun_d3');
+
+      let res = `📋 **Your Personalized Bone & Metabolic Diet Plan**\n`;
+      res += `• **Cuisine & Lifestyle:** ${formatRegionName(reg)} · ${formatDietName(diet)}\n`;
+      if (condNames.length > 0) {
+        res += `• **Clinical Focus:** ${condNames.join(', ')}\n`;
+      }
+      res += `\nHere is your tailored 4-milestone daily chart:\n`;
+
+      const slotEmoji = {
+        m_breakfast: '🌅',
+        m_lunch: '☀️',
+        m_snack: '☕',
+        m_dinner: '🌙'
+      };
+
+      mealSlots.forEach(m => {
+        const emoji = slotEmoji[m.id] || '🍽️';
+        const meal = m.meal;
+        res += `\n${emoji} **${m.slot}**\n`;
+        res += `• **Dish:** ${meal.name}\n`;
+        res += `• **Nutrients:** **${meal.calcium} mg** Calcium · **${meal.protein} g** Protein\n`;
+        if (meal.clinicalNote) {
+          res += `• **Clinical Note:** ${meal.clinicalNote}\n`;
+        } else if (meal.desc) {
+          res += `• **Benefit:** ${meal.desc}\n`;
+        }
+      });
+
+      // Clinical nutritional rules
+      const clinicalTips = [];
+      if (activeConds.has('diabetes')) {
+        clinicalTips.push(`**Diabetes:** Prioritize low-GI millets (Ragi, Jowar, Bajra) and pulses. Avoid refined sugar & jaggery to stop Advanced Glycation End-products (AGEs) from weakening bone collagen.`);
+      }
+      if (activeConds.has('hypertension')) {
+        clinicalTips.push(`**Hypertension (DASH):** Keep sodium under 2,000 mg/day. High sodium causes renal hypercalciuria (calcium wasting into urine); boost potassium via moringa and fresh curd.`);
+      }
+      if (activeConds.has('obesity')) {
+        clinicalTips.push(`**Obesity:** Maintain 1.0–1.2 g/kg lean protein from steamed legumes, sprouts, and low-fat dairy/tofu to preserve bone scaffolding while managing caloric load.`);
+      }
+      if (activeConds.has('dyslipidemia')) {
+        clinicalTips.push(`**High Cholesterol:** Incorporate soluble fiber (oats, methi, flaxseeds) and Omega-3 fats to quiet osteoclast inflammatory signaling; avoid trans fats and heavy ghee.`);
+      }
+      if (activeConds.has('thyroid')) {
+        clinicalTips.push(`**Thyroid 4-Hour Rule:** Take morning thyroid medication with water on an empty stomach, and wait at least 4 hours before consuming calcium supplements or dairy.`);
+      }
+      if (activeConds.has('kidney')) {
+        clinicalTips.push(`**Kidney Health:** Moderate high-quality protein with balanced minerals and low inorganic phosphorus to protect filtration while retaining bone minerals.`);
+      }
+      if (activeConds.has('lactose_intolerance')) {
+        clinicalTips.push(`**Lactose Intolerance:** Rely on calcium-fortified plant milks (soy, almond, oat), firm tofu, ragi rotis, white sesame (til), and moringa to hit 1,200 mg calcium daily without lactose.`);
+      }
+      if (activeConds.has('nuts_allergy')) {
+        clinicalTips.push(`**Nuts Allergy:** Swap tree nuts & peanuts for toasted pumpkin seeds, sunflower seeds, white sesame seeds (til), and roasted chana to secure essential magnesium, zinc, and bone minerals safely.`);
+      }
+      if (activeConds.has('fracture')) {
+        clinicalTips.push(`**Fracture Recovery:** Target 1,200 mg calcium daily paired with sunlight Vitamin D3 and gentle joint loading to accelerate trabecular bone remodeling.`);
+      }
+
+      if (clinicalTips.length > 0) {
+        res += `\n🩺 **Clinical Nutritional Directives:**\n`;
+        clinicalTips.forEach(tip => {
+          res += `• ${tip}\n`;
+        });
+      } else {
+        res += `\n💡 **Daily 3-2-1 Benchmark:** Ensure 3 calcium servings (~1,200 mg), 2 protein portions (~50–60g), and 15 mins morning sunlight for active Vitamin D3 synthesis.\n`;
+      }
+
+      res += `\n👉 *You can customize or swap any dish directly in the "3-2-1 Daily Diet" tab!*`;
+      return res;
+    }
+
     // 1. MEAL SUGGESTIONS
     if (text.includes('meal') || text.includes('food') || text.includes('diet') || text.includes('suggest') || text === 'meal_suggestion') {
-      const matches = catalog.filter(m => m.region === reg && (diet === 'all' || m.diet === diet)).slice(0, 3);
-      if (matches.length > 0) {
+      const activeConds = (user.healthConditions || []).filter(c => c && c !== 'none');
+      const pool = catalog.filter(m => m.region === reg && dietAllows(diet, m.diet));
+      if (pool.length > 0) {
+        pool.sort((a, b) => getMealMetabolicScore(b, activeConds, diet, reg) - getMealMetabolicScore(a, activeConds, diet, reg));
+        const matches = pool.slice(0, 3);
         let res = `Here are **3 bone-enriching meals** tailored to your **${formatRegionName(reg)} ${formatDietName(diet)}** lifestyle:\n`;
         matches.forEach((m, i) => {
           res += `\n**${i + 1}. ${m.name}**\n• Calcium: **${m.calcium} mg** · Protein: **${m.protein} g**\n• Clinical Benefit: ${m.desc}\n`;
+          const note = getClinicalMealNote(m, activeConds);
+          if (note) res += `• Clinical Note: ${note}\n`;
         });
         res += `\n💡 *Tip: You can swap any of these directly into today's 3-2-1 Diet checklist using the "Swap (100+)" button!*`;
         return res;
@@ -2817,13 +3903,10 @@
         const set = state.checkedDietMilestones[dObj.isoDate] || new Set();
         const done = set.size >= 5;
         return `
-          <button class="calendar-day-btn ${dObj.isoDate === currentDateKey ? 'active' : ''} ${dObj.isToday ? 'is-today' : ''} ${done ? 'day-completed' : ''}" onclick="BoneApp.selectCalendarDate('${dObj.isoDate}', '${dObj.dayName}')" aria-label="${dObj.dayName} ${dObj.dateNum}">
-            ${dObj.isToday ? '<span class="today-micro-badge">Today</span>' : ''}
-            <span class="day-abbr">${dObj.dayShort}</span>
+          <button class="calendar-day-btn ${dObj.isoDate === currentDateKey ? 'active' : ''} ${dObj.isToday ? 'is-today' : ''} ${done ? 'day-completed' : ''}" onclick="BoneApp.selectCalendarDate('${dObj.isoDate}', '${dObj.dayName}')" aria-label="${I18N.date(dObj.date, { weekday: 'long', day: 'numeric', month: 'long' })}">
+            <span class="day-abbr">${dObj.isToday ? 'Today' : dObj.dayShort}</span>
             <span class="day-date-number">${dObj.dateNum}</span>
-            <div class="day-status-pill">
-              ${done ? '<span class="status-check">✓</span>' : (set.size > 0 ? `<span class="status-count">${set.size}/5</span>` : '<span class="status-dot">•</span>')}
-            </div>
+            ${done ? '<div class="day-status-pill"><span class="status-check">✓</span></div>' : (set.size > 0 ? `<div class="day-status-pill"><span class="status-count">${set.size}/5</span></div>` : '')}
           </button>`;
       }).join('');
     }
@@ -2836,9 +3919,14 @@
     }
     const dayTitle = document.getElementById('dietDayTitle');
     if (dayTitle) {
-      const label = isToday ? 'Today' : activeDayObj.dayName;
       const tag = isPast ? '<span class="past-tag"><i class="fa-solid fa-lock"></i> View only</span>' : '';
-      dayTitle.innerHTML = `${label}, ${activeDayObj.dateNum} ${activeDayObj.monthShort} ${tag}`;
+      const when = I18N.current() === 'en'
+        ? `${activeDayObj.dateNum} ${activeDayObj.monthShort}`
+        : I18N.date(activeDayObj.date, { day: 'numeric', month: 'short' });
+      const title = isToday
+        ? t('Today, {date}', { date: when })
+        : (I18N.current() === 'en' ? `${activeDayObj.dayName}, ${when}` : I18N.date(activeDayObj.date, { weekday: 'long', day: 'numeric', month: 'short' }));
+      dayTitle.innerHTML = `${escapeHtml(title)} ${tag}`;
     }
     const daySubtitle = document.getElementById('dietDaySubtitle');
     if (daySubtitle) {
@@ -2913,7 +4001,17 @@
     const progDisp = document.getElementById('dietDayProgressDisplay');
     if (progDisp) progDisp.textContent = `${activeSet.size} / 5`;
 
-    // 6. Meal cards
+    // 5b. Protect Precaution Suggestion Prompt
+    renderProtectSuggestionBanner();
+
+    // 6. Meal cards & Clinical Guidance Banner
+    const guidanceContainer = document.getElementById('clinicalDietGuidanceContainer');
+    if (guidanceContainer) {
+      const userReg = state.userProfile.regionalFood || 'north';
+      const userDiet = state.userProfile.diet || 'veg';
+      guidanceContainer.innerHTML = renderClinicalDietGuidance(state.userProfile.healthConditions, userDiet, userReg);
+    }
+
     const listEl = document.getElementById('dietMilestonesList');
     if (!listEl) return;
     listEl.classList.toggle('no-anim', lastDietDateRendered === currentDateKey);
@@ -2935,13 +4033,14 @@
             <div class="meal-head-text">
               <b>${meta.name}</b>
               <span>${meta.time} · ${item.meal.calcium || 0} mg calcium · ${item.meal.protein || 0} g protein</span>
+              ${item.meal.clinicalNote ? `<div class="meal-clinical-badge"><i class="fa-solid fa-heart-pulse"></i> ${escapeHtml(item.meal.clinicalNote)}</div>` : ''}
             </div>
             ${!isPast ? `
               <div class="meal-head-nav">
-                <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', -1)" aria-label="Previous ${meta.name} idea"><i class="fa-solid fa-chevron-left"></i></button>
-                <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', 1)" aria-label="Next ${meta.name} idea"><i class="fa-solid fa-chevron-right"></i></button>
+                <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', -1)" aria-label="${t('Previous {meal} idea', { meal: tr(meta.name) })}"><i class="fa-solid fa-chevron-left"></i></button>
+                <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', 1)" aria-label="${t('Next {meal} idea', { meal: tr(meta.name) })}"><i class="fa-solid fa-chevron-right"></i></button>
               </div>` : ''}
-            <button class="meal-check ${isPast ? 'locked' : ''}" onclick="${action}" aria-pressed="${isChecked}" aria-label="${isChecked ? 'Undo' : 'Mark done'}: ${meta.name}">
+            <button class="meal-check ${isPast ? 'locked' : ''}" onclick="${action}" aria-pressed="${isChecked}" aria-label="${t(isChecked ? 'Undo: {meal}' : 'Mark done: {meal}', { meal: tr(meta.name) })}">
               <i class="fa-solid ${isPast && !isChecked ? 'fa-lock' : 'fa-check'}"></i>
             </button>
           </div>
@@ -2999,11 +4098,12 @@
       state.customMealSwaps[dateKey] = {};
     }
     state.customMealSwaps[dateKey][slotId] = nextMeal;
+    markDayForSync(dateKey);
     clearItemSwaps(dateKey, slotId);
 
     BoneDB.save();
     renderBuildDietView();
-    showToast(`🍽️ Cycled to: ${nextMeal.name.slice(0, 36)}...`, 'fa-arrows-rotate');
+    showToast(t('Meal updated to: {name}', { name: tr(nextMeal.name) }), 'fa-arrows-rotate');
   }
 
   function filterMealSlotView(slotKey) {
@@ -3112,6 +4212,7 @@
     playSound('check');
     if (!(state.checkedDietMilestones[dateKey] instanceof Set)) state.checkedDietMilestones[dateKey] = new Set();
     const set = state.checkedDietMilestones[dateKey];
+    markDayForSync(dateKey);
     const wasDone = set.has(milestoneId);
     if (wasDone) set.delete(milestoneId);
     else set.add(milestoneId);
@@ -3153,7 +4254,6 @@
 
   function pauseAllCardVideos() {
     document.querySelectorAll('#buildSubViewExercise video').forEach(v => v.pause());
-    setCharactersPaused(document.getElementById('buildSubViewExercise'), true);
   }
 
   // --------------------------------------------------------------------------
@@ -3168,7 +4268,8 @@
   };
 
   function getDailyExerciseTarget() {
-    return 4;
+    const groups = (BONE_SIP_DATA.exerciseGroups || []).filter(g => (BONE_SIP_DATA.workoutLibrary || []).some(e => e.group === g.id));
+    return Math.max(1, groups.length);
   }
 
   function workoutLib() {
@@ -3222,7 +4323,7 @@
     const doneDays = Object.keys(state.checkedExerciseMilestones)
       .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && isExerciseDayComplete(k)).length;
     const todayDone = isExerciseDayComplete(getTodayISODate());
-    const week = getWeekDays(0).map(d => ({ label: d.dayShort.slice(0, 1), iso: d.isoDate, done: isExerciseDayComplete(d.isoDate), today: d.isToday }));
+    const week = getWeekDays(0).map(d => ({ label: I18N.current() === 'en' ? d.dayShort.slice(0, 1) : I18N.date(d.date, { weekday: 'narrow' }), iso: d.isoDate, done: isExerciseDayComplete(d.isoDate), today: d.isToday }));
     return {
       doneDays: Math.min(28, doneDays),
       day: Math.min(28, doneDays + (todayDone ? 0 : 1)),
@@ -3231,27 +4332,8 @@
     };
   }
 
-  function hasCharacter(ex) {
-    return !!(ex && window.BoneCharacter && window.BoneCharacter.has(ex.id));
-  }
-
-  function charAnimHtml(ex) {
-    return `<div class="char-anim" data-anim="${ex.id}"></div>`;
-  }
-
-  function mountCharacters(root, opts = {}) {
-    if (window.BoneCharacter && root) window.BoneCharacter.mountAll(root, Object.assign({ gender: state.selectedCoach }, opts));
-  }
-
-  function setCharactersPaused(root, paused) {
-    if (window.BoneCharacter && root) window.BoneCharacter.setPaused(root, paused);
-  }
-
   function exThumbHtml(ex, size = 'sm') {
     const poster = exPosterSrc(ex);
-    if (!poster && hasCharacter(ex)) {
-      return `<div class="wk-thumb ${size} anim">${charAnimHtml(ex)}</div>`;
-    }
     if (poster) {
       // Looping preview; setupLazyVideos() only loads/plays it while it's on screen.
       return `<div class="wk-thumb ${size}"><video data-src="${exVideoSrc(ex)}" poster="${poster}" muted loop playsinline preload="none" aria-hidden="true"></video></div>`;
@@ -3314,7 +4396,7 @@
             <span class="wk-week-count" title="Workouts this week"><img src="${ICON_BASE}fire.webp" alt="" width="22" height="22"> ${stats.weekDone}/7</span>
           </div>
           <h2>Strong Bones Plan</h2>
-          <div class="wk-day">Day <b>${stats.day}</b> of 28</div>
+          <div class="wk-day">${t('Day {n} of {total}', { n: `<b>${stats.day}</b>`, total: 28 })}</div>
           <div class="wk-progress" role="progressbar" aria-valuemin="0" aria-valuemax="28" aria-valuenow="${stats.doneDays}"><i style="width: ${Math.round((stats.doneDays / 28) * 100)}%;"></i></div>
           <div class="wk-week">
             ${stats.week.map(d => `<span class="${d.done ? 'done' : ''} ${d.today ? 'today' : ''}" title="${d.iso}">${d.done ? '<i class="fa-solid fa-check"></i>' : d.label}</span>`).join('')}
@@ -3350,7 +4432,7 @@
               <button class="wk-group pop ${g.id === group.id ? 'active' : ''}" style="--i: ${i};" role="tab" aria-selected="${g.id === group.id}" onclick="BoneApp.selectExerciseGroup('${g.id}')">
                 ${img3d(g.img, '', 52)}
                 <b>${g.label}</b>
-                <small>${count} moves</small>
+                <small>${count} ${count === 1 ? 'move' : 'moves'}</small>
               </button>`;
           }).join('')}
         </div>
@@ -3358,7 +4440,7 @@
         <div class="wk-list-head">
           <div>
             <h3>${group.label}</h3>
-            <span>${group.blurb} · ${list.length} moves · ~${minutesFor(list)} min</span>
+            <span>${group.blurb} · ${list.length} ${list.length === 1 ? 'move' : 'moves'} · ~${minutesFor(list)} min</span>
           </div>
           <button class="wk-start-all" onclick="BoneApp.startWorkout('${group.id}')"><i class="fa-solid fa-play"></i> Start all</button>
         </div>
@@ -3366,19 +4448,20 @@
           ${list.map((ex, i) => {
             const done = todaySet.has(ex.id);
             return `
-              <button class="wk-row fade-up ${done ? 'done' : ''}" style="--i: ${i};" onclick="BoneApp.openExerciseDetail('${ex.id}')">
+              <div class="wk-row fade-up ${done ? 'done' : ''}" style="--i: ${i};" onclick="BoneApp.openExerciseDetail('${ex.id}')">
                 ${exThumbHtml(ex)}
                 <div class="wk-row-body">
                   <b>${ex.name}</b>
                   <span>${fmtClock(getExDuration(ex))} · ${ex.reps}</span>
-                  <small class="wk-level ${ex.level === 'Easy' ? 'easy' : 'mod'}">${ex.level}${ex.video || hasCharacter(ex) ? '' : ' · <i class="fa-solid fa-list-ol"></i> Steps'}</small>
+                  <small class="wk-level ${ex.level === 'Easy' ? 'easy' : 'mod'}">${ex.level}</small>
                 </div>
-                ${done ? '<span class="wk-row-done"><i class="fa-solid fa-check"></i></span>' : '<i class="fa-solid fa-chevron-right wk-row-go"></i>'}
-              </button>`;
+                <button type="button" class="wk-row-check ${done ? 'done' : ''}" onclick="event.stopPropagation(); BoneApp.toggleExerciseMilestone('${getTodayISODate()}', '${ex.id}');" aria-label="${done ? 'Mark incomplete' : 'Mark done'}">
+                  <i class="fa-solid ${done ? 'fa-check' : 'fa-plus'}"></i>
+                </button>
+              </div>`;
           }).join('')}
         </div>`;
       setupLazyVideos(root);
-      mountCharacters(root);
     } catch (err) {
       console.error('renderBuildExerciseView error:', err);
     }
@@ -3422,14 +4505,12 @@
     body.innerHTML = `
       <div class="exd-media">
         ${video
-          ? `<video src="${video}" poster="${exPosterSrc(ex)}" autoplay loop muted playsinline aria-label="${escapeHtml(ex.name)} demonstration"></video>`
-          : hasCharacter(ex)
-            ? `<div class="exd-anim">${charAnimHtml(ex)}</div>`
-            : `<div class="exd-illus">${img3d(ex.img || 'running', 'float', 110)}<span><i class="fa-solid fa-list-ol"></i> Follow the steps below</span></div>`}
+          ? `<video src="${video}" poster="${exPosterSrc(ex)}" autoplay loop muted playsinline aria-label="${escapeHtml(t('{name} demonstration', { name: tr(ex.name) }))}"></video>`
+          : `<div class="exd-illus">${img3d(ex.img || 'running', 'float', 110)}<span><i class="fa-solid fa-list-ol"></i> Follow the steps below</span></div>`}
         <button class="exd-close" onclick="BoneApp.closeExerciseDetail()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="exd-body">
-        <span class="step-chip build">${group.label}${done ? ' · <i class="fa-solid fa-check"></i> Done today' : ''}</span>
+        <span class="step-chip build">${tr(group.label)}${done ? ` · <i class="fa-solid fa-check"></i> ${t('Done today')}` : ''}</span>
         <h2 class="exd-title">${ex.name}</h2>
         <div class="exd-stats">
           <div><b>${ex.level}</b><span>Level</span></div>
@@ -3464,8 +4545,13 @@
 
         <h4 class="exd-h">Why it helps</h4>
         <ul class="exd-benefits">${(ex.benefits || []).map(b => `<li><i class="fa-solid fa-circle-check"></i>${b}</li>`).join('')}</ul>
+
+        <div class="exd-quick-action" style="margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
+          <button type="button" class="btn btn-full ${done ? 'btn-outline' : 'primary'}" onclick="BoneApp.toggleExerciseMilestone('${getTodayISODate()}', '${ex.id}'); BoneApp.renderExerciseDetail();" style="height: 48px; font-weight: 800; font-size: 0.98rem;">
+            <i class="fa-solid ${done ? 'fa-circle-check' : 'fa-check'}"></i> ${done ? 'Completed today ✓ (tap to undo)' : 'Mark as completed'}
+          </button>
+        </div>
       </div>`;
-    mountCharacters(body);
   }
 
   function closeExerciseDetail(silent) {
@@ -3480,7 +4566,6 @@
     const root = document.getElementById('buildSubViewExercise');
     if (root && root.style.display !== 'none') {
       setupLazyVideos(root);
-      setCharactersPaused(root, false);
     }
   }
 
@@ -3523,6 +4608,51 @@
     updateVoiceButton();
     const v = document.getElementById('plVideo');
     if (v) v.volume = val;
+    if (voiceAudio) voiceAudio.volume = val;
+  }
+
+  let voiceAudio = null;
+  function stopVoice() {
+    if (voiceAudio) {
+      try { voiceAudio.pause(); voiceAudio.currentTime = 0; } catch (e) {}
+      voiceAudio = null;
+    }
+    if ('speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+  }
+
+  function playVoiceCue(cueName, fallbackText, onDone) {
+    const vol = getVolume();
+    if (vol <= 0 || !voiceOn()) return;
+    stopVoice();
+
+    const code = (typeof I18N !== 'undefined' && I18N.current) ? I18N.current() : 'en';
+    const audioSrc = `assets/audio/voice/${code}/${cueName}.mp3`;
+
+    const audio = new Audio(audioSrc);
+    audio.volume = vol;
+    voiceAudio = audio;
+
+    let completed = false;
+    const finish = () => {
+      if (!completed) {
+        completed = true;
+        voiceAudio = null;
+        if (onDone) onDone();
+      }
+    };
+
+    audio.onended = finish;
+    audio.onerror = () => {
+      speak(fallbackText || cueName);
+      if (onDone) setTimeout(onDone, 1200);
+    };
+
+    audio.play().catch(() => {
+      speak(fallbackText || cueName);
+      if (onDone) setTimeout(onDone, 1200);
+    });
   }
 
   function speak(text) {
@@ -3530,10 +4660,24 @@
     if (vol <= 0 || !voiceOn() || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
+      const code = (typeof I18N !== 'undefined' && I18N.current) ? I18N.current() : 'en';
+      const spoken = (code !== 'en' && typeof I18N !== 'undefined' && I18N.tr) ? I18N.tr(text) : text;
+      const u = new SpeechSynthesisUtterance(spoken);
       u.rate = 0.9;
       u.volume = vol;
-      u.lang = 'en-IN';
+      const langTags = {
+        hi: 'hi-IN', bn: 'bn-IN', mr: 'mr-IN', te: 'te-IN', ta: 'ta-IN',
+        gu: 'gu-IN', kn: 'kn-IN', ml: 'ml-IN', pa: 'pa-IN', or: 'or-IN', as: 'as-IN', en: 'en-IN'
+      };
+      u.lang = langTags[code] || (code !== 'en' ? `${code}-IN` : 'en-IN');
+      const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+      if (voices.length && code !== 'en') {
+        const match = voices.find(v => {
+          const l = String(v.lang || '').toLowerCase().replace('_', '-');
+          return l === u.lang.toLowerCase() || l.startsWith(code + '-');
+        });
+        if (match) u.voice = match;
+      }
       window.speechSynthesis.speak(u);
     } catch (e) { /* speech is optional */ }
   }
@@ -3556,12 +4700,12 @@
     if (!btn) return;
     const vol = getVolume();
     const isMuted = vol <= 0 || !voiceOn();
-    btn.style.display = 'speechSynthesis' in window ? '' : 'none';
+    btn.style.display = ('speechSynthesis' in window || typeof Audio !== 'undefined') ? '' : 'none';
     const iconClass = isMuted ? 'fa-volume-xmark' : (vol < 0.5 ? 'fa-volume-low' : 'fa-volume-high');
     btn.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
     btn.setAttribute('aria-label', `Volume: ${Math.round(vol * 100)}%`);
     const slider = document.getElementById('plVolSlider');
-    if (slider) slider.value = vol;
+    if (slider) { slider.value = vol; slider.style.setProperty('--vol', `${Math.round(vol * 100)}%`); }
     const valEl = document.getElementById('plVolVal');
     if (valEl) valEl.textContent = `${Math.round(vol * 100)}%`;
   }
@@ -3621,18 +4765,35 @@
 
     if (phase === 'ready') {
       player.total = player.remaining = READY_SEC;
-      speak('Get ready.');
+      if (ex && ex.id) {
+        playVoiceCue('ready', 'Get ready.', () => {
+          if (player.phase === 'ready' && !player.paused) {
+            playVoiceCue(ex.id, ex.name);
+          }
+        });
+      } else {
+        playVoiceCue('ready', 'Get ready.');
+      }
     } else if (phase === 'work') {
       player.total = player.remaining = getExDuration(ex);
-      speak('Begin.');
+      playVoiceCue('begin', 'Begin.');
     } else if (phase === 'rest') {
       player.total = player.remaining = REST_SEC;
-      speak('Rest.');
+      const nextEx = player.queue[player.index + 1] ? findWorkout(player.queue[player.index + 1]) : null;
+      if (nextEx && nextEx.id) {
+        playVoiceCue('rest', 'Rest.', () => {
+          if (player.phase === 'rest' && !player.paused) {
+            playVoiceCue(nextEx.id, nextEx.name);
+          }
+        });
+      } else {
+        playVoiceCue('rest', 'Rest.');
+      }
     } else if (phase === 'done') {
       releaseWakeLock();
       celebrate('big');
       playSound('success');
-      speak('Workout complete. Well done!');
+      playVoiceCue('completed', 'Workout complete. Well done!');
     }
 
     renderPlayer();
@@ -3686,9 +4847,15 @@
       if (player.paused) v.pause();
       else if (player.phase === 'work') v.play().catch(() => {});
     }
-    setCharactersPaused(document.getElementById('plMedia'), player.paused || player.phase !== 'work');
-    if (player.paused && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+    if (player.paused) stopVoice();
     renderPlayerControls();
+  }
+
+  function playerCompleteCurrent() {
+    playSound('tap');
+    if (player.phase === 'ready') enterPhase('work');
+    else if (player.phase === 'work') finishCurrentExercise(true);
+    else if (player.phase === 'rest') advanceToNext();
   }
 
   function playerSkip() {
@@ -3708,10 +4875,10 @@
 
   function closePlayer(force) {
     const active = ['ready', 'work', 'rest'].includes(player.phase);
-    if (active && !force && !window.confirm('End this workout? Moves you finished are saved.')) return;
+    if (active && !force && !window.confirm(t('End this workout? Moves you finished are saved.'))) return;
     clearInterval(player.timer);
     player.phase = 'idle';
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    stopVoice();
     const v = document.getElementById('plVideo');
     if (v) v.pause();
     releaseWakeLock();
@@ -3758,15 +4925,6 @@
       }
       if (autoplay) v.play().catch(() => {});
       else v.pause();
-    } else if (hasCharacter(ex)) {
-      let host = media.querySelector(`[data-anim="${ex.id}"]`);
-      if (!host) {
-        media.innerHTML = `<div class="pl-anim">${charAnimHtml(ex)}</div>`;
-        host = media.querySelector('[data-anim]');
-        mountCharacters(media, { paused: !autoplay });
-        if (window.BoneCharacter) window.BoneCharacter.restart(host);
-      }
-      setCharactersPaused(media, !autoplay);
     } else {
       media.innerHTML = `
         <div class="pl-illus">
@@ -3808,13 +4966,12 @@
       set('plReps', ex.reps);
       set('plReadyName', ex.name);
       set('plSafety', ex.safety || 'Move slowly and keep support nearby.');
-      set('plNext', next ? `Next: ${next.name}` : 'Last move. You’re nearly done!');
+      set('plNext', next ? t('Next: {name}', { name: tr(next.name) }) : 'Last move. You’re nearly done!');
     }
 
     if (player.phase === 'rest' && next) {
       const v = document.getElementById('plVideo');
       if (v) v.pause();
-      setCharactersPaused(document.getElementById('plMedia'), true);
       const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
       set('plRestNextLabel', `Next ${player.index + 2}/${total}`);
       set('plRestNextName', next.name);
@@ -3822,15 +4979,13 @@
       const prev = document.getElementById('plRestPreview');
       if (prev) {
         const poster = exPosterSrc(next);
-        prev.innerHTML = poster ? `<img src="${poster}" alt="">` : (hasCharacter(next) ? `<div class="pl-anim">${charAnimHtml(next)}</div>` : img3d(next.img || 'running', 'float', 110));
-        mountCharacters(prev);
+        prev.innerHTML = poster ? `<img src="${poster}" alt="">` : img3d(next.img || 'running', 'float', 110);
       }
     }
 
     if (player.phase === 'done') {
       const v = document.getElementById('plVideo');
       if (v) v.pause();
-      setCharactersPaused(document.getElementById('plMedia'), true);
       const doneList = document.getElementById('plDoneList');
       const minutes = Math.max(1, Math.round(player.completed.reduce((a, id) => a + getExDuration(findWorkout(id) || {}), 0) / 60));
       const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
@@ -3860,6 +5015,7 @@
       state.checkedExerciseMilestones[key] = new Set(Array.isArray(prev) ? prev : []);
     }
     const set = state.checkedExerciseMilestones[key];
+    markDayForSync(key);
     const wasDone = set.has(exId);
     if (wasDone) set.delete(exId);
     else set.add(exId);
@@ -4009,7 +5165,7 @@
   // --------------------------------------------------------------------------
   // MODULE 4: PROTECT HUB VIEW
   // --------------------------------------------------------------------------
-  function renderProtectHubView() {
+  function renderProtectHubView(animate = false) {
     const badge = document.getElementById('protectRiskStatusBadge');
     if (badge) badge.textContent = `${getRiskLevel(state.protectRiskChecked.size).label} risk`;
 
@@ -4029,6 +5185,181 @@
       const totals = homeSafetyTotals();
       scoreBadge.textContent = `${totals.safe} of ${totals.total} safe`;
     }
+
+    renderProtectSafetyAnalysis(animate);
+  }
+
+  // Short, visual summary under the room check: a score ring, a "fix these"
+  // checklist (tap a row for the full how-to) and a few daily habits.
+  const SAFETY_HABITS = [
+    { img: 'shoe', text: 'Wear grip shoes' },
+    { img: 'bulb', text: 'Night lights on' },
+    { img: 'glasses', text: 'Yearly eye check' },
+    { img: 'pill', text: 'Review medicines' },
+    { img: 'flamingo', text: 'Balance practice' },
+    { img: 'phone', text: 'Phone within reach' }
+  ];
+
+  function renderProtectSafetyAnalysis(animate = false) {
+    const container = document.getElementById('protectSafetyAnalysisCard');
+    if (!container) return;
+
+    const totals = homeSafetyTotals();
+    const answered = homeSafetySummary().answered;
+    const unanswered = totals.total - answered;
+    const personalRisks = (BONE_SIP_DATA.boneRiskAuditFactors || []).filter(f => state.protectRiskChecked.has(f.id));
+    const hazards = [];
+    BONE_SIP_DATA.protectHomeAuditRooms.forEach(room => {
+      const ans = state.protectHomeAuditAnswers[room.id] || {};
+      room.questions.forEach(q => { if (ans[q.id] === 'no') hazards.push({ room, q }); });
+    });
+
+    // "Safe" is only said once every room question has an answer.
+    let tone = 'good';
+    let mood = '😊';
+    let headline = t('Your home is safe');
+    if (answered === 0) {
+      tone = 'todo'; mood = '📝'; headline = t('Home check not done yet');
+    } else if (hazards.length >= 6 || personalRisks.length >= 3) {
+      tone = 'bad'; mood = '⚠️'; headline = t('High fall risk');
+    } else if (hazards.length || personalRisks.length) {
+      tone = 'warn'; mood = '🙂'; headline = t('A few things to fix');
+    } else if (unanswered) {
+      tone = 'todo'; mood = '📝'; headline = t('Finish your home check');
+    }
+    const ringColor = { good: '#1E9E62', warn: '#D97706', bad: '#DC2626', todo: '#4A3F7A' }[tone];
+    const complete = unanswered === 0;
+    const ringPct = complete ? totals.pct : Math.round((answered / totals.total) * 100);
+    const startBtn = `<button type="button" class="psx-act primary psx-start" onclick="BoneApp.scrollToRoomCheck()"><i class="fa-solid fa-clipboard-check"></i> ${answered ? t('Continue room check') : t('Start room check')}</button>`;
+
+    let listHtml;
+    if (hazards.length) {
+      listHtml = `
+        <h4 class="psx-h"><span>🔧</span> ${t('Fix these')} <em class="psx-count">${hazards.length}</em></h4>
+        <div class="psx-fixes">
+          ${hazards.map(({ room, q }, i) => `
+            <div class="psx-fix" style="--i:${i}">
+              ${img3d(room.img || 'house', '', 38)}
+              <details>
+                <summary><b>${t(q.tip || q.text)}</b><span>${t(room.name)} · ${t('How?')}</span></summary>
+                <p>${t(q.fix)}</p>
+              </details>
+              <button type="button" class="psx-done" onclick="BoneApp.markHazardFixed('${room.id}', '${q.id}')" aria-label="${escapeHtml(t('Fixed'))}" title="${escapeHtml(t('Fixed'))}">
+                <i class="fa-solid fa-check"></i>
+              </button>
+            </div>`).join('')}
+        </div>`;
+    } else if (complete) {
+      listHtml = `<div class="psx-note good"><span>🎉</span><b>${t('All rooms are safe. Great job!')}</b></div>`;
+    } else {
+      listHtml = `<div class="psx-note"><span>👆</span><b>${t('Answer the room questions above to see what to fix.')}</b></div>${startBtn}`;
+    }
+    if (hazards.length && unanswered) {
+      listHtml += `<div class="psx-note"><span>📝</span><b>${t('{0} questions not answered yet.', { 0: unanswered })}</b></div>${startBtn}`;
+    }
+
+    container.classList.toggle('psx-anim', animate);
+    container.innerHTML = `
+      <div class="psx-hero ${tone}">
+        <div class="psx-ring" style="--p:${ringPct}; --c:${ringColor};" role="img" aria-label="${complete ? `${totals.pct}% ${t('safe')}` : `${answered}/${totals.total} ${t('answered')}`}">
+          <div>${complete ? `<b>${totals.pct}%</b><span>${t('safe')}</span>` : `<b class="sm">${answered}/${totals.total}</b><span>${t('answered')}</span>`}</div>
+        </div>
+        <div class="psx-hero-body">
+          <h3><span class="psx-mood">${mood}</span> ${headline}</h3>
+          <div class="psx-pills">
+            ${answered ? `<span class="stat-pill">${img3d('house', '', 20)} <b>${totals.safe}</b>&nbsp;${t('safe')}</span>` : ''}
+            ${hazards.length ? `<span class="stat-pill warn">🔧 <b>${hazards.length}</b>&nbsp;${t('to fix')}</span>` : ''}
+            ${unanswered ? `<span class="stat-pill">📝 <b>${unanswered}</b>&nbsp;${t('not answered')}</span>` : ''}
+            ${personalRisks.length ? `<span class="stat-pill warn">${img3d('warning', '', 20)} <b>${personalRisks.length}</b>&nbsp;${t('risk signs')}</span>` : ''}
+          </div>
+        </div>
+      </div>
+
+      ${listHtml}
+
+      <h4 class="psx-h"><span>✨</span> ${t('Daily safety habits')}</h4>
+      <div class="psx-habits">
+        ${SAFETY_HABITS.map((h, i) => `
+          <div class="psx-habit" style="--i:${i}">
+            ${img3d(h.img, '', 40)}
+            <b>${t(h.text)}</b>
+          </div>`).join('')}
+      </div>
+
+      <div class="psx-actions">
+        <button type="button" class="psx-act" onclick="BoneApp.askAiAboutFallSafety()">
+          <img src="assets/images/ojas-avatar.svg" alt="" width="26" height="26"> ${t('Ask Ojas')}
+        </button>
+        <button type="button" class="psx-act" onclick="BoneApp.shareProtectSafetyWhatsApp()">
+          <i class="fa-brands fa-whatsapp" style="color:#25D366"></i> ${t('Share')}
+        </button>
+        <button type="button" class="psx-act" onclick="BoneApp.printDocument('report')">
+          <i class="fa-solid fa-file-pdf" style="color:#B1315D"></i> PDF
+        </button>
+      </div>
+    `;
+  }
+
+  function scrollToRoomCheck() {
+    playSound('tap');
+    const rooms = BONE_SIP_DATA.protectHomeAuditRooms;
+    const firstOpen = rooms.find(r => r.questions.some(q => !(state.protectHomeAuditAnswers[r.id] || {})[q.id]));
+    if (firstOpen && firstOpen.id !== state.selectedAuditRoom) {
+      state.selectedAuditRoom = firstOpen.id;
+      renderProtectHubView();
+    }
+    const tabs = document.getElementById('hubRoomTabs');
+    if (tabs) tabs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function markHazardFixed(roomId, questionId) {
+    setHubRoomAnswer(roomId, questionId, 'yes');
+    showToast(t('Nice! Marked as fixed'), 'fa-circle-check');
+  }
+
+  function shareProtectSafetyWhatsApp() {
+    playSound('tap');
+    const summary = homeSafetySummary();
+    const hazards = [];
+    summary.rows.forEach(r => {
+      if (r.fixes && r.fixes.length) {
+        hazards.push(`*${r.name}:*`);
+        r.fixes.forEach(f => hazards.push(` • Fix: ${f}`));
+      }
+    });
+
+    const msg = [
+      '*BONE SIP — Home Fall-Proofing & Safety Plan*',
+      `Safety Score: ${summary.safe} of ${summary.total} checks safe (${Math.round((summary.safe / summary.total) * 100)}%)`,
+      '',
+      hazards.length ? '*Identified Hazards to Fix:*' : '*All home areas verified safe!*',
+      ...hazards,
+      '',
+      '*Key Prevention Habits:*',
+      '1. Wear non-skid footwear indoors.',
+      '2. Keep bedside and hallway nightlights on.',
+      '3. Practice daily 1-leg balance & chair stand exercises.',
+      '',
+      'Invest in Bones. Invest in Life.'
+    ].join('\n');
+
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+  }
+
+  function askAiAboutFallSafety() {
+    playSound('tap');
+    toggleChatDrawer();
+    const summary = homeSafetySummary();
+    const hazardsCount = summary.total - summary.safe;
+    let query = 'How can I make my home safer from falls?';
+    if (hazardsCount > 0) {
+      query = `I completed my home safety check and found ${hazardsCount} hazards. What are the most urgent fixes and balance exercises to prevent falls?`;
+    }
+    const input = document.getElementById('chatTextInput');
+    if (input) {
+      input.value = query;
+      sendChatMessage();
+    }
   }
 
   function selectHubRoom(roomId) {
@@ -4045,62 +5376,1201 @@
     renderProtectHubView();
   }
 
-  // --------------------------------------------------------------------------
-  // MODULE 5: STRENGTHEN HUB VIEW
-  // --------------------------------------------------------------------------
-  function renderStrengthenHubView() {
-    const listEl = document.getElementById('hubDoctorChecklist');
-    if (listEl) {
-      listEl.innerHTML = BONE_SIP_DATA.doctorReviewChecklist.map(q => {
-        const isChecked = state.strengthenDoctorChecked.has(q.id);
-        return `
-          <button type="button" class="doc-row ${isChecked ? 'selected' : ''}" onclick="BoneApp.toggleHubDoctor('${q.id}')" aria-pressed="${isChecked}">
-            ${img3d(q.img || 'clipboard', '', 34)}
-            <span>${q.text}</span>
-            <span class="tick"><i class="fa-solid fa-check"></i></span>
-          </button>`;
-      }).join('');
-    }
-
-    const dxaEl = document.getElementById('hubDxaRangesList');
-    const guide = BONE_SIP_DATA.dxaInterpretationGuide;
-    if (dxaEl && guide) {
-      const colors = ['#1E9E62', '#D97706', '#B1315D'];
-      dxaEl.innerHTML = guide.ranges.map((r, i) => `
-        <div class="dxa-item" style="--dxa-c: ${colors[i] || '#6B6580'};">
-          <div>
-            <b>${r.category}</b>
-            <p><strong>${r.score}.</strong> ${r.meaning}</p>
-          </div>
-        </div>`).join('');
-    }
+  function toggleHubDoctor(docId) {
+    toggleStrengthenDoctor(docId);
   }
 
-  function toggleHubDoctor(docId) {
-    playSound('check');
-    if (state.strengthenDoctorChecked.has(docId)) state.strengthenDoctorChecked.delete(docId);
-    else state.strengthenDoctorChecked.add(docId);
+  function shareDoctorReviewWhatsApp() {
+    shareStrengthenBriefWhatsApp();
+  }
+
+  // --------------------------------------------------------------------------
+  // MODULE 5: STRENGTHEN — THE USER'S BONE HEALTH FILE
+  // --------------------------------------------------------------------------
+  // Only what the user enters is shown (no sample values): DXA scans and blood
+  // tests with dates so changes are visible, the medicines they take with a daily
+  // tick, a height check, and a doctor-visit summary built from all of it.
+  const T_SITES = [['spine', 'Spine'], ['neck', 'Hip neck'], ['hip', 'Total hip']];
+  const MED_KINDS = [
+    { id: 'calcium', name: 'Calcium', icon: '🥛', time: '13:00' },
+    { id: 'vitd', name: 'Vitamin D3', icon: '☀️', time: '13:00' },
+    { id: 'thyroid', name: 'Thyroid pill', icon: '🦋', time: '07:00' },
+    { id: 'bone', name: 'Weekly bone medicine', icon: '🦴', time: '07:00', weekly: true },
+    { id: 'other', name: 'Other medicine', icon: '💊', time: '09:00' }
+  ];
+
+  function switchStrengthenSubTab(tabId) {
+    playSound('tap');
+    state.strengthenActiveSubTab = tabId;
+    state.strengthenForm = null;
+    BoneDB.save();
+    renderStrengthenHubView(true);
+  }
+
+  // `animate` replays the entrance animation; plain re-renders after an input
+  // change skip it so the screen does not flicker while typing.
+  function renderStrengthenHubView(animate = false) {
+    const tabs = ['dxa_risk', 'labs_biomarkers', 'meds_timing', 'spine_safety', 'doctor_brief'];
+    const activeTab = tabs.includes(state.strengthenActiveSubTab) ? state.strengthenActiveSubTab : 'dxa_risk';
+
+    tabs.forEach(tId => {
+      const btn = document.getElementById(`stTab_${tId}`);
+      if (btn) {
+        btn.classList.toggle('active', tId === activeTab);
+        btn.setAttribute('aria-selected', String(tId === activeTab));
+      }
+    });
+
+    const container = document.getElementById('strengthenContentContainer');
+    if (!container) return;
+    const render = {
+      dxa_risk: renderDxaRiskSubTab,
+      labs_biomarkers: renderLabsBiomarkersSubTab,
+      meds_timing: renderMedsTimingSubTab,
+      spine_safety: renderSpineSafetySubTab,
+      doctor_brief: renderDoctorBriefSubTab
+    }[activeTab];
+    container.classList.toggle('sx-anim', animate);
+    container.innerHTML = render();
+  }
+
+  const sxHead = (img, title, sub = '', action = '') => `
+    <div class="sx-head">
+      ${img3d(img, '', 44)}
+      <div><h3>${title}</h3>${sub ? `<p>${sub}</p>` : ''}</div>
+      ${action}
+    </div>`;
+
+  const sxAddBtn = (form, label) => `<button type="button" class="sx-add" onclick="BoneApp.openStrengthenForm('${form}')"><i class="fa-solid fa-plus"></i> ${label}</button>`;
+
+  function newRecordId(prefix) {
+    return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  }
+
+  function byNewest(list) {
+    return (list || []).slice().sort((a, b) => ((a.date || '') < (b.date || '') ? 1 : -1));
+  }
+
+  function fmtRecordDate(iso) {
+    return iso ? I18N.date(new Date(`${iso}T00:00:00`), { day: 'numeric', month: 'short', year: 'numeric' }) : t('Date not saved');
+  }
+
+  function addMonthsISO(iso, months) {
+    const d = new Date(`${iso}T00:00:00`);
+    d.setMonth(d.getMonth() + months);
+    return toISODate(d);
+  }
+
+  const isNum = v => typeof v === 'number' && !isNaN(v);
+
+  function scanLowest(scan) {
+    const vals = scan ? [scan.spine, scan.neck, scan.hip].filter(isNum) : [];
+    return vals.length ? Math.min(...vals) : null;
+  }
+
+  function latestScan() {
+    return byNewest(state.scans)[0] || null;
+  }
+
+  function tScoreInfo(tScore) {
+    if (tScore <= -2.5) return { tone: 'bad', emoji: '⚠️', label: t('Osteoporosis'), advice: t('Ask your doctor about bone medicine.'), months: 12 };
+    if (tScore < -1.0) return { tone: 'warn', emoji: '🙂', label: t('Low bone mass'), advice: t('Calcium, vitamin D and exercise help a lot.'), months: 18 };
+    return { tone: 'good', emoji: '💪', label: t('Healthy bones'), advice: t('Keep up your diet and exercise.'), months: 24 };
+  }
+
+  // Latest value of one blood test, with the one before it for the trend.
+  function labHistory(id) {
+    return byNewest(state.labs).filter(l => isNum(l[id])).map(l => ({ value: l[id], date: l.date }));
+  }
+
+  function scanDue() {
+    const scan = latestScan();
+    const low = scanLowest(scan);
+    if (!scan || low === null || !scan.date) return null;
+    const due = addMonthsISO(scan.date, tScoreInfo(low).months);
+    return { due, overdue: due <= getTodayISODate() };
+  }
+
+  function strengthenFormHtml(fields, saveFn, title) {
+    return `
+      <div class="sx-form" role="group" aria-label="${escapeHtml(title)}">
+        <b class="sx-form-title">${title}</b>
+        ${fields}
+        <div class="sx-form-actions">
+          <button type="button" class="psx-act" onclick="BoneApp.closeStrengthenForm()">${t('Cancel')}</button>
+          <button type="button" class="psx-act primary" onclick="BoneApp.${saveFn}()"><i class="fa-solid fa-check"></i> ${t('Save')}</button>
+        </div>
+      </div>`;
+  }
+
+  const dateField = id => `
+    <label class="sx-field"><span>${t('Date on the report')}</span>
+      <input type="date" id="${id}" value="${getTodayISODate()}" max="${getTodayISODate()}">
+    </label>`;
+
+  // ---------------------------------------------------------------- 1. Bone scan
+  function renderDxaRiskSubTab() {
+    const scans = byNewest(state.scans);
+    const formOpen = state.strengthenForm === 'scan';
+    const form = formOpen ? strengthenFormHtml(`
+      ${dateField('sxScanDate')}
+      <p class="sx-hint">${t('Find the T-score for each place on your report. Leave a box empty if it is not there.')}</p>
+      <div class="sx-form-grid">
+        ${T_SITES.map(([key, name]) => `
+          <label class="sx-field"><span>${t(name)}</span>
+            <input type="number" step="0.1" min="-6" max="4" inputmode="decimal" id="sxScan_${key}" placeholder="-1.5">
+          </label>`).join('')}
+      </div>`, 'saveScan', t('Add scan result')) : '';
+
+    if (!scans.length) {
+      return `
+        <div class="st-card sx-card">
+          ${sxHead('xray', t('Bone scan (DXA)'), t('A DXA scan shows how strong your bones are.'))}
+          ${form || `
+            <div class="sx-empty">
+              <span class="sx-empty-icon">🩻</span>
+              <b>${t('No scan saved yet')}</b>
+              <p>${t('Had a DXA scan? Add the T-scores from your report.')}</p>
+              <button type="button" class="psx-act primary" onclick="BoneApp.openStrengthenForm('scan')"><i class="fa-solid fa-plus"></i> ${t('Add scan result')}</button>
+            </div>`}
+        </div>
+        ${whoNeedsScanCard()}
+        ${riskFactorsCard()}`;
+    }
+
+    const latest = scans[0];
+    const low = scanLowest(latest);
+    const info = tScoreInfo(low);
+    const pinPct = Math.min(100, Math.max(0, ((low + 4) / 5.5) * 100));
+    const prev = scans.slice(1).find(s => scanLowest(s) !== null);
+    let trend = '';
+    if (prev) {
+      const diff = Math.round((low - scanLowest(prev)) * 10) / 10;
+      trend = diff > 0
+        ? `<div class="sx-trend good">📈 ${t('Better than your last scan ({0})', { 0: `+${diff}` })}</div>`
+        : diff < 0
+          ? `<div class="sx-trend bad">📉 ${t('Lower than your last scan ({0})', { 0: diff })}</div>`
+          : `<div class="sx-trend">➖ ${t('Same as your last scan')}</div>`;
+    }
+    const due = scanDue();
+    const dueLine = due
+      ? (due.overdue ? `⏰ ${t('Your next scan is due now')}` : `📅 ${t('Next scan due: {date}', { date: I18N.date(new Date(`${due.due}T00:00:00`), { month: 'long', year: 'numeric' }) })}`)
+      : '';
+
+    return `
+      <div class="st-card sx-card">
+        ${sxHead('xray', t('Bone scan (DXA)'), fmtRecordDate(latest.date), formOpen ? '' : sxAddBtn('scan', t('Add')))}
+        ${form}
+        <div class="sx-result ${info.tone}">
+          <div class="sx-big"><b>${low.toFixed(1)}</b><span>${t('Lowest T-score')}</span></div>
+          <div class="sx-result-body">
+            <span class="sx-status ${info.tone}">${info.emoji} ${info.label}</span>
+            <p>${info.advice}</p>
+          </div>
+        </div>
+        <div class="sx-scale">
+          <div class="sx-scale-bar"><i class="bad"></i><i class="warn"></i><i class="good"></i>
+            <span class="sx-pin" style="left:${pinPct}%"></span>
+          </div>
+          <div class="sx-scale-labels"><span>${t('Weak')}</span><span>${t('Low')}</span><span>${t('Healthy')}</span></div>
+        </div>
+        <div class="sx-sites">
+          ${T_SITES.map(([key, name]) => `
+            <div class="sx-site"><span>${t(name)}</span><b>${isNum(latest[key]) ? latest[key].toFixed(1) : '—'}</b></div>`).join('')}
+        </div>
+        ${trend}
+        ${dueLine ? `<div class="sx-chip-line">${dueLine}</div>` : ''}
+        ${recordHistoryHtml(scans, s => `${t('Lowest T-score')} ${scanLowest(s) === null ? '—' : scanLowest(s).toFixed(1)}`, s => tScoreInfo(scanLowest(s) ?? 0).tone, 'deleteScan')}
+      </div>
+      ${riskFactorsCard()}`;
+  }
+
+  function recordHistoryHtml(list, summary, tone, deleteFn) {
+    return `
+      <details class="sx-history" ${list.length > 1 ? 'open' : ''}>
+        <summary>${t('All saved results')} <em>${list.length}</em></summary>
+        <ul>
+          ${list.map(r => `
+            <li><i class="sx-dot ${tone(r)}"></i><span><b>${fmtRecordDate(r.date)}</b>${summary(r)}</span>
+              <button type="button" class="sx-del" onclick="BoneApp.${deleteFn}('${r.id}')" aria-label="${escapeHtml(t('Delete'))}"><i class="fa-solid fa-trash-can"></i></button></li>`).join('')}
+        </ul>
+      </details>`;
+  }
+
+  function whoNeedsScanCard() {
+    const age = Number(state.userProfile.age) || 0;
+    const f = state.fraxInputs || {};
+    const advised = age >= 65 || f.prior_fracture || f.steroid_use;
+    return `
+      <div class="st-card sx-card">
+        ${sxHead('stethoscope', t('Who should get a scan?'))}
+        <ul class="sx-asks compact">
+          <li><em>👵</em><span>${t('Women over 65 and men over 70')}</span></li>
+          <li><em>🩹</em><span>${t('Anyone who broke a bone in a small fall')}</span></li>
+          <li><em>💊</em><span>${t('People on steroid tablets for 3+ months')}</span></li>
+          <li><em>🌸</em><span>${t('Early menopause or very low body weight')}</span></li>
+        </ul>
+        ${advised ? `<div class="psx-note good"><span>✅</span><b>${t('Based on your answers, ask your doctor for a DXA scan.')}</b></div>` : ''}
+      </div>`;
+  }
+
+  function riskFactorsCard() {
+    const factors = BONE_SIP_DATA.fraxRiskFactorsCatalog || [];
+    return `
+      <div class="st-card sx-card">
+        ${sxHead('target', t('Tell your doctor'), t('Tap what applies to you. Your doctor uses this with your scan to work out your fracture risk.'))}
+        <div class="sx-toggles">
+          ${factors.map(f => {
+            const on = !!(state.fraxInputs && state.fraxInputs[f.id]);
+            return `<button type="button" class="sx-toggle ${on ? 'on' : ''}" aria-pressed="${on}" onclick="BoneApp.toggleFraxFactor('${f.id}')">
+              ${img3d(f.img || 'bone', '', 30)}<span>${t(f.short || f.text)}</span><i class="fa-solid ${on ? 'fa-circle-check' : 'fa-circle-plus'}"></i>
+            </button>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
+
+  // ---------------------------------------------------------------- 2. Blood tests
+  function labStatusIndex(id, v) {
+    if (id === 'vit_d') return v < 20 ? 0 : v <= 30 ? 1 : v <= 60 ? 2 : 3;
+    if (id === 'calcium') return v < 8.5 ? 0 : v <= 10.2 ? 1 : 2;
+    if (id === 'alp') return v <= 129 ? 0 : 1;
+    if (id === 'egfr') return v < 35 ? 0 : v < 60 ? 1 : 2;
+    return 0;
+  }
+
+  const LAB_STATUS = {
+    good: { text: 'Good', icon: '✅', color: '#1E9E62' },
+    low: { text: 'Low', icon: '⬇️', color: '#D97706' },
+    high: { text: 'High', icon: '⬆️', color: '#DC2626' }
+  };
+
+  function labCardState(bm, v) {
+    const range = bm.ranges[labStatusIndex(bm.id, v)] || bm.ranges[0];
+    const st = LAB_STATUS[range.status] || LAB_STATUS.good;
+    return { st, tip: range.short || range.tip };
+  }
+
+  function renderLabsBiomarkersSubTab() {
+    const catalog = BONE_SIP_DATA.boneBiomarkersCatalog || [];
+    const labs = byNewest(state.labs);
+    const formOpen = state.strengthenForm === 'lab';
+    const form = formOpen ? strengthenFormHtml(`
+      ${dateField('sxLabDate')}
+      <p class="sx-hint">${t('Type the numbers from your blood report. Leave a box empty if the test was not done.')}</p>
+      <div class="sx-form-grid two">
+        ${catalog.map(bm => `
+          <label class="sx-field"><span>${t(bm.short || bm.name)} <small>${bm.unit}</small></span>
+            <input type="number" step="${bm.id === 'calcium' ? '0.1' : '1'}" min="0" inputmode="decimal" id="sxLab_${bm.id}">
+          </label>`).join('')}
+      </div>`, 'saveLab', t('Add blood test')) : '';
+
+    if (!labs.length) {
+      return `
+        <div class="st-card sx-card">
+          ${sxHead('barchart', t('Blood tests'), t('These tests show if your body can build bone.'))}
+          ${form || `
+            <div class="sx-empty">
+              <span class="sx-empty-icon">🩸</span>
+              <b>${t('No blood test saved yet')}</b>
+              <p>${t('Ask your doctor for these tests:')}</p>
+              <div class="sx-pills">${catalog.map(bm => `<span>${img3d(bm.img || 'barchart', '', 20)} ${t(bm.short || bm.name)}</span>`).join('')}</div>
+              <button type="button" class="psx-act primary" onclick="BoneApp.openStrengthenForm('lab')"><i class="fa-solid fa-plus"></i> ${t('Add blood test')}</button>
+            </div>`}
+        </div>`;
+    }
+
+    return `
+      <div class="st-card sx-card">
+        ${sxHead('barchart', t('Blood tests'), fmtRecordDate(labs[0].date), formOpen ? '' : sxAddBtn('lab', t('Add')))}
+        ${form}
+        <div class="sx-labs">
+          ${catalog.map((bm, i) => {
+            const hist = labHistory(bm.id);
+            if (!hist.length) {
+              return `<div class="sx-lab none" style="--i:${i}"><div class="sx-lab-top">${img3d(bm.img || 'barchart', '', 36)}<b>${t(bm.short || bm.name)}</b></div><p class="sx-lab-tip">${t('Not tested yet')}</p></div>`;
+            }
+            const v = hist[0].value;
+            const { st, tip } = labCardState(bm, v);
+            const prev = hist[1];
+            const change = prev ? (v > prev.value ? `↑ ${t('from {0}', { 0: prev.value })}` : v < prev.value ? `↓ ${t('from {0}', { 0: prev.value })}` : t('No change')) : '';
+            return `
+              <div class="sx-lab" style="--i:${i}; --c:${st.color}">
+                <div class="sx-lab-top">
+                  ${img3d(bm.img || 'barchart', '', 36)}
+                  <b>${t(bm.short || bm.name)}</b>
+                  <span class="sx-lab-chip">${st.icon} ${t(st.text)}</span>
+                </div>
+                <div class="sx-lab-val"><b>${v}</b> <small>${bm.unit}</small>${change ? `<em>${change}</em>` : ''}</div>
+                <p class="sx-lab-tip">${t(tip)}</p>
+              </div>`;
+          }).join('')}
+        </div>
+        ${recordHistoryHtml(labs, l => catalog.filter(bm => isNum(l[bm.id])).map(bm => `${t(bm.short || bm.name)} ${l[bm.id]}`).join(' · '), l => {
+          const tones = catalog.filter(bm => isNum(l[bm.id])).map(bm => (bm.ranges[labStatusIndex(bm.id, l[bm.id])] || {}).status);
+          return tones.includes('high') ? 'bad' : tones.includes('low') ? 'warn' : 'good';
+        }, 'deleteLab')}
+      </div>`;
+  }
+
+  // ---------------------------------------------------------------- 3. Medicines
+  function medKind(id) {
+    return MED_KINDS.find(k => k.id === id) || MED_KINDS[MED_KINDS.length - 1];
+  }
+
+  function medsDueOn(iso) {
+    const weekday = new Date(`${iso}T00:00:00`).getDay();
+    return (state.meds || []).filter(m => !m.weekly || m.weekday === weekday);
+  }
+
+  function minutesOf(hhmm) {
+    const [h, m] = String(hhmm || '00:00').split(':').map(Number);
+    return (h || 0) * 60 + (m || 0);
+  }
+
+  function renderMedsTimingSubTab() {
+    const today = getTodayISODate();
+    const due = medsDueOn(today).slice().sort((a, b) => minutesOf(a.time) - minutesOf(b.time));
+    const later = (state.meds || []).filter(m => !due.includes(m));
+    const taken = new Set(state.medTaken[today] || []);
+    const formOpen = state.strengthenForm === 'med';
+    const draft = state.medDraft || MED_KINDS[0];
+    const form = formOpen ? strengthenFormHtml(`
+      <div class="sx-kind-chips">
+        ${MED_KINDS.map(k => `<button type="button" class="${draft.id === k.id ? 'on' : ''}" onclick="BoneApp.pickMedKind('${k.id}')">${k.icon} ${t(k.name)}</button>`).join('')}
+      </div>
+      <div class="sx-form-grid two">
+        <label class="sx-field"><span>${t('Medicine name')}</span><input type="text" id="sxMedName" maxlength="40" value="${escapeHtml(t(draft.name))}"></label>
+        <label class="sx-field"><span>${t('Time')}</span><input type="time" id="sxMedTime" value="${draft.time}"></label>
+      </div>
+      <label class="sx-check"><input type="checkbox" id="sxMedWeekly" ${draft.weekly ? 'checked' : ''}> ${t('Once a week (on this day of the week)')}</label>`, 'saveMed', t('Add medicine')) : '';
+
+    const weekdayName = m => I18N.date(new Date(2024, 0, 7 + (m.weekday || 0)), { weekday: 'long' });
+    const medRow = (m, isDue) => {
+      const k = medKind(m.kind);
+      const done = taken.has(m.id);
+      return `
+        <li class="sx-med-row ${done ? 'done' : ''} ${isDue ? '' : 'later'}">
+          <em>${k.icon}</em>
+          <span><b>${escapeHtml(m.name)}</b><small>${m.time}${m.weekly ? ` · ${t('Every {day}', { day: weekdayName(m) })}` : ''}</small></span>
+          ${isDue ? `<button type="button" class="sx-taken ${done ? 'on' : ''}" onclick="BoneApp.toggleMedTaken('${m.id}')" aria-pressed="${done}"><i class="fa-solid fa-check"></i> ${done ? t('Taken') : t('Take')}</button>` : ''}
+          <button type="button" class="sx-del" onclick="BoneApp.deleteMed('${m.id}')" aria-label="${escapeHtml(t('Delete'))}"><i class="fa-solid fa-trash-can"></i></button>
+        </li>`;
+    };
+
+    const listCard = (state.meds || []).length ? `
+      <div class="st-card sx-card">
+        ${sxHead('pill', t('Today’s medicines'), t('{0} of {1} taken today', { 0: due.filter(m => taken.has(m.id)).length, 1: due.length }), formOpen ? '' : sxAddBtn('med', t('Add')))}
+        ${form}
+        <ul class="sx-med-list">${due.map(m => medRow(m, true)).join('')}</ul>
+        ${later.length ? `<p class="sx-label">${t('Not due today')}</p><ul class="sx-med-list">${later.map(m => medRow(m, false)).join('')}</ul>` : ''}
+      </div>` : `
+      <div class="st-card sx-card">
+        ${sxHead('pill', t('My medicines'), t('Tick each tablet when you take it, so you never miss one.'))}
+        ${form || `
+          <div class="sx-empty">
+            <span class="sx-empty-icon">💊</span>
+            <b>${t('No medicines added yet')}</b>
+            <p>${t('Add the tablets you take, like calcium, vitamin D or a thyroid pill.')}</p>
+            <button type="button" class="psx-act primary" onclick="BoneApp.openStrengthenForm('med')"><i class="fa-solid fa-plus"></i> ${t('Add medicine')}</button>
+          </div>`}
+      </div>`;
+
+    return listCard + medTipsHtml() + `
+      <div class="st-card sx-card">
+        ${sxHead('milk', t('Which calcium tablet?'))}
+        <div class="sx-duo">
+          <div class="sx-duo-card good">
+            <b>${t('Calcium citrate (CCM)')}</b>
+            <span>✅ ${t('Take any time')}</span>
+            <span>✅ ${t('Gentle on the stomach')}</span>
+          </div>
+          <div class="sx-duo-card">
+            <b>${t('Calcium carbonate')}</b>
+            <span>🍽️ ${t('Take right after a meal')}</span>
+            <span>💨 ${t('May cause gas')}</span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Tips that only show when they apply to the medicines the user added.
+  function medTipsHtml() {
+    const meds = state.meds || [];
+    const thyroid = meds.find(m => m.kind === 'thyroid');
+    const calcium = meds.filter(m => m.kind === 'calcium');
+    const bone = meds.find(m => m.kind === 'bone');
+    const vitd = meds.find(m => m.kind === 'vitd');
+    const tips = [];
+
+    if (thyroid) {
+      const safeMin = (minutesOf(thyroid.time) + 240) % 1440;
+      const safe = `${String(Math.floor(safeMin / 60)).padStart(2, '0')}:${String(safeMin % 60).padStart(2, '0')}`;
+      const tooClose = calcium.filter(c => {
+        const gap = (minutesOf(c.time) - minutesOf(thyroid.time) + 1440) % 1440;
+        return gap < 240 || gap > 1440 - 60;
+      });
+      tips.push(`
+        <div class="st-card sx-card">
+          ${sxHead('thyroid', t('Thyroid pill & calcium'), t('Calcium blocks the thyroid pill. Keep {0} hours apart.', { 0: 4 }))}
+          <div class="sx-timeline">
+            <div class="sx-tl-step"><span class="sx-tl-emoji">🦋</span><b class="plain">${thyroid.time}</b><small>${t('Thyroid pill')}</small></div>
+            <div class="sx-tl-gap"><span>⏳ ${t('{0} hours', { 0: 4 })}</span></div>
+            <div class="sx-tl-step ok"><span class="sx-tl-emoji">🥛</span><b>${safe}</b><small>${t('Calcium & milk')}</small></div>
+          </div>
+          ${tooClose.length
+            ? `<div class="psx-note warn"><span>⚠️</span><b>${t('Your calcium at {0} is too close to your thyroid pill. Take it at {1} or later.', { 0: tooClose[0].time, 1: safe })}</b></div>`
+            : calcium.length ? `<div class="psx-note good"><span>✅</span><b>${t('Good gap between your thyroid pill and calcium.')}</b></div>` : ''}
+        </div>`);
+    }
+    if (bone) {
+      const p = (BONE_SIP_DATA.prescriptionTherapiesCatalog || [])[0] || {};
+      tips.push(`
+        <div class="st-card sx-card">
+          ${sxHead('shield', t('Your weekly bone medicine'), t('Follow these steps every time.'))}
+          <div class="sx-rules">${(p.rulesShort || []).map(r => `<span><em>${r.icon}</em>${t(r.text)}</span>`).join('')}</div>
+        </div>`);
+    }
+    if (vitd) {
+      tips.push(`<div class="psx-note sx-tip"><span>☀️</span><b>${t('Take vitamin D with a meal. It is absorbed better with some fat.')}</b></div>`);
+    }
+    return tips.join('');
+  }
+
+  // ---------------------------------------------------------------- 4. Spine
+  function renderSpineSafetySubTab() {
+    const h25 = parseInt(state.spineInputs.heightAge25, 10);
+    const hNow = parseInt(state.spineInputs.heightCurrent || state.userProfile.heightCm, 10);
+    const hasBoth = !isNaN(h25) && !isNaN(hNow);
+    const loss = hasBoth ? Math.max(0, h25 - hNow) : 0;
+
+    let tone = 'good', emoji = '✅', msg = t('Normal. Nothing to worry about.');
+    if (loss >= 4) { tone = 'bad'; emoji = '🩻'; msg = t('Ask your doctor for a spine X-ray.'); }
+    else if (loss >= 2) { tone = 'warn'; emoji = '⚠️'; msg = t('Watch your posture. Do back exercises.'); }
+
+    const moves = BONE_SIP_DATA.safeMovementFlashcards || [];
+    const steps = BONE_SIP_DATA.emergencyFallSteps || [];
+
+    return `
+      <div class="st-card sx-card">
+        ${sxHead('standing', t('Height check'), t('Losing height can mean a hidden spine fracture.'))}
+        <div class="sx-height">
+          <label class="sx-hbox"><span>${t('At age 25')}</span><input type="number" inputmode="numeric" placeholder="cm" value="${isNaN(h25) ? '' : h25}" onchange="BoneApp.setSpineHeight('heightAge25', this.value)"><small>cm</small></label>
+          <span class="sx-harrow">→</span>
+          <label class="sx-hbox"><span>${t('Now')}</span><input type="number" inputmode="numeric" placeholder="cm" value="${isNaN(hNow) ? '' : hNow}" onchange="BoneApp.setSpineHeight('heightCurrent', this.value)"><small>cm</small></label>
+        </div>
+        ${hasBoth ? `
+          <div class="sx-result ${tone} slim">
+            <div class="sx-big"><b>${loss}</b><span>${t('cm lost')}</span></div>
+            <div class="sx-result-body"><span class="sx-status ${tone}">${emoji} ${msg}</span></div>
+          </div>` : `<div class="psx-note"><span>📏</span><b>${t('Enter your height at age 25 (or the tallest you remember) to check.')}</b></div>`}
+      </div>
+
+      <div class="st-card sx-card">
+        ${sxHead('shield', t('Move safely'), t('Small changes protect your spine.'))}
+        <div class="sx-moves">
+          ${moves.map((m, i) => `
+            <div class="sx-move" style="--i:${i}">
+              <div class="sx-move-top">${img3d(m.img || 'biceps', '', 36)}<b>${t(m.title || m.activity)}</b></div>
+              <div class="sx-dont"><span>✕</span>${t(m.dont || m.danger)}</div>
+              <div class="sx-do"><span>✓</span>${t(m.do || m.safe)}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="st-card sx-card">
+        ${sxHead('warning', t('If you fall'))}
+        <ol class="sx-steps">
+          ${steps.map((s, i) => `
+            <li style="--i:${i}"><em>${s.icon || s.step}</em><span>${t(s.short || s.title)}</span></li>`).join('')}
+        </ol>
+        <a class="sx-call" href="tel:108"><i class="fa-solid fa-phone"></i> ${t('Call {0} for an ambulance', { 0: 108 })}</a>
+      </div>
+    `;
+  }
+
+  // ---------------------------------------------------------------- 5. Doctor visit
+  // Questions built only from what the user really entered.
+  function autoDoctorQuestions() {
+    const u = state.userProfile;
+    const conds = (u.healthConditions || []).filter(c => c !== 'none');
+    const age = Number(u.age) || 0;
+    const f = state.fraxInputs || {};
+    const anyRisk = Object.values(f).some(Boolean);
+    const low = scanLowest(latestScan());
+    const due = scanDue();
+    const vitD = labHistory('vit_d')[0];
+    const egfr = labHistory('egfr')[0];
+    const home = homeSafetySummary();
+    const meds = state.meds || [];
+    const ask = [];
+
+    if (low === null && (age >= 50 || anyRisk)) ask.push(['🩻', t('Do I need a bone density (DXA) scan?')]);
+    if (low !== null && low <= -2.5) ask.push(['💊', t('Should I start bone medicine? (T-score {0})', { 0: low.toFixed(1) })]);
+    else if (low !== null && low < -1) ask.push(['🦴', t('My bone density is low. How can I stop more bone loss?')]);
+    if (due && due.overdue) ask.push(['📅', t('Is it time for my next bone scan?')]);
+    if (anyRisk) ask.push(['🎯', t('I have risk factors for fractures. What is my 10-year fracture risk?')]);
+    if (!vitD) ask.push(['☀️', t('Should I check my vitamin D level?')]);
+    else if (vitD.value < 30) ask.push(['☀️', t('My vitamin D is {0}. Do I need D3 doses?', { 0: vitD.value })]);
+    if (conds.includes('thyroid') || meds.some(m => m.kind === 'thyroid')) ask.push(['⏰', t('How far apart should I take my thyroid pill and calcium?')]);
+    if (conds.includes('diabetes')) ask.push(['🩸', t('Does diabetes affect my bone strength?')]);
+    if (conds.includes('kidney') || (egfr && egfr.value < 60)) ask.push(['🫘', t('Are bone medicines safe for my kidneys?')]);
+    const hazards = home.rows.reduce((n, r) => n + r.fixes.length, 0);
+    if (hazards > 0) ask.push(['🏠', t('I have {0} fall risks at home. Can you check my balance?', { 0: hazards })]);
+    ask.push(['🥛', t('How much calcium daily? When is my next scan?')]);
+    return ask;
+  }
+
+  function renderDoctorBriefSubTab() {
+    const u = state.userProfile;
+    const low = scanLowest(latestScan());
+    const vitD = labHistory('vit_d')[0];
+    const home = homeSafetySummary();
+    const visit = state.doctorVisit || { date: '', questions: [] };
+    const today = getTodayISODate();
+    let visitNote = '';
+    if (visit.date && visit.date >= today) {
+      const days = Math.round((new Date(`${visit.date}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000);
+      visitNote = days === 0 ? t('Your visit is today') : t('In {0} days', { 0: days });
+    }
+
+    const stat = (img, label, value, color = '') => `
+      <div class="sx-stat">${img3d(img, '', 30)}<span>${label}</span><b${color ? ` style="color:${color}"` : ''}>${value}</b></div>`;
+    const tone = { good: '#1E9E62', warn: '#D97706', bad: '#B1315D' };
+
+    return `
+      <div class="st-card sx-card">
+        ${sxHead('calendar', t('Next doctor visit'))}
+        <div class="sx-visit">
+          <input type="date" value="${visit.date || ''}" min="${today}" onchange="BoneApp.setDoctorVisitDate(this.value)" aria-label="${escapeHtml(t('Next doctor visit'))}">
+          ${visitNote ? `<span class="sx-chip-line">⏰ ${visitNote}</span>` : `<span class="sx-hint">${t('Add the date so you can prepare.')}</span>`}
+        </div>
+      </div>
+
+      <div class="st-card sx-card">
+        ${sxHead('clipboard', t('Doctor visit'), t('Show this to your doctor.'))}
+        <div class="sx-stats">
+          ${stat('family', t('Age / BMI'), `${u.age || '—'} · ${calculateBMI()}`)}
+          ${stat('xray', t('Lowest T-score'), low === null ? t('No scan yet') : low.toFixed(1), low === null ? '' : tone[tScoreInfo(low).tone])}
+          ${stat('sun', t('Vitamin D'), vitD ? `${vitD.value}` : t('Not tested yet'), vitD ? (vitD.value < 30 ? '#D97706' : '#1E9E62') : '')}
+          ${stat('pill', t('Medicines'), `${(state.meds || []).length}`)}
+          ${stat('house', t('Home safety'), home.answered ? `${home.safe}/${home.total}` : t('Not checked yet'))}
+        </div>
+        <h4 class="psx-h"><span>💬</span> ${t('Ask your doctor')}</h4>
+        <ul class="sx-asks">
+          ${autoDoctorQuestions().map(([icon, text], i) => `<li style="--i:${i}"><em>${icon}</em><span>${text}</span></li>`).join('')}
+          ${(visit.questions || []).map((q, i) => `<li class="mine"><em>✍️</em><span>${escapeHtml(q)}</span>
+            <button type="button" class="sx-del" onclick="BoneApp.deleteDoctorQuestion(${i})" aria-label="${escapeHtml(t('Delete'))}"><i class="fa-solid fa-xmark"></i></button></li>`).join('')}
+        </ul>
+        <div class="sx-own-q">
+          <input type="text" id="sxOwnQuestion" maxlength="160" placeholder="${escapeHtml(t('Add your own question'))}" onkeydown="if(event.key==='Enter') BoneApp.addDoctorQuestion()">
+          <button type="button" class="psx-act" onclick="BoneApp.addDoctorQuestion()"><i class="fa-solid fa-plus"></i></button>
+        </div>
+        <div class="psx-actions">
+          <button type="button" class="psx-act primary" onclick="BoneApp.printDocument('doctor')">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+          </button>
+          <button type="button" class="psx-act" onclick="BoneApp.shareStrengthenBriefWhatsApp()">
+            <i class="fa-brands fa-whatsapp" style="color:#25D366"></i> ${t('Share')}
+          </button>
+          <button type="button" class="psx-act" onclick="BoneApp.askAiAboutStrengthenTopic('doctor')">
+            <img src="assets/images/ojas-avatar.svg" alt="" width="22" height="22"> ${t('Ask Ojas')}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---------------------------------------------------------------- Actions
+  function openStrengthenForm(form) {
+    playSound('tap');
+    state.strengthenForm = form;
+    if (form === 'med' && !state.medDraft) state.medDraft = MED_KINDS[0];
+    renderStrengthenHubView();
+    setTimeout(() => {
+      const first = document.querySelector('.sx-form input:not([type="date"]):not([type="checkbox"])');
+      if (first) first.focus();
+    }, 50);
+  }
+
+  function closeStrengthenForm() {
+    playSound('tap');
+    state.strengthenForm = null;
+    renderStrengthenHubView();
+  }
+
+  function formNumber(id, min, max) {
+    const el = document.getElementById(id);
+    if (!el || el.value.trim() === '') return null;
+    const n = parseFloat(el.value);
+    return isNaN(n) || n < min || n > max ? NaN : Math.round(n * 10) / 10;
+  }
+
+  function formDate(id) {
+    const el = document.getElementById(id);
+    const v = el ? el.value : '';
+    return /^\d{4}-\d{2}-\d{2}$/.test(v) && v <= getTodayISODate() ? v : getTodayISODate();
+  }
+
+  function saveScan() {
+    const scan = { id: newRecordId('s'), date: formDate('sxScanDate') };
+    T_SITES.forEach(([key]) => { scan[key] = formNumber(`sxScan_${key}`, -6, 4); });
+    const vals = T_SITES.map(([key]) => scan[key]);
+    if (vals.some(v => Number.isNaN(v))) {
+      showToast(t('T-scores are usually between -5 and +3. Please check the numbers.'), 'fa-triangle-exclamation');
+      return;
+    }
+    if (vals.every(v => v === null)) {
+      showToast(t('Enter at least one T-score'), 'fa-circle-info');
+      return;
+    }
+    playSound('success');
+    state.scans.push(scan);
+    state.strengthenForm = null;
+    BoneDB.save();
+    renderStrengthenHubView();
+    showToast(t('Scan result saved'), 'fa-circle-check');
+  }
+
+  function saveLab() {
+    const lab = { id: newRecordId('l'), date: formDate('sxLabDate') };
+    const limits = { vit_d: [1, 200], calcium: [3, 20], alp: [5, 2000], egfr: [1, 200] };
+    (BONE_SIP_DATA.boneBiomarkersCatalog || []).forEach(bm => {
+      const [min, max] = limits[bm.id] || [0, 10000];
+      lab[bm.id] = formNumber(`sxLab_${bm.id}`, min, max);
+    });
+    const vals = Object.keys(limits).map(k => lab[k]);
+    if (vals.some(v => Number.isNaN(v))) {
+      showToast(t('One of the numbers looks wrong. Please check it.'), 'fa-triangle-exclamation');
+      return;
+    }
+    if (vals.every(v => v === null || v === undefined)) {
+      showToast(t('Enter at least one test result'), 'fa-circle-info');
+      return;
+    }
+    playSound('success');
+    state.labs.push(lab);
+    state.strengthenForm = null;
+    BoneDB.save();
+    renderStrengthenHubView();
+    showToast(t('Blood test saved'), 'fa-circle-check');
+  }
+
+  function deleteRecord(listName, id) {
+    if (!confirm(t('Delete this result?'))) return;
+    playSound('tap');
+    state[listName] = (state[listName] || []).filter(r => r.id !== id);
     BoneDB.save();
     renderStrengthenHubView();
   }
 
-  function shareDoctorReviewWhatsApp() {
+  function deleteScan(id) { deleteRecord('scans', id); }
+  function deleteLab(id) { deleteRecord('labs', id); }
+
+  function pickMedKind(kindId) {
     playSound('tap');
-    const questions = BONE_SIP_DATA.doctorReviewChecklist
-      .filter(q => state.strengthenDoctorChecked.has(q.id))
-      .map((q, idx) => `${idx + 1}. ${q.text}`);
-    if (!questions.length) {
-      showToast('Tick at least one question first', 'fa-circle-info');
+    state.medDraft = medKind(kindId);
+    renderStrengthenHubView();
+  }
+
+  function saveMed() {
+    const nameEl = document.getElementById('sxMedName');
+    const timeEl = document.getElementById('sxMedTime');
+    const weeklyEl = document.getElementById('sxMedWeekly');
+    const name = (nameEl ? nameEl.value : '').trim().slice(0, 40);
+    if (!name) {
+      showToast(t('Enter the medicine name'), 'fa-circle-info');
       return;
     }
-    const msg = [
-      '*BONE SIP — Questions for my doctor*',
+    const draft = state.medDraft || MED_KINDS[0];
+    playSound('success');
+    state.meds.push({
+      id: newRecordId('m'),
+      name,
+      kind: draft.id,
+      time: timeEl && /^\d{2}:\d{2}$/.test(timeEl.value) ? timeEl.value : draft.time,
+      weekly: !!(weeklyEl && weeklyEl.checked),
+      weekday: new Date().getDay()
+    });
+    state.strengthenForm = null;
+    state.medDraft = null;
+    BoneDB.save();
+    renderStrengthenHubView();
+    showToast(t('Medicine added'), 'fa-circle-check');
+  }
+
+  function deleteMed(id) {
+    if (!confirm(t('Remove this medicine?'))) return;
+    playSound('tap');
+    state.meds = state.meds.filter(m => m.id !== id);
+    BoneDB.save();
+    renderStrengthenHubView();
+  }
+
+  function toggleMedTaken(id) {
+    const today = getTodayISODate();
+    const set = new Set(state.medTaken[today] || []);
+    if (set.has(id)) set.delete(id);
+    else { set.add(id); playSound('check'); }
+    state.medTaken[today] = Array.from(set);
+    const due = medsDueOn(today);
+    if (due.length && due.every(m => set.has(m.id)) && set.has(id)) {
+      playSound('success');
+      showToast(t('All medicines taken today. Well done!'), 'fa-circle-check');
+    }
+    markDayForSync(today);
+    BoneDB.save();
+    renderStrengthenHubView();
+  }
+
+  function setDoctorVisitDate(value) {
+    state.doctorVisit.date = /^\d{4}-\d{2}-\d{2}$/.test(value || '') ? value : '';
+    BoneDB.save();
+    renderStrengthenHubView();
+  }
+
+  function addDoctorQuestion() {
+    const input = document.getElementById('sxOwnQuestion');
+    const text = (input ? input.value : '').trim().slice(0, 160);
+    if (!text) return;
+    playSound('check');
+    state.doctorVisit.questions = (state.doctorVisit.questions || []).concat(text).slice(-15);
+    BoneDB.save();
+    renderStrengthenHubView();
+  }
+
+  function deleteDoctorQuestion(index) {
+    playSound('tap');
+    state.doctorVisit.questions.splice(index, 1);
+    BoneDB.save();
+    renderStrengthenHubView();
+  }
+
+  function toggleFraxFactor(factorId) {
+    playSound('check');
+    if (!state.fraxInputs) state.fraxInputs = {};
+    state.fraxInputs[factorId] = !state.fraxInputs[factorId];
+    BoneDB.save();
+    renderStrengthenHubView();
+  }
+
+  function setSpineHeight(field, val) {
+    const num = parseInt(val, 10);
+    state.spineInputs[field] = !isNaN(num) && num >= 100 && num <= 230 ? num : '';
+    BoneDB.save();
+    renderStrengthenHubView();
+  }
+
+  function shareStrengthenBriefWhatsApp() {
+    playSound('tap');
+    const u = state.userProfile;
+    const scan = latestScan();
+    const low = scanLowest(scan);
+    const vitD = labHistory('vit_d')[0];
+    const lines = [
+      '*BONE SIP: My bone health summary*',
+      `${u.fullName || 'Me'} · ${u.age || '—'} years · BMI ${calculateBMI()}`,
       '',
-      ...questions,
+      scan && low !== null
+        ? `*DXA scan (${scan.date || 'date not saved'}):* lowest T-score ${low.toFixed(1)}${T_SITES.filter(([k]) => isNum(scan[k])).map(([k, n]) => ` · ${n} ${scan[k]}`).join('')}`
+        : '*DXA scan:* none saved yet',
+      vitD ? `*Vitamin D:* ${vitD.value} ng/mL (${vitD.date || 'date not saved'})` : '*Vitamin D:* not tested yet',
+      (state.meds || []).length ? `*Medicines:* ${state.meds.map(m => `${m.name} ${m.time}${m.weekly ? ' weekly' : ''}`).join(', ')}` : '',
+      '',
+      '*Questions for my doctor:*',
+      ...autoDoctorQuestions().map(([, q], i) => `${i + 1}. ${q}`),
+      ...(state.doctorVisit.questions || []).map((q, i) => `${autoDoctorQuestions().length + i + 1}. ${q}`),
       '',
       'Invest in Bones. Invest in Life.'
-    ].join('\n');
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+    ].filter(line => line !== null);
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(lines.join('\n'))}`, '_blank', 'noopener');
+  }
+
+  function askAiAboutStrengthenTopic(topic) {
+    playSound('tap');
+    toggleChatDrawer();
+    const low = scanLowest(latestScan());
+    const vitD = labHistory('vit_d')[0];
+    let query = 'What should I discuss with my doctor about my bone health?';
+    if (topic === 'doctor') {
+      query = low !== null
+        ? `My lowest DXA T-score is ${low.toFixed(1)}${vitD ? ` and my vitamin D is ${vitD.value} ng/mL` : ''}. What should I ask my doctor at my next visit?`
+        : 'I have not had a DXA bone scan yet. Do I need one, and what should I ask my doctor?';
+    }
+    const input = document.getElementById('chatTextInput');
+    if (input) {
+      input.value = query;
+      sendChatMessage();
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // MODULE: PRINTABLE DOCUMENTS (bone report + doctor visit summary)
+  // --------------------------------------------------------------------------
+  // "Save PDF" renders a proper A4 document into #printDoc and prints only that,
+  // rather than printing whatever is on screen.
+  function bmiCategory(bmi) {
+    if (isNaN(bmi)) return ['–', '#6B6580'];
+    return bmi < 18.5 ? ['Underweight', '#D97706'] : bmi < 25 ? ['Healthy', '#1E9E62'] : bmi < 30 ? ['Overweight', '#D97706'] : ['High', '#DC2626'];
+  }
+
+  function optionTitle(list, id) {
+    const o = (list || []).find(x => x.id === id);
+    return o ? o.title : '';
+  }
+
+  function maskedPhone() {
+    const phone = state.userProfile.phone || (state.auth && state.auth.phone) || '';
+    return phone ? `+91 ••••••${String(phone).slice(-4)}` : '—';
+  }
+
+  function homeSafetySummary() {
+    const rooms = BONE_SIP_DATA.protectHomeAuditRooms || [];
+    let safe = 0, total = 0, answered = 0;
+    const rows = rooms.map(room => {
+      const ans = state.protectHomeAuditAnswers[room.id] || {};
+      const fixes = room.questions.filter(q => ans[q.id] === 'no').map(q => q.text);
+      const yes = room.questions.filter(q => ans[q.id] === 'yes').length;
+      const done = room.questions.filter(q => ans[q.id]).length;
+      safe += yes; total += room.questions.length; answered += done;
+      return { name: room.name, yes, count: room.questions.length, done, fixes };
+    });
+    return { rows, safe, total, answered };
+  }
+
+  const pdSection = (num, title, inner, flow = false) => `
+    <section class="pd-sec${flow ? ' flow' : ''}">
+      <h2><span>${num}</span>${title}</h2>
+      ${inner}
+    </section>`;
+
+  const pdTable = (head, rows, cls = '') => `
+    <table class="pd-table ${cls}">
+      <thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>`;
+
+  const pdBar = (pct, color) => `<span class="pd-bar"><i style="width: ${Math.max(0, Math.min(100, pct))}%; background: ${color};"></i></span>`;
+
+  function pdPatientHtml() {
+    const u = state.userProfile;
+    const bmi = parseFloat(calculateBMI());
+    const conditions = (u.healthConditions || []).filter(c => c !== 'none')
+      .map(c => optionTitle(BONE_SIP_DATA.healthConditionOptions, c)).filter(Boolean);
+    const rows = [
+      ['Name', escapeHtml(u.fullName) || '—'],
+      ['Mobile', maskedPhone()],
+      ['Age', u.age ? `${escapeHtml(u.age)} years` : '—'],
+      ['Height · Weight', `${escapeHtml(u.heightCm)} cm · ${escapeHtml(u.weightKg)} kg`],
+      ['BMI', isNaN(bmi) ? '—' : `${bmi} <em style="color: ${bmiCategory(bmi)[1]};">${bmiCategory(bmi)[0]}</em>`],
+      ['Diet', formatDietName(u.diet)],
+      ['Activity', optionTitle(BONE_SIP_DATA.activityLevelOptions, u.activityLevel) || '—'],
+      ['Bone history', conditions.length ? conditions.join(', ') : 'None reported']
+    ];
+    return `<dl class="pd-kv">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
+  }
+
+  function pdShell({ title, intro, body }) {
+    const dateStr = I18N.date(new Date(), { day: 'numeric', month: 'long', year: 'numeric' });
+    // Table header/footer groups repeat on every printed page.
+    return `
+      <table class="pd-page">
+        <thead><tr><td>
+          <header class="pd-head">
+            <img src="assets/images/bonesip_logo_720.webp" alt="BONE SIP" width="130" height="52">
+            <div class="pd-head-meta"><b>${title}</b><span>${t('Prepared {date}', { date: dateStr })}</span></div>
+          </header>
+        </td></tr></thead>
+        <tfoot><tr><td>
+          <footer class="pd-foot">
+            <span>BONE SIP · Invest in Bones. Invest in Life.</span>
+            <span>For discussion with a doctor. Not a medical diagnosis.</span>
+          </footer>
+        </td></tr></tfoot>
+        <tbody><tr><td>
+          <h1 class="pd-title">${title}</h1>
+          <p class="pd-intro">${intro}</p>
+          ${body}
+        </td></tr></tbody>
+      </table>`;
+  }
+
+  function healthReportDocHtml() {
+    const todayISO = getTodayISODate();
+    const score = calculateDailyScore100(todayISO);
+    const bmi = parseFloat(calculateBMI());
+    const streak = state.activeStreakDays || 0;
+    const exTarget = getDailyExerciseTarget();
+
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const iso = toISODate(d);
+      const diet = Math.min(5, (state.checkedDietMilestones[iso] || new Set()).size);
+      const ex = Math.min(exTarget, (state.checkedExerciseMilestones[iso] || new Set()).size);
+      const pct = Math.round(Math.min(1, (diet / 5) * 0.6 + (ex / exTarget) * 0.4) * 100);
+      days.push([
+        `${I18N.date(d, { weekday: 'short', day: 'numeric', month: 'short' })}${i === 0 ? ` <em>(${t('today')})</em>` : ''}`,
+        `${diet} / 5`, `${ex} / ${exTarget}`, `${pdBar(pct, '#8E2C6A')} ${pct}%`
+      ]);
+    }
+
+    const parts = [
+      ['Diet milestones', 'Meals & calcium-rich foods ticked off', score.dietPts, 40, '#D6265A'],
+      ['Exercise', 'Bone-loading moves completed', score.exPts, 30, '#8E2C6A'],
+      ['Safety & sunlight', 'Home safety check + daily sunlight', score.safePts, 20, '#4A3F7A'],
+      ['Streak bonus', `${streak} day streak`, score.streakPts, 10, '#D97706']
+    ];
+
+    const risks = (BONE_SIP_DATA.boneRiskAuditFactors || []).filter(f => state.protectRiskChecked.has(f.id));
+    const risk = getRiskLevel(risks.length);
+    const home = homeSafetySummary();
+
+    const body = `
+      ${pdSection(1, 'Patient details', pdPatientHtml())}
+      ${pdSection(2, 'Summary', `
+        <div class="pd-kpis">
+          <div><span>Today's bone score</span><b>${score.total}<small> / 100</small></b><em>${score.tier}</em></div>
+          <div><span>Habit streak</span><b>${streak}<small> ${streak === 1 ? 'day' : 'days'}</small></b><em>Consecutive active days</em></div>
+          <div><span>Body mass index</span><b>${isNaN(bmi) ? '–' : bmi}</b><em style="color: ${bmiCategory(bmi)[1]};">${bmiCategory(bmi)[0]}</em></div>
+        </div>`)}
+      ${pdSection(3, 'Score breakdown (today)', pdTable(
+        ['Area', 'What it measures', 'Points', ''],
+        [...parts.map(([a, m, v, max, c]) => [`<b>${a}</b>`, m, `${v} / ${max}`, pdBar((v / max) * 100, c)]),
+         ['<b>Total</b>', '', `<b>${score.total} / 100</b>`, pdBar(score.total, '#2A2540')]],
+        'pd-score'))}
+      ${pdSection(4, 'Last 7 days', pdTable(['Day', 'Meals & sunlight', 'Exercises', 'Daily progress'], days, 'pd-week'), true)}
+      ${pdSection(5, 'Fall-risk check', `
+        <p class="pd-line"><b>${risks.length} of ${(BONE_SIP_DATA.boneRiskAuditFactors || []).length} warning signs</b> · <span class="pd-tag" style="--c: ${risk.color};">${risk.label} risk</span></p>
+        ${risks.length ? `<ul class="pd-list">${risks.map(r => `<li>${r.text}</li>`).join('')}</ul>` : '<p class="pd-muted">No warning signs noted.</p>'}`)}
+      ${pdSection(6, 'Home safety check', `
+        <p class="pd-line"><b>${home.safe} of ${home.total} checks safe</b>${home.answered < home.total ? ` · ${home.total - home.answered} not yet checked` : ''}</p>
+        ${pdTable(['Room', 'Safe', 'Needs attention'], home.rows.map(r => [
+          `<b>${r.name}</b>`, `${r.yes} / ${r.count}`,
+          r.fixes.length ? r.fixes.join('<br>') : (r.done ? '<span class="pd-muted">Nothing</span>' : '<span class="pd-muted">Not checked</span>')
+        ]))}`, true)}
+      ${pdSection(7, 'Discuss with your doctor', `
+        <ul class="pd-list">
+          <li>Your daily calcium target (often 1,000–1,200 mg)</li>
+          <li>A Vitamin D blood test (25-OH Vitamin D)</li>
+          <li>Whether you need a DXA bone density scan</li>
+          ${risks.length >= 2 ? `<li>The ${risks.length} fall-risk signs noted above</li>` : ''}
+        </ul>`)}
+      <p class="pd-note">The bone score is an estimate built from daily habits logged in BONE SIP (diet, exercise, home safety and sunlight). It does not measure bone density and is not a medical diagnosis.</p>`;
+
+    return pdShell({
+      title: 'Bone Health Report',
+      intro: 'A summary of daily bone-building habits, fall risk and home safety, recorded in the BONE SIP app.',
+      body
+    });
+  }
+
+  function doctorSummaryDocHtml() {
+    const questions = autoDoctorQuestions().map(([, text]) => ({ text }))
+      .concat((state.doctorVisit.questions || []).map(text => ({ text: escapeHtml(text) })));
+    const scans = byNewest(state.scans);
+    const labRow = (id, label, unit, ref) => {
+      const h = labHistory(id)[0];
+      return [`<b>${label}</b>`, h ? `${h.value} ${unit}` : '—', h && h.date ? fmtRecordDate(h.date) : '—', ref];
+    };
+    const u = state.userProfile;
+    const risks = (BONE_SIP_DATA.boneRiskAuditFactors || []).filter(f => state.protectRiskChecked.has(f.id));
+    const risk = getRiskLevel(risks.length);
+    const home = homeSafetySummary();
+    const conditions = (u.healthConditions || []).filter(c => c !== 'none')
+      .map(c => optionTitle(BONE_SIP_DATA.healthConditionOptions, c)).filter(Boolean);
+    const guide = BONE_SIP_DATA.dxaInterpretationGuide || { ranges: [] };
+    const dxaColors = ['#1E9E62', '#D97706', '#B1315D'];
+    const fixes = home.rows.flatMap(r => r.fixes.map(f => `${tr(r.name)}: ${tr(f)}`));
+
+    const body = `
+      ${pdSection(1, 'Patient details', pdPatientHtml())}
+      ${pdSection(2, 'My questions', `
+        <ol class="pd-qs">
+          ${questions.map(q => `
+            <li>
+              <b>${q.text}</b>
+              <div class="pd-write"><span>Doctor's answer</span><i></i><i></i></div>
+            </li>`).join('')}
+        </ol>`, true)}
+      ${pdSection(3, 'Things my doctor should know', pdTable(['Topic', 'Details'], [
+        ['<b>Bone history</b>', conditions.length ? conditions.join(', ') : 'None reported'],
+        ['<b>Fall-risk signs</b>', `${risks.length ? risks.map(r => r.text).join(', ') : 'None noted'} <span class="pd-tag" style="--c: ${risk.color};">${risk.label} risk</span>`],
+        ['<b>Home safety</b>', `${home.safe} of ${home.total} checks safe${fixes.length ? `<br><span class="pd-muted">${t('To fix: {list}', { list: fixes.join('; ') })}</span>` : ''}`],
+        ['<b>Activity</b>', optionTitle(BONE_SIP_DATA.activityLevelOptions, u.activityLevel) || '—'],
+        ['<b>Diet</b>', formatDietName(u.diet)]
+      ], 'pd-facts'), true)}
+      ${pdSection(4, 'My DXA scan results', `
+        ${scans.length ? pdTable(['Scan date', 'Spine', 'Hip neck', 'Total hip', 'Lowest'], scans.map(sc => [
+          `<b>${fmtRecordDate(sc.date)}</b>`,
+          ...['spine', 'neck', 'hip'].map(k => (isNum(sc[k]) ? sc[k].toFixed(1) : '—')),
+          scanLowest(sc) === null ? '—' : `<b>${scanLowest(sc).toFixed(1)}</b>`
+        ]), 'pd-fill') : '<p class="pd-muted">No DXA scan saved yet.</p>'}
+        <h3 class="pd-h3">Blood tests (latest)</h3>
+        ${pdTable(['Test', 'Result', 'Date', 'Usual range'], [
+          labRow('vit_d', '25-OH Vitamin D', 'ng/mL', '30–60 ng/mL'),
+          labRow('calcium', 'Serum calcium', 'mg/dL', '8.5–10.2 mg/dL'),
+          labRow('alp', 'Alkaline phosphatase (ALP)', 'IU/L', '40–129 IU/L'),
+          labRow('egfr', 'Kidney (eGFR)', 'mL/min', 'Above 60 mL/min')
+        ], 'pd-fill')}
+        ${(state.meds || []).length ? `<h3 class="pd-h3">Medicines I take</h3>${pdTable(['Medicine', 'When'], state.meds.map(m => [`<b>${escapeHtml(m.name)}</b>`, `${m.time}${m.weekly ? ' (once a week)' : ' (daily)'}`]), 'pd-fill')}` : ''}
+        <h3 class="pd-h3">How to read a T-score</h3>
+        ${pdTable(['T-score', 'Category', 'What it means'], guide.ranges.map((r, i) => [
+          `<b>${r.score.replace('T-Score ', '')}</b>`,
+          `<span class="pd-dot" style="--c: ${dxaColors[i] || '#6B6580'};"></span>${r.category}`,
+          r.meaning
+        ]), 'pd-dxa')}`, true)}
+      ${pdSection(5, 'Plan agreed with my doctor', `
+        <div class="pd-plan">
+          ${['Calcium target (mg/day)', 'Vitamin D (dose / test)', 'Medicines', 'Next DXA scan', 'Other tests', 'Next appointment']
+            .map(l => `<div><span>${l}</span><i></i></div>`).join('')}
+        </div>
+        <div class="pd-write tall"><span>Other notes</span><i></i><i></i></div>`)}`;
+
+    return pdShell({
+      title: 'Doctor Visit Summary',
+      intro: `${questions.length} ${questions.length === 1 ? 'question' : 'questions'} to discuss at my next visit, with the background my doctor may need.`,
+      body
+    });
+  }
+
+  async function printDocument(kind) {
+    playSound('tap');
+    const host = document.getElementById('printDoc');
+    if (!host) return;
+    host.innerHTML = kind === 'doctor' ? doctorSummaryDocHtml() : healthReportDocHtml();
+    // Make sure the logo is ready, or it prints blank.
+    await Promise.all(Array.from(host.querySelectorAll('img')).map(img => (img.decode ? img.decode().catch(() => {}) : null)));
+
+    const prevTitle = document.title;
+    // Browsers use the title as the suggested PDF file name.
+    document.title = `BONE SIP ${kind === 'doctor' ? 'Doctor Visit Summary' : 'Bone Health Report'} ${getTodayISODate()}`;
+    document.body.classList.add('printing-doc');
+    const cleanup = () => {
+      window.removeEventListener('afterprint', cleanup);
+      document.title = prevTitle;
+      setTimeout(() => document.body.classList.remove('printing-doc'), 500);
+    };
+    window.addEventListener('afterprint', cleanup);
+    window.print();
+  }
+
+  // --------------------------------------------------------------------------
+  // MODULE: LANGUAGE (English + 10 Indian languages, see js/i18n.js)
+  // --------------------------------------------------------------------------
+  // Picker copy is shown in the language being previewed, before it is applied.
+  const LANG_PICKER_COPY = {
+    en: ['Choose your language', 'You can change this anytime from the top bar.', 'Continue'],
+    hi: ['अपनी भाषा चुनें', 'इसे आप कभी भी ऊपर की पट्टी से बदल सकते हैं।', 'आगे बढ़ें'],
+    bn: ['আপনার ভাষা বেছে নিন', 'উপরের বার থেকে যেকোনো সময় এটি বদলাতে পারবেন।', 'এগিয়ে চলুন'],
+    mr: ['तुमची भाषा निवडा', 'वरच्या पट्टीतून ही भाषा कधीही बदलता येईल.', 'पुढे चला'],
+    te: ['మీ భాషను ఎంచుకోండి', 'పై పట్టీ నుండి దీన్ని ఎప్పుడైనా మార్చవచ్చు.', 'కొనసాగించండి'],
+    ta: ['உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்', 'மேலே உள்ள பட்டையிலிருந்து இதை எப்போது வேண்டுமானாலும் மாற்றலாம்.', 'தொடரவும்'],
+    gu: ['તમારી ભાષા પસંદ કરો', 'ઉપરની પટ્ટીમાંથી તમે તેને ગમે ત્યારે બદલી શકો છો.', 'આગળ વધો'],
+    kn: ['ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ', 'ಮೇಲಿನ ಪಟ್ಟಿಯಿಂದ ಇದನ್ನು ಯಾವಾಗ ಬೇಕಾದರೂ ಬದಲಾಯಿಸಬಹುದು.', 'ಮುಂದುವರಿಸಿ'],
+    ml: ['നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക', 'മുകളിലെ ബാറിൽ നിന്ന് ഇത് എപ്പോൾ വേണമെങ്കിലും മാറ്റാം.', 'തുടരുക'],
+    pa: ['ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ', 'ਤੁਸੀਂ ਇਸਨੂੰ ਕਦੇ ਵੀ ਉੱਪਰਲੀ ਪੱਟੀ ਤੋਂ ਬਦਲ ਸਕਦੇ ਹੋ।', 'ਅੱਗੇ ਵਧੋ'],
+    or: ['ଆପଣଙ୍କ ଭାଷା ବାଛନ୍ତୁ', 'ଉପର ପଟିରୁ ଏହାକୁ ଯେକୌଣସି ସମୟରେ ବଦଳାଇ ପାରିବେ।', 'ଆଗକୁ ବଢ଼ନ୍ତୁ']
+  };
+  let langPickerChoice = 'en';
+  let langPickerThen = null;
+
+  function openLanguagePicker(opts = {}) {
+    const el = document.getElementById('langPicker');
+    if (!el) return;
+    if (!opts.firstRun) playSound('tap');
+    langPickerChoice = I18N.current();
+    langPickerThen = typeof opts.then === 'function' ? opts.then : null;
+    el.classList.toggle('first-run', !!opts.firstRun);
+    renderLanguagePicker();
+    el.hidden = false;
+    document.body.classList.add('lang-open');
+    requestAnimationFrame(() => el.classList.add('open'));
+    const sel = el.querySelector('.lang-option.selected');
+    if (sel) setTimeout(() => sel.focus({ preventScroll: true }), 50);
+  }
+
+  function renderLanguagePicker() {
+    const grid = document.getElementById('langGrid');
+    if (grid) {
+      grid.innerHTML = I18N.LANGS.map(l => `
+        <button type="button" class="lang-option ${l.code === langPickerChoice ? 'selected' : ''}" lang="${l.code}" onclick="BoneApp.pickLanguage('${l.code}')" aria-pressed="${l.code === langPickerChoice}">
+          <span class="lang-glyph" aria-hidden="true">${l.glyph}</span>
+          <span class="lang-names"><b>${l.native}</b>${l.code === 'en' ? '' : `<small>${l.name}</small>`}</span>
+          <span class="lang-tick" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+        </button>`).join('');
+    }
+    const copy = LANG_PICKER_COPY[langPickerChoice] || LANG_PICKER_COPY.en;
+    const set = (id, text) => { const el = document.getElementById(id); if (el) { el.textContent = text; el.lang = langPickerChoice; } };
+    set('langPickerTitle', copy[0]);
+    set('langPickerSub', copy[1]);
+    set('langContinueLabel', copy[2]);
+  }
+
+  function pickLanguage(code) {
+    playSound('tap');
+    langPickerChoice = code;
+    renderLanguagePicker();
+  }
+
+  function confirmLanguage() {
+    playSound('success');
+    const then = langPickerThen;
+    const btn = document.getElementById('langContinueBtn');
+    if (btn) btn.disabled = true;
+    I18N.setLanguage(langPickerChoice).then(() => {
+      if (btn) btn.disabled = false;
+      closeLanguagePicker(true);
+      if (then) then();
+    });
+  }
+
+  function closeLanguagePicker(silent) {
+    const el = document.getElementById('langPicker');
+    if (!el || el.hidden) return;
+    // The first-run picker can't be dismissed without choosing.
+    if (!silent && el.classList.contains('first-run')) return;
+    if (!silent) playSound('tap');
+    el.classList.remove('open');
+    document.body.classList.remove('lang-open');
+    setTimeout(() => { el.hidden = true; }, 220);
+  }
+
+  function updateHeaderLangButton() {
+    const label = document.getElementById('headerLangLabel');
+    const lang = I18N.language ? I18N.language() : null;
+    if (label) label.textContent = lang ? lang.native : 'English';
+  }
+
+  // The reply language Ojas uses: the chat's own choice, else the app language.
+  function chatReplyLanguage() {
+    if (state.chatLanguage && state.chatLanguage !== 'auto') return state.chatLanguage;
+    return I18N.current() !== 'en' ? I18N.current() : 'auto';
+  }
+
+  // Re-render everything built with t()/dates so it switches language too.
+  function onLanguageChanged() {
+    updateHeaderLangButton();
+    renderPillarBottomNav();
+    updateHeaderProfileBadge();
+    const view = document.body.dataset.view;
+    if (view === 'assessment') renderAssessmentStage();
+    else if (view === 'build') switchBuildSubTab(state.activeBuildSubTab || 'diet', true);
+    else if (view === 'protect') renderProtectHubView();
+    else if (view === 'strengthen') renderStrengthenHubView();
+    const tour = document.getElementById('appOnboardingOverlay');
+    if (tour && tour.style.display === 'flex') renderOnboardingCarousel();
+    const report = document.getElementById('progressiveReportModal');
+    if (report && report.style.display === 'flex') generateProgressiveHealthReport();
+    // A chat that only holds the greeting starts again in the new language.
+    if ((state.chatHistory || []).every(m => m.greeting)) state.chatHistory = [];
+    if (state.isChatDrawerOpen) {
+      renderChatLanguageSelect();
+      renderChatContextStrip();
+      renderQuickChips();
+      if (!state.chatHistory.length) initChatbotGreeting();
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -4125,6 +6595,8 @@
     updateHeaderProfileBadge();
     syncCoachToggle();
     setupOnboardingSwipe();
+    updateHeaderLangButton();
+    document.addEventListener('bonesip:language', onLanguageChanged);
 
     const splash = document.getElementById('appSplashScreen');
     if (hadSavedData && hasExistingJourney()) {
@@ -4143,6 +6615,8 @@
         e.target.click();
       }
       if (e.key === 'Escape') {
+        const picker = document.getElementById('langPicker');
+        if (picker && !picker.hidden) { closeLanguagePicker(); return; }
         const playerEl = document.getElementById('workoutPlayer');
         if (playerEl && !playerEl.hidden) {
           closePlayer(player.phase === 'done');
@@ -4176,6 +6650,13 @@
       }
     });
 
+    // Account sync: catch up on start, when back online, and when the app is put away.
+    scheduleCloudSync(1500);
+    window.addEventListener('online', () => scheduleCloudSync(500));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && isCloudUser()) syncToCloud();
+    });
+
     registerServiceWorker();
   }
 
@@ -4183,6 +6664,10 @@
   window.BoneApp = {
     startOnboardingTour,
     skipOnboarding,
+    openLanguagePicker,
+    pickLanguage,
+    confirmLanguage,
+    closeLanguagePicker,
     nextOnboardingSlide,
     goToOnboardingSlide,
 
@@ -4215,6 +6700,8 @@
     autofillInlineOTP,
     handleInlineOtpInput,
     verifyInlineOTP,
+    changeAuthPhone,
+    handleAuthBack,
     completeProtectAssessment,
     completeStrengthenAssessment,
 
@@ -4233,11 +6720,13 @@
     openWorkoutTimerModal,
     selectExerciseGroup,
     openExerciseDetail,
+    renderExerciseDetail,
     closeExerciseDetail,
     startDetailExercise,
     adjustExerciseDuration,
     startWorkout,
     playerTogglePause,
+    playerCompleteCurrent,
     playerSkip,
     playerAddRest,
     closePlayer,
@@ -4250,8 +6739,12 @@
 
     selectHubRoom,
     setHubRoomAnswer,
+    renderProtectHubView,
     toggleHubDoctor,
     shareDoctorReviewWhatsApp,
+    setChatLanguage,
+    runAssistantAction,
+    printDocument,
 
     // Meal Swap System
     openMealSwapModal,
@@ -4294,12 +6787,52 @@
     saveUserProfileModal,
     exportDatabaseJSON,
     resetDatabase,
+    openLogin,
+    cancelLogin,
+    logout,
+    deleteAccount,
+    openHistoryModal,
+    closeHistoryModal,
+    shiftHistoryMonth,
+    selectHistoryDay,
 
     // AI Chatbot
     toggleChatDrawer,
     closeChatDrawer,
     clearChatHistory,
-    sendChatMessage
+    sendChatMessage,
+    generateBotResponse,
+
+    // Protect Precaution Suggestion & Safety Risk Analysis
+    completeBuildPillar,
+    dismissProtectBanner,
+    renderProtectSuggestionBanner,
+    renderProtectSafetyAnalysis,
+    shareProtectSafetyWhatsApp,
+    askAiAboutFallSafety,
+    markHazardFixed,
+    scrollToRoomCheck,
+
+    // Strengthen Clinical Medical & Bone Care Portal (V3.5)
+    switchStrengthenSubTab,
+    renderStrengthenHubView,
+    toggleFraxFactor,
+    setSpineHeight,
+    openStrengthenForm,
+    closeStrengthenForm,
+    saveScan,
+    deleteScan,
+    saveLab,
+    deleteLab,
+    pickMedKind,
+    saveMed,
+    deleteMed,
+    toggleMedTaken,
+    setDoctorVisitDate,
+    addDoctorQuestion,
+    deleteDoctorQuestion,
+    shareStrengthenBriefWhatsApp,
+    askAiAboutStrengthenTopic
   };
 
   // Run on DOM Ready

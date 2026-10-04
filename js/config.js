@@ -14,6 +14,18 @@ window.BONE_SIP_CONFIG = {
     verifyUrl: ''
   },
 
+  // Accounts: real phone login, saving to the user's account, history and the
+  // admin portal (server/accounts.js). If this host has no accounts API (static
+  // hosting, file://) the app falls back to the on-device demo login above.
+  accountsApi: '/api',
+
+  // AI assistant "Ojas". The browser only talks to this endpoint on our own server
+  // (server/server.js, netlify/functions/chat.js or api/chat.js), which holds the
+  // GROQ_API_KEY. Set endpoint to '' to use only the built-in offline answers.
+  assistant: {
+    endpoint: '/api/chat'
+  },
+
   // Registers sw.js for offline use. Disable while developing if caching gets in the way.
   enableServiceWorker: true
 };

@@ -9,4 +9,5 @@
 | BONE SIP logo & app icons | `assets/images/`, `assets/icons/` | Supplied by the BONE SIP team; app icons are derived from the logo | Proprietary |
 | Exercise demo videos | `assets/exercises/*.mp4` | Supplied with the project | Confirm usage rights before public launch |
 | Exercise thumbnails | `assets/exercises/posters/*.webp` | Frames extracted from the supplied exercise videos | Same as the videos |
-| Animated coach characters | `js/character.js` | Original vector rig made for BONE SIP, styled to match the coach videos | Proprietary (project code) |
+| Ojas assistant avatar | `assets/images/ojas-avatar.svg` | Drawn for BONE SIP | Proprietary |
+| AI answers (Ojas) | `server/assistant.js` → Groq API | Open-weight models served by [Groq](https://groq.com) (`openai/gpt-oss-120b`, `openai/gpt-oss-20b`, `qwen/qwen3.8-27b`) | Groq terms of service; mention Groq as a data processor in your privacy policy |

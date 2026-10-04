@@ -22,8 +22,12 @@
   <!-- Icons & PWA -->
   <link rel="icon" href="assets/icons/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
+  <!-- Languages: loaded first so a saved language is applied before the page shows -->
+  <script src="js/i18n.js?v=3.7.0"></script>
 
   <!-- Unified Global Typography: Outfit (geometric, modern, clean throughout entire app) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +39,7 @@
 
   <link rel="preload" as="image" href="assets/images/bonesip_logo_720.webp">
   <link rel="stylesheet" href="css/style.css?v=3.2.4">
-  <link rel="stylesheet" href="css/brand.css?v=3.2.4">
+  <link rel="stylesheet" href="css/brand.css?v=3.7.0">
 </head>
 <body class="portal-locked">
   <a class="skip-link" href="#mainContent">Skip to content</a>
@@ -90,13 +94,34 @@
   </div>
 
   <!-- =========================================================================
+       LANGUAGE PICKER (first visit after the splash, and from the top bar)
+       ========================================================================= -->
+  <div class="lang-overlay" id="langPicker" hidden role="dialog" aria-modal="true" aria-labelledby="langPickerTitle">
+    <div class="lang-card" translate="no">
+      <button class="lang-close" onclick="BoneApp.closeLanguagePicker()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      <div class="lang-head">
+        <span class="lang-head-icon" aria-hidden="true"><i class="fa-solid fa-language"></i></span>
+        <h2 id="langPickerTitle">Choose your language</h2>
+        <p id="langPickerSub">You can change this anytime from the top bar.</p>
+      </div>
+      <div class="lang-grid" id="langGrid" role="group" aria-labelledby="langPickerTitle"></div>
+      <div class="lang-footer">
+        <button class="cta-btn cta-lg lang-continue" id="langContinueBtn" onclick="BoneApp.confirmLanguage()"><span id="langContinueLabel">Continue</span> <i class="fa-solid fa-arrow-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
        ONBOARDING (3 visual slides)
        ========================================================================= -->
   <div class="onboarding-tour-overlay" id="appOnboardingOverlay" style="display: none;" role="dialog" aria-label="How BONE SIP works">
     <div class="onboarding-tour-container">
       <div class="onboarding-top-bar">
         <img src="assets/images/bonesip_logo_720.webp" alt="BONE SIP" class="onboarding-logo" width="720" height="289">
-        <button class="onboarding-skip-btn" onclick="BoneApp.skipOnboarding()">Skip</button>
+        <div class="onboarding-top-actions">
+          <button class="onboarding-skip-btn onboarding-login-btn" onclick="BoneApp.openLogin()"><i class="fa-solid fa-right-to-bracket"></i> Log in</button>
+          <button class="onboarding-skip-btn" onclick="BoneApp.skipOnboarding()">Skip</button>
+        </div>
       </div>
 
       <div class="onboarding-carousel-stage" id="onboardingCarousel"></div>
@@ -118,6 +143,9 @@
       </button>
 
       <div class="header-actions">
+        <button class="icon-pill lang-pill" id="headerLangBtn" onclick="BoneApp.openLanguagePicker()" title="Language" aria-label="Change language">
+          <i class="fa-solid fa-language" aria-hidden="true"></i> <span id="headerLangLabel" translate="no">English</span>
+        </button>
         <button class="icon-pill" onclick="BoneApp.openProgressiveReportModal()" title="My health report" aria-label="Open my health report">
           <img src="assets/icons3d/barchart.webp" alt="" width="22" height="22"> <span class="hide-mobile">Report</span>
         </button>
@@ -172,9 +200,10 @@
           <img class="i3d i3d-sm auth-lock" src="assets/icons3d/lock.webp" alt="" width="40" height="40">
         </div>
 
-        <span class="step-chip build"><i class="fa-solid fa-circle-check"></i> Build plan ready</span>
-        <h2 class="auth-title">Save your plan</h2>
-        <p class="auth-sub">Verify your mobile to keep your progress and unlock <b>Protect</b>.</p>
+        <button type="button" class="link-btn auth-back" id="authBackBtn" hidden onclick="BoneApp.handleAuthBack()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+        <span class="step-chip build" id="authStepChip"><i class="fa-solid fa-circle-check"></i> Build plan ready</span>
+        <h2 class="auth-title" id="authTitle">Save your plan</h2>
+        <p class="auth-sub" id="authSub">Verify your mobile to keep your progress and unlock Protect.</p>
 
         <!-- Step 1: phone -->
         <div id="inlineAuthPhoneStep">
@@ -196,11 +225,16 @@
 
         <!-- Step 2: OTP -->
         <div id="inlineAuthOtpStep" style="display: none;">
-          <p class="otp-sent" id="inlineOtpSentPhoneText">Enter the 6-digit code</p>
+          <div class="otp-sent-wrap">
+            <p class="otp-sent" id="inlineOtpSentPhoneText">Enter the 6-digit code</p>
+            <button type="button" class="btn-change-number" id="inlineChangePhoneBtn" onclick="BoneApp.changeAuthPhone()">
+              <i class="fa-solid fa-pen-to-square"></i> Change number
+            </button>
+          </div>
 
           <div class="sms-sim-bubble" id="inlineSmsSimBubble" style="display: none;">
             <i class="fa-solid fa-flask"></i>
-            <span>Demo mode — your code is <b id="inlineSimulatedOtpCodeText">849201</b></span>
+            <span><span id="inlineSmsSimLabel">Demo mode — your code is</span> <b id="inlineSimulatedOtpCodeText" translate="no">849201</b></span>
           </div>
 
           <div class="otp-box-grid">
@@ -241,6 +275,9 @@
       <!-- DIET -->
       <div id="buildSubViewDiet">
 
+        <!-- Protect Precaution Suggestion Prompt -->
+        <div id="protectSuggestionBannerContainer"></div>
+
         <!-- Today hero: score ring + streak -->
         <div class="today-hero">
           <div class="score-ring" id="scoreRing" style="--p: 0;" role="img" aria-label="Today's bone score">
@@ -272,10 +309,11 @@
 
         <!-- Week calendar -->
         <div class="calendar-date-nav-bar">
-          <div class="calendar-month-heading">
+          <button type="button" class="calendar-month-heading history-link" onclick="BoneApp.openHistoryModal()" title="My history">
             <img src="assets/icons3d/calendar.webp" alt="" width="22" height="22">
             <span id="calendarMonthYearText">This week</span>
-          </div>
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
           <div class="calendar-nav-controls">
             <button class="cal-nav-btn" onclick="BoneApp.prevCalendarWeek()" aria-label="Previous week"><i class="fa-solid fa-chevron-left"></i></button>
             <button class="cal-today-pill" onclick="BoneApp.jumpToTodayCalendar()">Today</button>
@@ -329,6 +367,7 @@
         </div>
 
         <!-- Meals -->
+        <div id="clinicalDietGuidanceContainer"></div>
         <div class="diet-milestones-container" id="dietMilestonesList"></div>
 
         <!-- Tips -->
@@ -344,8 +383,8 @@
         </div>
 
         <div class="ask-ai-card" onclick="BoneApp.toggleChatDrawer()" role="button" tabindex="0">
-          <img class="i3d i3d-md" src="assets/icons3d/robot.webp" alt="" width="44" height="44">
-          <div><b>Questions about your plan?</b><span>Ask Dr. Bone, your bone-health guide</span></div>
+          <img class="i3d i3d-md" src="assets/images/ojas-avatar.svg" alt="" width="44" height="44">
+          <div><b>Questions about your plan?</b><span>Ask Ojas, your AI bone-health assistant · 11 languages</span></div>
           <i class="fa-solid fa-chevron-right"></i>
         </div>
 
@@ -387,6 +426,9 @@
         <div class="room-audit-tabs" id="hubRoomTabs"></div>
         <div class="qa-list" id="hubRoomQuestionsList"></div>
       </div>
+
+      <!-- SAFETY RISK ANALYSIS & ACTION SUGGESTIONS AFTER COMPLETION -->
+      <div class="glass-card protect-safety-summary-card" id="protectSafetyAnalysisCard"></div>
     </section>
 
     <!-- =========================================================================
@@ -397,32 +439,42 @@
         <img class="i3d i3d-lg float" src="assets/icons3d/stethoscope.webp" alt="" width="72" height="72">
         <div>
           <span class="step-chip strengthen">Strengthen</span>
-          <h2>Talk to your doctor</h2>
-          <p>Take these questions to your next visit.</p>
+          <h2>Bone care &amp; scans</h2>
+          <p>Scans, tests and medicines made simple.</p>
         </div>
       </div>
 
-      <div class="glass-card">
-        <div class="card-head">
-          <h3><img src="assets/icons3d/clipboard.webp" alt="" width="28" height="28"> Ask your doctor</h3>
-          <div class="card-head-actions">
-            <button class="btn btn-sm btn-outline" onclick="BoneApp.shareDoctorReviewWhatsApp()" aria-label="Share on WhatsApp"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> <span class="hide-mobile">WhatsApp</span></button>
-            <button class="btn btn-sm btn-primary" onclick="window.print()" aria-label="Save as PDF"><i class="fa-solid fa-file-arrow-down"></i> <span class="hide-mobile">PDF</span></button>
-          </div>
-        </div>
-        <div class="qa-list" id="hubDoctorChecklist"></div>
+      <!-- STRENGTHEN SUB-TABS -->
+      <div class="sx-tabs" id="strengthenSubTabs" role="tablist" aria-label="Strengthen">
+        <button class="sx-tab active" id="stTab_dxa_risk" onclick="BoneApp.switchStrengthenSubTab('dxa_risk')" role="tab" aria-selected="true">
+          <img src="assets/icons3d/xray.webp" alt="" width="34" height="34">
+          <span>Scan</span>
+        </button>
+        <button class="sx-tab" id="stTab_labs_biomarkers" onclick="BoneApp.switchStrengthenSubTab('labs_biomarkers')" role="tab" aria-selected="false">
+          <img src="assets/icons3d/barchart.webp" alt="" width="34" height="34">
+          <span>Tests</span>
+        </button>
+        <button class="sx-tab" id="stTab_meds_timing" onclick="BoneApp.switchStrengthenSubTab('meds_timing')" role="tab" aria-selected="false">
+          <img src="assets/icons3d/pill.webp" alt="" width="34" height="34">
+          <span>Medicines</span>
+        </button>
+        <button class="sx-tab" id="stTab_spine_safety" onclick="BoneApp.switchStrengthenSubTab('spine_safety')" role="tab" aria-selected="false">
+          <img src="assets/icons3d/standing.webp" alt="" width="34" height="34">
+          <span>Spine</span>
+        </button>
+        <button class="sx-tab" id="stTab_doctor_brief" onclick="BoneApp.switchStrengthenSubTab('doctor_brief')" role="tab" aria-selected="false">
+          <img src="assets/icons3d/clipboard.webp" alt="" width="34" height="34">
+          <span>Doctor</span>
+        </button>
       </div>
 
-      <div class="glass-card">
-        <div class="card-head">
-          <h3><img src="assets/icons3d/xray.webp" alt="" width="28" height="28"> Your DXA T-score</h3>
-        </div>
-        <div class="tscore-scale" aria-hidden="true">
-          <div class="tscore-zone danger"><b>Osteoporosis</b><span>below −2.5</span></div>
-          <div class="tscore-zone warn"><b>Osteopenia</b><span>−1 to −2.5</span></div>
-          <div class="tscore-zone ok"><b>Normal</b><span>above −1</span></div>
-        </div>
-        <div class="dxa-list" id="hubDxaRangesList"></div>
+      <!-- ACTIVE SUB-TAB (rendered by renderStrengthenHubView) -->
+      <div id="strengthenContentContainer"></div>
+
+      <div class="ask-ai-card" onclick="BoneApp.askAiAboutStrengthenTopic('general')" role="button" tabindex="0">
+        <img class="i3d i3d-md" src="assets/images/ojas-avatar.svg" alt="" width="44" height="44">
+        <div><b>Questions about scans or medicines?</b><span>Ask Ojas, your AI bone-health assistant · 11 languages</span></div>
+        <i class="fa-solid fa-chevron-right"></i>
       </div>
     </section>
   </main>
@@ -494,6 +546,7 @@
       <div class="pl-bar"><i id="plBar"></i></div>
       <div class="pl-controls">
         <button class="cta-btn pl-main" id="plPauseBtn" onclick="BoneApp.playerTogglePause()"><i class="fa-solid fa-pause"></i> Pause</button>
+        <button class="pl-done-btn" onclick="BoneApp.playerCompleteCurrent()"><i class="fa-solid fa-circle-check"></i> Done</button>
         <button class="pl-skip" onclick="BoneApp.playerSkip()"><i class="fa-solid fa-forward-step"></i> Skip</button>
       </div>
       <p class="pl-safety"><i class="fa-solid fa-shield-heart"></i> <span id="plSafety"></span></p>
@@ -638,10 +691,32 @@
 
       <div id="progressiveReportContainer"></div>
 
+      <button type="button" class="ask-ai-card history-entry" onclick="BoneApp.openHistoryModal()">
+        <img class="i3d i3d-md" src="assets/icons3d/calendar.webp" alt="" width="44" height="44">
+        <div><b>My history</b><span>See any past day: meals eaten and moves done</span></div>
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+
       <div class="sheet-actions">
         <button class="btn btn-outline" onclick="BoneApp.shareProgressiveReportWhatsApp()"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> Share</button>
-        <button class="cta-btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Save PDF</button>
+        <button class="cta-btn" onclick="BoneApp.printDocument('report')"><i class="fa-solid fa-file-arrow-down"></i> Save PDF</button>
       </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MY HISTORY (rendered by renderHistory in app.js)
+       ========================================================================= -->
+  <div class="modal-backdrop" id="historyModal" style="display: none;">
+    <div class="modal-card modal-wide sheet history-sheet" role="dialog" aria-labelledby="historyTitle">
+      <div class="sheet-head">
+        <div class="report-title">
+          <img class="i3d i3d-md" src="assets/icons3d/calendar.webp" alt="" width="44" height="44">
+          <div><h3 id="historyTitle">My history</h3></div>
+        </div>
+        <button class="modal-close-btn" onclick="BoneApp.closeHistoryModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="historyBody"></div>
     </div>
   </div>
 
@@ -732,48 +807,53 @@
       </div>
 
       <button class="cta-btn btn-full" onclick="BoneApp.saveUserProfileModal()"><i class="fa-solid fa-check"></i> Save</button>
-      <div class="profile-data-actions">
+      <div class="profile-account" id="profileAccountBox"></div>
+      <div class="profile-data-actions" id="profileDataActions">
         <button class="link-btn" onclick="BoneApp.exportDatabaseJSON()"><i class="fa-solid fa-download"></i> Export my data</button>
-        <button class="link-btn danger" onclick="BoneApp.resetDatabase()"><i class="fa-solid fa-trash-can"></i> Reset</button>
+        <button class="link-btn danger" id="profileResetBtn" onclick="BoneApp.resetDatabase()"><i class="fa-solid fa-trash-can"></i> Reset</button>
       </div>
-      <p class="privacy-note"><i class="fa-solid fa-lock"></i> Your data stays on this device.</p>
+      <p class="privacy-note" id="profilePrivacyNote"><i class="fa-solid fa-lock"></i> Your data stays on this device.</p>
     </div>
   </div>
 
   <!-- =========================================================================
-       DR. BONE ASSISTANT
+       OJAS: AI ASSISTANT ("ojas" = vitality and strength in Sanskrit/Ayurveda)
        ========================================================================= -->
-  <button class="bone-ai-fab" id="boneAiFab" onclick="BoneApp.toggleChatDrawer()" aria-label="Chat with Dr. Bone">
+  <button class="bone-ai-fab" id="boneAiFab" onclick="BoneApp.toggleChatDrawer()" aria-label="Chat with Ojas, your AI assistant">
     <span class="fab-pulse-aura"></span>
-    <img src="assets/icons3d/robot.webp" alt="" width="34" height="34">
-    <span class="fab-label">Dr. Bone</span>
+    <img src="assets/images/ojas-avatar.svg" alt="" width="34" height="34">
+    <span class="fab-label">Ask Ojas</span>
   </button>
 
-  <div class="bone-chat-drawer" id="boneChatDrawer" style="display: none;" role="dialog" aria-label="Dr. Bone assistant">
+  <div class="bone-chat-drawer" id="boneChatDrawer" style="display: none;" role="dialog" aria-label="Ojas AI assistant">
     <div class="chat-header">
       <div class="chat-header-id">
         <div class="chat-bot-avatar">
-          <img src="assets/icons3d/robot.webp" alt="" width="30" height="30">
+          <img src="assets/images/ojas-avatar.svg" alt="" width="34" height="34">
           <span class="avatar-online-dot"></span>
         </div>
         <div>
-          <h4>Dr. Bone</h4>
-          <small>Bone &amp; nutrition guide</small>
+          <h4>Ojas <span class="ai-badge">AI</span></h4>
+          <small id="chatStatusText">Your bone-health assistant</small>
         </div>
       </div>
       <div class="chat-header-actions">
+        <label class="chat-lang" title="Reply language">
+          <i class="fa-solid fa-language" aria-hidden="true"></i>
+          <select id="chatLangSelect" onchange="BoneApp.setChatLanguage(this.value)" aria-label="Reply language"></select>
+        </label>
         <button class="chat-header-icon-btn" onclick="BoneApp.clearChatHistory()" aria-label="Clear chat"><i class="fa-solid fa-trash-can"></i></button>
         <button class="chat-header-icon-btn" onclick="BoneApp.closeChatDrawer()" aria-label="Close chat"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
     <div class="chat-context-strip" id="chatContextStrip"></div>
     <div class="chat-quick-chips" id="chatQuickChips"></div>
-    <div class="chat-messages-container" id="chatMessagesContainer" aria-live="polite"></div>
+    <div class="chat-messages-container" id="chatMessagesContainer" aria-live="polite" translate="no"></div>
     <div class="chat-input-bar">
-      <input type="text" id="chatTextInput" placeholder="Ask about meals, exercises, DXA…" maxlength="300" onkeydown="if(event.key==='Enter') BoneApp.sendChatMessage()">
+      <input type="text" id="chatTextInput" placeholder="Ask anything, in any language…" maxlength="500" enterkeyhint="send" onkeydown="if(event.key==='Enter') BoneApp.sendChatMessage()">
       <button class="chat-send-btn" onclick="BoneApp.sendChatMessage()" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
-    <p class="chat-disclaimer">General guidance only — not medical advice.</p>
+    <p class="chat-disclaimer">AI guidance, not medical advice. Your question and plan summary are sent to our AI provider to answer.</p>
   </div>
 
   <!-- Toast -->
@@ -781,12 +861,14 @@
     <span id="toastMessage"></span>
   </div>
 
+  <!-- Filled by BoneApp.printDocument(); only this prints when saving a PDF -->
+  <div id="printDoc" class="print-doc" aria-hidden="true"></div>
+
   <noscript><div class="noscript">BONE SIP needs JavaScript to run.</div></noscript>
 
   <script src="js/vendor/confetti.browser.min.js" defer></script>
-  <script src="js/config.js?v=3.2.4"></script>
-  <script src="js/data.js?v=3.2.4"></script>
-  <script src="js/character.js?v=3.2.4"></script>
-  <script src="js/app.js?v=3.2.4"></script>
+  <script src="js/config.js?v=3.6.0"></script>
+  <script src="js/data.js?v=3.5.0"></script>
+  <script src="js/app.js?v=3.7.0"></script>
 </body>
 </html>

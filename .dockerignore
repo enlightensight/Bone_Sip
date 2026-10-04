@@ -11,3 +11,7 @@ vercel.json
 Dockerfile
 tests
 .claude
+.env
+.env.*
+
+data/

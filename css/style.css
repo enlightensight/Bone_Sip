@@ -107,7 +107,7 @@
   --transition-bounce: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   --header-height: 64px;
-  --max-width-app: 1180px;
+  --max-width-app: 680px;
 }
 
 /* Base Reset */
@@ -3417,7 +3417,7 @@ body.portal-locked main.app-container {
 
 @media (min-width: 768px) {
   .pillar-bottom-nav {
-    max-width: 540px;
+    max-width: var(--max-width-app, 680px);
     left: 50%;
     transform: translateX(-50%);
     border-radius: 20px 20px 0 0;

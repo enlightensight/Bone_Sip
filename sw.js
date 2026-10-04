@@ -1,6 +1,6 @@
 // BONE SIP service worker — offline app shell + runtime caching.
 // Bump CACHE_VERSION whenever you deploy changed files (or let your build step do it).
-const CACHE_VERSION = 'bonesip-v3.2.4';
+const CACHE_VERSION = 'bonesip-v3.7.0';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -9,13 +9,14 @@ const APP_SHELL = [
   "index.html",
   "manifest.webmanifest",
   "css/style.css?v=3.2.4",
-  "css/brand.css?v=3.2.4",
-  "js/config.js?v=3.2.4",
-  "js/data.js?v=3.2.4",
-  "js/app.js?v=3.2.4",
-  "js/character.js?v=3.2.4",
+  "css/brand.css?v=3.7.0",
+  "js/config.js?v=3.6.0",
+  "js/data.js?v=3.5.0",
+  "js/i18n.js?v=3.7.0",
+  "js/app.js?v=3.7.0",
   "js/vendor/confetti.browser.min.js",
   "assets/images/bonesip_logo_720.webp",
+  "assets/images/ojas-avatar.svg",
   "assets/icons/icon-192.png",
   "assets/icons/icon-512.png",
   "assets/icons/favicon-32.png",
@@ -120,6 +121,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
+
+  // Account data must always be live, and the admin page must never replace the cached app shell.
+  if (url.origin === self.location.origin && (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin'))) return;
 
   // Exercise videos use range requests; let the browser/CDN handle them directly.
   if (url.pathname.endsWith('.mp4') || request.headers.has('range')) return;

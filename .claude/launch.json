@@ -3,8 +3,11 @@
   "configurations": [
     {
       "name": "bonesip",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "5510", "--bind", "127.0.0.1"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "server/server.js",
+        "5510"
+      ],
       "port": 5510
     }
   ]

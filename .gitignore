@@ -1,9 +1,17 @@
 ~$*
 *.bak
-scratch/*.bak
+scratch/
 node_modules/
 .DS_Store
 Thumbs.db
 .vercel
 .netlify
 dist/
+
+# Secrets: the Groq API key lives here and must never be committed or published.
+.env
+.env.*
+!.env.example
+
+# Accounts database (server/db.js)
+data/

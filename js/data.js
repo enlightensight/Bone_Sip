@@ -175,8 +175,56 @@ const BONE_SIP_DATA = {
     }
   ],
 
-  // Step: Health Conditions & Bone History
+  // Step: Health Conditions & Metabolic History
   healthConditionOptions: [
+    {
+      id: "diabetes",
+      title: "Diabetes",
+      description: "Blood sugar & glycemic balance",
+      img: "glucose"
+    },
+    {
+      id: "hypertension",
+      title: "Hypertension",
+      description: "Blood pressure & low sodium",
+      img: "bp_cuff"
+    },
+    {
+      id: "obesity",
+      title: "Obesity",
+      description: "Weight & calorie management",
+      img: "scale"
+    },
+    {
+      id: "dyslipidemia",
+      title: "High Cholesterol (Dyslipidemia)",
+      description: "Heart-healthy lipids & fats",
+      img: "cholesterol"
+    },
+    {
+      id: "thyroid",
+      title: "Thyroid Disorders",
+      description: "Hormone & metabolic rate",
+      img: "thyroid"
+    },
+    {
+      id: "kidney",
+      title: "Kidney Impairment/Disease",
+      description: "Renal & mineral filtration",
+      img: "kidney"
+    },
+    {
+      id: "lactose_intolerance",
+      title: "Lactose Intolerance",
+      description: "Dairy-free & plant calcium",
+      img: "lactose"
+    },
+    {
+      id: "nuts_allergy",
+      title: "Nuts Allergy",
+      description: "Nut-free seeds & legumes",
+      img: "nut_allergy"
+    },
     {
       id: "fracture",
       title: "Fracture after 40",
@@ -184,27 +232,9 @@ const BONE_SIP_DATA = {
       img: "bandage"
     },
     {
-      id: "family_history",
-      title: "Family history",
-      description: "Parent or sibling",
-      img: "family"
-    },
-    {
-      id: "menopause",
-      title: "Menopause",
-      description: "Or post-menopause",
-      img: "hourglass"
-    },
-    {
-      id: "joint_discomfort",
-      title: "Thyroid / long-term meds",
-      description: "Or joint stiffness",
-      img: "pill"
-    },
-    {
       id: "none",
       title: "None of these",
-      description: "Prevention only",
+      description: "General bone health prevention",
       img: "check"
     }
   ],
@@ -941,9 +971,9 @@ const BONE_SIP_DATA = {
       icon: "fa-bed",
       headline: "Clear pathways and immediate bedside visibility prevent morning and midnight falls.",
       questions: [
-        { id: "bed_path", text: "Bed-to-door path free of rugs & cables?" },
-        { id: "bed_lamp", text: "Bedside light within reach?" },
-        { id: "bed_height", text: "Feet flat on floor when sitting on bed?" }
+        { id: "bed_path", text: "Bed-to-door path free of rugs & cables?", tip: "Clear rugs & cables", fix: "Remove loose throw rugs, secure electrical cables with cord organizers, and keep a wide unobstructed walkway from bed to door." },
+        { id: "bed_lamp", text: "Bedside light within reach?", tip: "Keep a lamp by your bed", fix: "Place a touch lamp or nightlight within easy arm's reach from the pillow to avoid walking in the dark." },
+        { id: "bed_height", text: "Feet flat on floor when sitting on bed?", tip: "Adjust the bed height", fix: "Adjust bed height or mattress thickness so both feet rest flat and firmly on the floor when seated." }
       ]
     },
     {
@@ -953,9 +983,9 @@ const BONE_SIP_DATA = {
       icon: "fa-bath",
       headline: "The highest-risk room deserves the highest attention.",
       questions: [
-        { id: "bath_grab", text: "Grab bars near toilet & shower?" },
-        { id: "bath_mats", text: "Non-slip mats on the floor?" },
-        { id: "bath_light", text: "Bright light, even at night?" }
+        { id: "bath_grab", text: "Grab bars near toilet & shower?", tip: "Fit grab bars", fix: "Install wall-anchored grab bars inside the shower stall and next to the toilet (avoid holding towel racks)." },
+        { id: "bath_mats", text: "Non-slip mats on the floor?", tip: "Use non-slip mats", fix: "Place heavy-duty suction rubber mats inside the bathing area and non-skid absorbent mats outside." },
+        { id: "bath_light", text: "Bright light, even at night?", tip: "Add a night light", fix: "Install bright shadow-free lighting and a plug-in motion sensor night light for late-night bathroom trips." }
       ]
     },
     {
@@ -965,9 +995,9 @@ const BONE_SIP_DATA = {
       icon: "fa-stairs",
       headline: "Stairs require continuous grip and zero-shadow visibility.",
       questions: [
-        { id: "stairs_rail", text: "Handrails on both sides?" },
-        { id: "stairs_tread", text: "Non-slip, clutter-free steps?" },
-        { id: "stairs_light", text: "Light switches at top & bottom?" }
+        { id: "stairs_rail", text: "Handrails on both sides?", tip: "Fit handrails on both sides", fix: "Mount sturdy, continuous handrails on both sides of the staircase extending beyond the top and bottom steps." },
+        { id: "stairs_tread", text: "Non-slip, clutter-free steps?", tip: "Add non-slip strips to steps", fix: "Apply high-contrast non-slip adhesive treads on step edges and keep staircase fully free of clutter." },
+        { id: "stairs_light", text: "Light switches at top & bottom?", tip: "Light switch at top & bottom", fix: "Install dual two-way light switches at both top and bottom landings so stairs are never used in darkness." }
       ]
     },
     {
@@ -977,9 +1007,9 @@ const BONE_SIP_DATA = {
       icon: "fa-kitchen-set",
       headline: "Keep frequently used items within natural arm reach.",
       questions: [
-        { id: "kit_reach", text: "Daily items between waist & shoulder?" },
-        { id: "kit_mats", text: "Non-skid mat near the sink?" },
-        { id: "kit_spills", text: "Spills wiped up right away?" }
+        { id: "kit_reach", text: "Daily items between waist & shoulder?", tip: "Keep daily items at waist height", fix: "Rearrange cabinets to store heavy cookware, dishes, and daily spices between waist and shoulder height." },
+        { id: "kit_mats", text: "Non-skid mat near the sink?", tip: "Non-skid mat by the sink", fix: "Place cushioned rubber-backed non-skid floor mats directly in front of the sink and cooking stove." },
+        { id: "kit_spills", text: "Spills wiped up right away?", tip: "Wipe spills at once", fix: "Keep a microfiber mop or cloth within reach to wipe water or oil spills immediately before stepping." }
       ]
     },
     {
@@ -989,15 +1019,15 @@ const BONE_SIP_DATA = {
       icon: "fa-couch",
       headline: "Wide unobstructed corridors allow relaxed, surefooted movement.",
       questions: [
-        { id: "liv_rugs", text: "Loose rugs removed or taped?" },
-        { id: "liv_cords", text: "Wires tucked along walls?" },
-        { id: "liv_corridor", text: "Clear paths between furniture?" }
+        { id: "liv_rugs", text: "Loose rugs removed or taped?", tip: "Tape or remove loose rugs", fix: "Apply double-sided carpet tape to anchor all rug edges securely, or remove loose area rugs completely." },
+        { id: "liv_cords", text: "Wires tucked along walls?", tip: "Tuck wires along walls", fix: "Route lamp and electronics cables behind furniture or fasten them neatly along baseboards." },
+        { id: "liv_corridor", text: "Clear paths between furniture?", tip: "Clear the walking paths", fix: "Arrange coffee tables, chairs, and footrests to maintain wide unobstructed walking corridors." }
       ]
     }
   ],
 
   // --------------------------------------------------------------------------
-  // MODULE 15B: STRENGTHEN ASSESSMENT DATA (MATCHING IMAGE 5)
+  // MODULE 15B: STRENGTHEN CLINICAL MEDICAL & BONE CARE DATA
   // --------------------------------------------------------------------------
   doctorReviewChecklist: [
     { id: "doc_risk", img: "target", text: "What is my fracture risk?", checked: true },
@@ -1006,6 +1036,205 @@ const BONE_SIP_DATA = {
     { id: "doc_fracture", img: "bandage", text: "Have previous fractures changed my future risk?", checked: true },
     { id: "doc_strengthen", img: "biceps", text: "What can I do to strengthen my bones?", checked: true },
     { id: "doc_treatment", img: "pill", text: "Are additional treatment options right for me?", checked: false }
+  ],
+
+  dxaInterpretationGuide: {
+    ranges: [
+      { category: "Normal Bone Density", score: "T-Score above -1.0", minT: -1.0, maxT: 5.0, meaning: "Healthy bone mineral density. Maintain with daily 3-2-1 nutrition and progressive loading exercises.", color: "#1E9E62", icon: "shield", advice: "Continue routine diet and exercise. Rescan in 2 to 3 years." },
+      { category: "Osteopenia (Low Bone Mass)", score: "T-Score between -1.0 and -2.5", minT: -2.5, maxT: -1.0, meaning: "Accelerated bone thinning detected. High responsiveness to proactive nutrition, Vitamin D3, and impact loading.", color: "#D97706", icon: "scale", advice: "Target 1,200 mg daily calcium + 1,000 IU D3. Repeat scan in 18 to 24 months." },
+      { category: "Osteoporosis (High Fragility)", score: "T-Score below -2.5", minT: -5.0, maxT: -2.5, meaning: "Elevated fragility fracture state. Requires clinical physician partnership, fall-proofing, and targeted therapeutics.", color: "#B1315D", icon: "warning", advice: "Consult your doctor for prescription bone-sparing therapy. Rescan in 12 months." }
+    ],
+    scanSites: [
+      { id: "spine", name: "Lumbar Spine (L1-L4)", desc: "Key indicator for trabecular bone loss and early post-menopausal thinning." },
+      { id: "neck", name: "Femoral Neck", desc: "Gold standard site used in FRAX 10-year hip fracture risk calculation." },
+      { id: "hip", name: "Total Hip", desc: "Reflects overall cortical and trabecular strength supporting body weight." }
+    ]
+  },
+
+  fraxRiskFactorsCatalog: [
+    { id: "prior_fracture", short: "Broke a bone before", text: "Prior Fragility Fracture (Adult)", weight: 1.85, img: "bandage", desc: "Any fracture from standing height or minor slip after age 40." },
+    { id: "parent_hip", short: "Parent broke a hip", text: "Parental Hip Fracture History", weight: 1.60, img: "hearts", desc: "Mother or father suffered a broken hip." },
+    { id: "steroid_use", short: "Steroid tablets", text: "Oral Steroids / Glucocorticoids", weight: 1.75, img: "pill", desc: "Prednisolone or similar steroids taken for more than 3 months." },
+    { id: "rheumatoid", short: "Arthritis (RA)", text: "Rheumatoid Arthritis / Autoimmune", weight: 1.45, img: "stethoscope", desc: "Inflammatory joint conditions that accelerate bone resorption." }
+  ],
+
+  boneBiomarkersCatalog: [
+    {
+      id: "vit_d",
+      short: "Vitamin D",
+      img: "sun",
+      name: "25-OH Vitamin D3",
+      unit: "ng/mL",
+      defaultVal: 24,
+      min: 5,
+      max: 100,
+      ranges: [
+        { label: "Deficient", status: "low", short: "Very low. Ask your doctor about D3 doses.", max: 20, color: "#DC2626", tip: "Requires 60,000 IU weekly clinical loading dose with milk for 8 weeks." },
+        { label: "Suboptimal", status: "low", short: "A bit low. Get more sun and D3.", min: 20, max: 30, color: "#D97706", tip: "Increase daily D3 intake to 1,000–2,000 IU or take 60,000 IU every 2 weeks." },
+        { label: "Optimal", status: "good", short: "Great level. Keep it up.", min: 30, max: 60, color: "#1E9E62", tip: "Ideal range for gut calcium absorption. Maintain with daily sun & maintenance dose." },
+        { label: "Excess", status: "high", short: "Too high. Ask your doctor to lower the dose.", min: 60, color: "#8E2C6A", tip: "High blood level. Consult doctor to taper down high-dose supplements." }
+      ]
+    },
+    {
+      id: "calcium",
+      short: "Calcium",
+      img: "milk",
+      name: "Serum Total Calcium",
+      unit: "mg/dL",
+      defaultVal: 9.4,
+      min: 7.0,
+      max: 12.0,
+      ranges: [
+        { label: "Low", status: "low", short: "Low. Check vitamin D and diet.", max: 8.5, color: "#D97706", tip: "Low serum calcium. Verify Vitamin D3, albumin, and daily dietary calcium intake." },
+        { label: "Normal", status: "good", short: "Normal. Keep your 3-2-1 diet.", min: 8.5, max: 10.2, color: "#1E9E62", tip: "Normal circulating calcium equilibrium. Continue balanced 3-2-1 diet." },
+        { label: "Elevated", status: "high", short: "High. Stop calcium tablets and see your doctor.", min: 10.2, color: "#DC2626", tip: "High calcium. Check Parathyroid Hormone (PTH) and avoid calcium supplements." }
+      ]
+    },
+    {
+      id: "alp",
+      short: "ALP (bone turnover)",
+      img: "barchart",
+      name: "Serum Alkaline Phosphatase (ALP)",
+      unit: "IU/L",
+      defaultVal: 85,
+      min: 30,
+      max: 200,
+      ranges: [
+        { label: "Normal", status: "good", short: "Normal bone turnover.", min: 40, max: 129, color: "#1E9E62", tip: "Healthy baseline bone turnover." },
+        { label: "Elevated", status: "high", short: "High. Your doctor should check it.", min: 130, color: "#D97706", tip: "High bone remodeling or liver activity. Correlate with bone-specific ALP & vitamin D." }
+      ]
+    },
+    {
+      id: "egfr",
+      short: "Kidney (eGFR)",
+      img: "kidney",
+      name: "Kidney eGFR Filtration",
+      unit: "mL/min",
+      defaultVal: 75,
+      min: 15,
+      max: 120,
+      ranges: [
+        { label: "Reduced (<35)", status: "low", short: "Weak kidneys. Doctor must adjust bone medicines.", max: 35, color: "#DC2626", tip: "Impaired filtration. Bisphosphonates require doctor adjustment; evaluate Denosumab." },
+        { label: "Moderate (35-59)", status: "low", short: "Slightly low. Drink enough water with medicines.", min: 35, max: 59, color: "#D97706", tip: "Mild-moderate reduction. Ensure adequate hydration with medications." },
+        { label: "Normal (60+)", status: "good", short: "Kidneys are fine for bone medicines.", min: 60, color: "#1E9E62", tip: "Full renal clearance. Safe for standard oral or IV bone medications." }
+      ]
+    }
+  ],
+
+  supplementProtocolsCatalog: [
+    {
+      id: "thyroid_timing",
+      title: "Thyroid & Calcium 4-Hour Spacing Rule",
+      icon: "fa-clock",
+      desc: "Levothyroxine / Thyroxine binds to calcium tablets and dairy products in the stomach, reducing thyroid medicine absorption by up to 50%.",
+      rule: "Take thyroid medicine with plain water on an empty stomach at morning waking. Wait strictly AT LEAST 4 HOURS before taking any calcium tablet, milk, curd, or paneer."
+    },
+    {
+      id: "calcium_types",
+      title: "Calcium Citrate Malate (CCM) vs Calcium Carbonate",
+      icon: "fa-pills",
+      desc: "Choose the calcium formulation best suited for your stomach and digestion.",
+      options: [
+        { name: "Calcium Citrate Malate (CCM)", pros: "Highest bioavailability; gentle on stomach; does not require stomach acid; minimal constipation or gas; can be taken before or after food." },
+        { name: "Calcium Carbonate", pros: "Highest elemental calcium per tablet (40%); requires stomach acid (must be taken with full meals); may cause mild constipation in sensitive individuals." }
+      ]
+    },
+    {
+      id: "d3_protocol",
+      title: "Vitamin D3 Loading vs Maintenance Protocol",
+      icon: "fa-sun",
+      desc: "Vitamin D3 is fat-soluble and requires dietary lipids for absorption.",
+      rule: "For deficiency (<20 ng/mL): 60,000 IU weekly sachet or capsule taken with milk or fatty meal for 8 consecutive weeks, followed by 60,000 IU once every month as maintenance."
+    }
+  ],
+
+  prescriptionTherapiesCatalog: [
+    {
+      id: "antiresorptives",
+      short: "Stops bone loss",
+      img: "shield",
+      rulesShort: [
+        { icon: "💧", text: "Full glass of plain water" },
+        { icon: "🧍", text: "Stay upright for 30 min" },
+        { icon: "⏰", text: "Eat after 30–60 min" }
+      ],
+      category: "Antiresorptive Agents (Bone Preservation)",
+      badge: "Slows Bone Breakdown",
+      medicines: "Alendronate (70mg weekly), Risedronate, Zoledronic Acid (5mg yearly IV infusion), Denosumab (60mg 6-monthly subQ)",
+      howItWorks: "Inhibits osteoclast cells to prevent rapid bone resorption, stabilizing bone mineral density and cutting spine/hip fracture risk.",
+      goldenRules: [
+        "Take oral weekly bisphosphonates first thing in the morning with a full 250ml glass of plain water.",
+        "Stay strictly upright (sitting or standing) for at least 30 minutes. Never lie down to prevent heartburn.",
+        "Wait 30 to 60 minutes before having morning tea, breakfast, or any other supplements."
+      ]
+    },
+    {
+      id: "anabolics",
+      short: "Builds new bone",
+      img: "seedling",
+      rulesShort: [
+        { icon: "💉", text: "One shot daily, same time" },
+        { icon: "❄️", text: "Keep the pen in the fridge" }
+      ],
+      category: "Anabolic Bone Builders (New Bone Formation)",
+      badge: "Builds Brand New Bone",
+      medicines: "Teriparatide (recombinant human PTH 1-34 daily subcutaneous injection)",
+      howItWorks: "Directly stimulates osteoblasts to generate new trabecular bone architecture. Indicated for severe osteoporosis or recurrent fractures.",
+      goldenRules: [
+        "Administer once daily at the same time into thigh or abdominal subcutaneous tissue.",
+        "Store pen in refrigerator (2°C to 8°C). Keep adequate calcium and vitamin D intake during course."
+      ]
+    }
+  ],
+
+  safeMovementFlashcards: [
+    {
+      id: "lift",
+      title: "Picking things up",
+      dont: "Bend at the waist",
+      do: "Bend knees, back straight",
+      activity: "Picking Objects From Floor",
+      danger: "Bending forward from waist with straight knees (creates massive compressive torque on lumbar vertebrae).",
+      safe: "Use the Hip-Hinge or Golfer's Lift — bend hips and knees while keeping spine elongated and straight.",
+      img: "biceps"
+    },
+    {
+      id: "bed",
+      title: "Getting out of bed",
+      dont: "Sit straight up",
+      do: "Roll to your side, push up",
+      activity: "Getting In & Out of Bed",
+      danger: "Sitting straight up like a crunch (flexes fragile vertebrae under morning body weight).",
+      safe: "Use the Log-Roll technique — roll onto your side first, swing legs off edge, and push torso up with arms.",
+      img: "bed"
+    },
+    {
+      id: "reach",
+      title: "Reaching up high",
+      dont: "Stretch on tiptoes",
+      do: "Use a sturdy step-stool",
+      activity: "Reaching Overhead Items",
+      danger: "Stretching on tiptoes with hyperextended lower back while holding heavy objects.",
+      safe: "Use a wide sturdy step-stool so the item stays between chest and eye level before gripping.",
+      img: "ladder"
+    },
+    {
+      id: "twist",
+      title: "Sweeping & chores",
+      dont: "Twist your back",
+      do: "Turn with your feet",
+      activity: "Sweeping & House Chores",
+      danger: "Rapid spinal twisting while leaning forward with a broom or mop.",
+      safe: "Step with your feet to turn the entire body facing the direction of movement instead of twisting the spine.",
+      img: "house"
+    }
+  ],
+
+  emergencyFallSteps: [
+    { step: 1, icon: "😮‍💨", short: "Stay calm. Breathe and check for pain.", title: "Stay Calm & Assess", desc: "Do not rush to stand up. Take deep breaths for 60 seconds and check for severe hip, groin, or wrist pain." },
+    { step: 2, icon: "🦵", short: "Leg looks short or turned out? Don’t move. Call for help.", title: "Check Leg Alignment", desc: "Look at your legs. If one leg appears noticeably shorter or turned outward with sharp hip pain, do not force movement." },
+    { step: 3, icon: "🔄", short: "Roll to your side, then onto hands and knees.", title: "Roll to Hands & Knees", desc: "If uninjured, slowly roll onto your side, bend your knees, and push up onto your hands and knees." },
+    { step: 4, icon: "🪑", short: "Crawl to a sturdy chair and push up to sit.", title: "Crawl to Sturdy Support", desc: "Crawl to a heavy chair or bed, place both hands on the seat, bring one foot flat on floor, and push up to sit." }
   ],
 
   // --------------------------------------------------------------------------
@@ -1295,6 +1524,48 @@ const BONE_SIP_DATA = {
     { id: "fd_c_v_18", name: "Ricotta Cheese on Multigrain Toast drizzled with Thyme Honey", region: "continental", diet: "veg", slot: "snack", calcium: 350, protein: 15, desc: "Whey protein byproduct ricotta delivers easily digestible calcium and casein" },
     { id: "fd_c_v_19", name: "Grilled Herb Chicken Breast with Broccoli Mash & Roasted Garlic", region: "continental", diet: "non_veg", slot: "lunch", calcium: 330, protein: 38, desc: "Lean poultry protein essential for collagen scaffolding" },
 
+
+    // --- AUTHENTIC REGIONAL VEGAN & METABOLIC POWER DISHES ---
+    // North Indian Vegan
+    { id: "fd_n_vg_1", name: "Tofu Methi Bhurji + 2 Whole Wheat Phulkas + Sprouted Salad", region: "north", diet: "vegan", slot: "breakfast", calcium: 390, protein: 22, desc: "Calcium-set tofu with fenugreek greens: low glycemic, diabetes & hypertension safe", conditions: ["diabetes", "hypertension", "obesity", "dyslipidemia"] },
+    { id: "fd_n_vg_2", name: "Besan Chilla with Spinach & Flaxseed Podi + Mint Chutney", region: "north", diet: "vegan", slot: "breakfast", calcium: 320, protein: 18, desc: "Gram flour lysine with spinach minerals; dairy-free, heart-healthy soluble fiber", conditions: ["diabetes", "dyslipidemia", "obesity"] },
+    { id: "fd_n_vg_3", name: "Sarson Ka Saag (Mustard Greens in Cold-Pressed Mustard Oil) + 1 Makki Roti", region: "north", diet: "vegan", slot: "lunch", calcium: 410, protein: 15, desc: "Classic North Indian winter calcium powerhouse from brassica greens, zero dairy", conditions: ["diabetes", "hypertension", "dyslipidemia"] },
+    { id: "fd_n_vg_4", name: "Rajma (Red Kidney Bean) Curry + Jeera Brown Rice + Kachumber Salad", region: "north", diet: "vegan", slot: "lunch", calcium: 360, protein: 20, desc: "High fiber slow-release legume carbs with potassium-rich cucumber", conditions: ["diabetes", "hypertension", "obesity"] },
+    { id: "fd_n_vg_5", name: "Sprouted Kala Chana Chaat with Lemon Juice & Roasted White Sesame", region: "north", diet: "vegan", slot: "snack", calcium: 260, protein: 14, desc: "Dense bioavailable sesame calcium (975mg/100g) paired with sprouted pulse enzymes", conditions: ["diabetes", "hypertension", "obesity", "dyslipidemia", "thyroid"] },
+    { id: "fd_n_vg_6", name: "Roasted Makhana (Foxnuts) with Turmeric & Crushed Almonds", region: "north", diet: "vegan", slot: "snack", calcium: 210, protein: 9, desc: "Unsalted magnesium and trace zinc snack; protects vascular endothelium and bone matrix", conditions: ["hypertension", "dyslipidemia", "kidney", "obesity"] },
+    { id: "fd_n_vg_7", name: "Lauki (Bottle Gourd) Chana Dal + 2 Multigrain Rotis + Green Salad", region: "north", diet: "vegan", slot: "dinner", calcium: 310, protein: 18, desc: "Alkaline hydration with high fiber; gentle on kidneys and optimal for blood pressure", conditions: ["hypertension", "kidney", "diabetes", "obesity"] },
+    { id: "fd_n_vg_8", name: "Soya Chaap Matar Curry + 2 Whole Wheat Phulkas", region: "north", diet: "vegan", slot: "dinner", calcium: 420, protein: 27, desc: "Phytoestrogens that bond onto osteoblast receptors for nighttime bone remodeling", conditions: ["diabetes", "dyslipidemia", "obesity"] },
+
+    // South Indian Vegan
+    { id: "fd_s_vg_1", name: "Ragi Dosa (Finger Millet Crepe) + Drumstick Sambar + Tomato Chutney", region: "south", diet: "vegan", slot: "breakfast", calcium: 410, protein: 15, desc: "Finger millet provides 340mg Ca/100g with low glycemic index for steady insulin response", conditions: ["diabetes", "hypertension", "dyslipidemia", "obesity"] },
+    { id: "fd_s_vg_2", name: "Pesarattu (Whole Green Moong Crepe) with Ginger-Tomato Chutney", region: "south", diet: "vegan", slot: "breakfast", calcium: 330, protein: 19, desc: "Unpolished green moong pulse protein with digestive ginger; gentle on blood sugar", conditions: ["diabetes", "obesity", "hypertension"] },
+    { id: "fd_s_vg_3", name: "Ragi Mudde (Steamed Millet Ball) + Drumstick Keerai (Moringa) Sambar", region: "south", diet: "vegan", slot: "lunch", calcium: 510, protein: 21, desc: "Traditional South Indian bone capital meal: moringa leaves carry 4x milk calcium", conditions: ["diabetes", "hypertension", "obesity", "dyslipidemia"] },
+    { id: "fd_s_vg_4", name: "Murungai Keerai (Moringa) Kootu with Yellow Moong Dal + Brown Rice", region: "south", diet: "vegan", slot: "lunch", calcium: 480, protein: 20, desc: "Ultra-concentrated plant calcium and potassium; ideal for blood pressure regulation", conditions: ["hypertension", "diabetes", "dyslipidemia"] },
+    { id: "fd_s_vg_5", name: "Sundal (Tempered Boiled White Peas with Mustard Seeds, Curry Leaves & Coconut)", region: "south", diet: "vegan", slot: "snack", calcium: 210, protein: 12, desc: "Oil-free protein snack packed with magnesium and potassium to slow bone resorption", conditions: ["hypertension", "diabetes", "obesity", "kidney"] },
+    { id: "fd_s_vg_6", name: "Roasted Sesame (Til) & Flaxseed Podi with Warm Water & 1 Apple", region: "south", diet: "vegan", slot: "snack", calcium: 250, protein: 8, desc: "Plant lignans and concentrated calcium without dairy or saturated fats", conditions: ["dyslipidemia", "hypertension", "diabetes"] },
+    { id: "fd_s_vg_7", name: "Horsegram (Kollu) Rasam + Steamed Red Rice + Cabbage-Carrot Poriyal", region: "south", diet: "vegan", slot: "dinner", calcium: 370, protein: 17, desc: "Ancient Tamil Siddha legume known as highest calcium pulse; warm thermogenic support", conditions: ["obesity", "diabetes", "hypertension"] },
+    { id: "fd_s_vg_8", name: "Adai (Four-Lentil Pancake) with Coconut-Tomato Chutney + Steamed Beans", region: "south", diet: "vegan", slot: "dinner", calcium: 390, protein: 23, desc: "Four-dal protein foundation providing complete essential amino acids for collagen", conditions: ["diabetes", "obesity", "dyslipidemia"] },
+
+    // West Indian Vegan
+    { id: "fd_w_vg_1", name: "Bajra (Pearl Millet) Bhakri + Methi Pithla (Gram Flour Stew in Peanut Oil)", region: "west", diet: "vegan", slot: "breakfast", calcium: 390, protein: 17, desc: "Pearl millet iron and chickpea flour magnesium balance calcium uptake; low glycemic", conditions: ["diabetes", "hypertension", "obesity"] },
+    { id: "fd_w_vg_2", name: "Kanda Poha with Double Roasted Peanuts & Lemon Juice", region: "west", diet: "vegan", slot: "breakfast", calcium: 230, protein: 12, desc: "Flattened rice with vitamin C lemon juice ensuring iron and calcium bio-uptake", conditions: ["hypertension", "kidney", "thyroid"] },
+    { id: "fd_w_vg_3", name: "Jowar (Sorghum) Bhakri + Sprouted Moong-Matki Usal + Kachumber Salad", region: "west", diet: "vegan", slot: "lunch", calcium: 420, protein: 23, desc: "Bioavailable sprouted pulse enzymes with high potassium sorghum; excellent for BP and glucose", conditions: ["diabetes", "hypertension", "obesity", "dyslipidemia"] },
+    { id: "fd_w_vg_4", name: "Chawli (Black Eyed Peas) Usal + 2 Bajra Bhakris + Tomato-Coriander Salad", region: "west", diet: "vegan", slot: "lunch", calcium: 430, protein: 22, desc: "High copper and manganese legumes essential for bone collagen lysyl oxidase enzyme", conditions: ["diabetes", "dyslipidemia", "obesity"] },
+    { id: "fd_w_vg_5", name: "Methi Muthiya (Steamed Fenugreek & Gram Flour Dumplings) + Mint Chaat", region: "west", diet: "vegan", slot: "snack", calcium: 270, protein: 12, desc: "Steamed Gujarati specialty maximizing mineral absorption through low phytates", conditions: ["diabetes", "hypertension", "obesity"] },
+    { id: "fd_w_vg_6", name: "Shengdana (Peanut) Garlic Chutney + Jowar Bhakri Slice + Cucumber", region: "west", diet: "vegan", slot: "snack", calcium: 220, protein: 10, desc: "Monounsaturated healthy fats facilitating fat-soluble Vitamin D absorption", conditions: ["dyslipidemia", "diabetes", "thyroid"] },
+    { id: "fd_w_vg_7", name: "Moong Dal Khichdi (Prepared in Sesame Oil) + Roasted Papad + Tomato Salad", region: "west", diet: "vegan", slot: "dinner", calcium: 320, protein: 18, desc: "Gentle comforting evening dinner supporting restful sleep and bone repair; renal friendly", conditions: ["kidney", "hypertension", "diabetes"] },
+    { id: "fd_w_vg_8", name: "Tofu & Green Pea Bhurji + 2 Jowar Rotis + Cucumber Salad", region: "west", diet: "vegan", slot: "dinner", calcium: 410, protein: 24, desc: "Sorghum fiber paired with calcium-set tofu for slow overnight mineral release", conditions: ["diabetes", "obesity", "dyslipidemia", "hypertension"] },
+
+    // East Indian Vegan
+    { id: "fd_e_vg_1", name: "Sattu (Roasted Gram Flour) Sherbet with Cumin, Lemon, Mint & Black Salt", region: "east", diet: "vegan", slot: "breakfast", calcium: 220, protein: 19, desc: "Instant cooling superfood packed with insoluble fiber and plant protein; low GI", conditions: ["diabetes", "obesity", "hypertension"] },
+    { id: "fd_e_vg_2", name: "Chuda (Poha) with Crushed Sesame, Roasted Peanuts & Banana", region: "east", diet: "vegan", slot: "breakfast", calcium: 280, protein: 11, desc: "Traditional mineral energy with bioavailable sesame calcium and potassium", conditions: ["hypertension", "kidney", "thyroid"] },
+    { id: "fd_e_vg_3", name: "Dalma (Odia Lentil Stew with Raw Papaya, Drumstick & Pumpkin) + Brown Rice", region: "east", diet: "vegan", slot: "lunch", calcium: 390, protein: 20, desc: "Traditional Odia medicinal stew packed with vegetable minerals; renal and cardiac safe", conditions: ["hypertension", "kidney", "diabetes", "obesity"] },
+    { id: "fd_e_vg_4", name: "Posto Bora (Poppy Seed Patties in Cold-Pressed Mustard Oil) + Biulir Dal + Rice", region: "east", diet: "vegan", slot: "lunch", calcium: 470, protein: 21, desc: "Poppy seeds are nature's densest plant calcium source (1400mg/100g)", conditions: ["diabetes", "hypertension", "dyslipidemia"] },
+    { id: "fd_e_vg_5", name: "Manipuri Kanghou (Stir-fried Sprouted Peas, Black Sesame & Greens)", region: "east", diet: "vegan", slot: "snack", calcium: 410, protein: 19, desc: "High mineral black sesame seed crust delivers over 400mg natural calcium", conditions: ["diabetes", "hypertension", "dyslipidemia", "obesity"] },
+    { id: "fd_e_vg_6", name: "Ghugni (Spiced Yellow Pea Stew with Ginger, Cumin & Lemon)", region: "east", diet: "vegan", slot: "snack", calcium: 200, protein: 13, desc: "Fiber-rich legume snack with anti-inflammatory ginger and lemon", conditions: ["diabetes", "obesity", "kidney"] },
+    { id: "fd_e_vg_7", name: "Soyabean & Black Sesame Tarkari + 2 Multigrain Rotis", region: "east", diet: "vegan", slot: "dinner", calcium: 430, protein: 26, desc: "Dual plant calcium synergy popular across Assam & Manipur for bone density", conditions: ["diabetes", "dyslipidemia", "obesity"] },
+    { id: "fd_e_vg_8", name: "Shorshe Palak & Chana Dal (Spinach Mustard Lentils) + Brown Rice", region: "east", diet: "vegan", slot: "dinner", calcium: 350, protein: 18, desc: "Isothiocyanates from mustard seed pair with spinach folate and calcium", conditions: ["diabetes", "hypertension", "dyslipidemia"] },
+
     // --- D3 / SUNLIGHT & HYDRATION BOOSTERS (DAILY 5TH MILESTONE) ---
     { id: "fd_d3_1", name: "15 mins Safe Midday Sunlight Exposure + 2.5L Hydration", region: "north", diet: "veg", slot: "sun_d3", calcium: 200, protein: 5, desc: "Triggers 10,000 IU natural skin synthesis of cholecalciferol (D3)" },
     { id: "fd_d3_2", name: "Morning Sun Walk (Face & Arms exposed) + 1 Glass Fortified D3 Milk", region: "south", diet: "veg", slot: "sun_d3", calcium: 280, protein: 9, desc: "Sun ultraviolet-B activation paired with digestive milk lipids" },
@@ -1305,19 +1576,16 @@ const BONE_SIP_DATA = {
 
   // --------------------------------------------------------------------------
   // GUIDED WORKOUTS FOR OLDER ADULTS (Exercise tab)
-  // Only moves with a matching coach video get `video`; others show an
-  // illustration + steps so nobody follows the wrong movement.
+  // Every move here has a filmed coach video that matches the movement.
   // Content should be reviewed by a physiotherapist before launch.
   // --------------------------------------------------------------------------
   exerciseGroups: [
     { id: "strength", label: "Strength", img: "biceps", blurb: "Stronger legs, hips & arms" },
     { id: "balance", label: "Balance", img: "flamingo", blurb: "Steadier on your feet" },
-    { id: "flexibility", label: "Flexibility", img: "lotus", blurb: "Easier, freer movement" },
     { id: "posture", label: "Posture", img: "standing", blurb: "Stand tall, protect your spine" }
   ],
 
   workoutLibrary: [
-    // ---------------- STRENGTH ----------------
     {
       id: "ex_sit_to_stand", group: "strength", name: "Chair Sit-to-Stand", level: "Easy",
       durationSec: 45, reps: "10 slow reps", img: "chair",
@@ -1349,35 +1617,6 @@ const BONE_SIP_DATA = {
       safety: "Always hold the handrail and use a low step."
     },
     {
-      id: "ex_wall_sit", group: "strength", name: "Mini Wall Squat", level: "Moderate",
-      durationSec: 30, reps: "Hold 20–30 s", img: "leg", video: null,
-      focus: ["thighs"], focus2: ["hips", "core"],
-      bones: ["Hip", "Thigh bone"],
-      benefits: ["Stronger thighs for sitting and standing", "Gentle on the joints"],
-      how: ["Stand with your back flat against a wall, feet one step forward.", "Slide down a little so your knees bend slightly. Only a small bend.", "Hold the position and keep breathing normally.", "Slide back up the wall to stand."],
-      safety: "Keep your knees behind your toes. Never go lower than feels comfortable."
-    },
-    {
-      id: "ex_wall_pushups", group: "strength", name: "Wall Push-Ups", level: "Easy",
-      durationSec: 45, reps: "10 reps", img: "biceps", video: null,
-      focus: ["arms", "chest", "shoulders"], focus2: ["core"],
-      bones: ["Wrist", "Arm bones", "Shoulder"],
-      benefits: ["Stronger arms to catch yourself if you trip", "Loads the wrist, a common fracture spot"],
-      how: ["Stand an arm's length from a wall.", "Place your hands on the wall at shoulder height.", "Bend your elbows to bring your chest towards the wall, keeping your back straight.", "Push back to the start."],
-      safety: "Keep your feet planted and move slowly."
-    },
-    {
-      id: "ex_heel_drops", group: "strength", name: "Heel Drops", level: "Moderate",
-      durationSec: 40, reps: "20 drops", img: "shoe", video: null,
-      focus: ["calves", "ankles"], focus2: ["hips"],
-      bones: ["Hip", "Heel", "Shin bone"],
-      benefits: ["Gentle impact tells bones to get denser", "Stronger ankles"],
-      how: ["Hold the back of a chair.", "Rise up onto your toes.", "Let your heels drop to the floor with a gentle thud.", "Repeat at a steady pace."],
-      safety: "Skip this if you've had a spine or hip fracture. Ask your doctor first."
-    },
-
-    // ---------------- BALANCE ----------------
-    {
       id: "ex_one_leg_balance", group: "balance", name: "One-Leg Stand", level: "Easy",
       durationSec: 60, reps: "30 s each leg", img: "flamingo",
       video: { male: "assets/exercises/male_one_leg_balance.mp4", female: "assets/exercises/female_one_leg_balance.mp4" },
@@ -1388,73 +1627,6 @@ const BONE_SIP_DATA = {
       safety: "Keep support within reach. Stop if you feel dizzy."
     },
     {
-      id: "ex_tandem_stand", group: "balance", name: "Heel-to-Toe Stand", level: "Easy",
-      durationSec: 60, reps: "30 s each side", img: "shoe", video: null,
-      focus: ["ankles"], focus2: ["hips", "core"],
-      bones: ["Hip", "Ankle"],
-      benefits: ["Better balance in narrow spaces", "Trains the reflexes that stop falls"],
-      how: ["Stand next to a kitchen counter for support.", "Place one foot directly in front of the other, heel touching toes.", "Hold for 30 seconds, looking straight ahead.", "Swap which foot is in front."],
-      safety: "Keep one hand near the counter."
-    },
-    {
-      id: "ex_heel_toe_walk", group: "balance", name: "Heel-to-Toe Walk", level: "Moderate",
-      durationSec: 45, reps: "20 steps", img: "walking", video: null,
-      focus: ["ankles", "calves"], focus2: ["hips", "core"],
-      bones: ["Hip", "Ankle"],
-      benefits: ["Safer, steadier walking", "Better coordination"],
-      how: ["Stand beside a wall or counter for support.", "Walk in a straight line, putting your heel right in front of your toes.", "Look ahead, not down at your feet.", "Turn around slowly and walk back."],
-      safety: "Clear the path of rugs and clutter first."
-    },
-    {
-      id: "ex_side_leg_raise", group: "balance", name: "Side Leg Raise", level: "Easy",
-      durationSec: 45, reps: "10 each leg", img: "leg", video: null,
-      focus: ["hips"], focus2: ["thighs", "core"],
-      bones: ["Hip"],
-      benefits: ["Stronger hips stop sideways falls", "Helps with getting in and out of cars"],
-      how: ["Stand behind a chair, holding the back.", "Lift one leg out to the side, toes pointing forward.", "Keep your back straight, without leaning.", "Lower slowly. Switch legs after 10."],
-      safety: "Small, slow lifts are enough."
-    },
-
-    // ---------------- FLEXIBILITY ----------------
-    {
-      id: "ex_calf_stretch", group: "flexibility", name: "Wall Calf Stretch", level: "Easy",
-      durationSec: 40, reps: "20 s each leg", img: "leg", video: null,
-      focus: ["calves", "ankles"], focus2: [],
-      bones: [],
-      benefits: ["Looser ankles for steadier steps", "Fewer leg cramps"],
-      how: ["Place both hands on a wall.", "Step one foot back and keep its heel on the floor.", "Bend the front knee and lean in gently until you feel a stretch in the back calf.", "Hold and breathe. Switch legs."],
-      safety: "Stretch gently. It should never hurt."
-    },
-    {
-      id: "ex_chest_stretch", group: "flexibility", name: "Doorway Chest Stretch", level: "Easy",
-      durationSec: 40, reps: "Hold 20 s · 2 times", img: "door", video: null,
-      focus: ["chest", "shoulders"], focus2: ["upperBack"],
-      bones: [],
-      benefits: ["Opens a rounded upper back", "Easier, deeper breathing"],
-      how: ["Stand in a doorway.", "Rest your forearms on the door frame at shoulder height.", "Step one foot forward until you feel a stretch across your chest.", "Hold, keeping your back tall."],
-      safety: "Gentle stretch only. Never push into pain."
-    },
-    {
-      id: "ex_ankle_circles", group: "flexibility", name: "Seated Ankle Circles", level: "Easy",
-      durationSec: 40, reps: "10 circles each way", img: "chair", video: null,
-      focus: ["ankles"], focus2: ["calves"],
-      bones: [],
-      benefits: ["Keeps ankles moving freely", "Quicker balance reactions"],
-      how: ["Sit tall in a chair.", "Lift one foot slightly off the floor.", "Draw slow circles with your toes, 10 each direction.", "Switch feet."],
-      safety: "Hold the chair seat if you feel unsteady."
-    },
-    {
-      id: "ex_hamstring_stretch", group: "flexibility", name: "Seated Hamstring Stretch", level: "Easy",
-      durationSec: 40, reps: "20 s each leg", img: "chair", video: null,
-      focus: ["thighs"], focus2: ["calves"],
-      bones: [],
-      benefits: ["Easier walking and bending knees", "Less stiffness in the back of the legs"],
-      how: ["Sit at the front edge of a sturdy chair.", "Straighten one leg, heel on the floor, toes pointing up.", "Keep your back straight and tall. Lean forward only slightly from the hips.", "Hold, then switch legs."],
-      safety: "Don't round your back or bend forward from the waist. This strains weak bones."
-    },
-
-    // ---------------- POSTURE ----------------
-    {
       id: "ex_band_pull", group: "posture", name: "Band Pull-Apart", level: "Easy",
       durationSec: 45, reps: "12 reps", img: "standing",
       video: { male: "assets/exercises/male_band_pull.mp4", female: "assets/exercises/female_band_pull.mp4" },
@@ -1463,33 +1635,6 @@ const BONE_SIP_DATA = {
       benefits: ["Stand taller and stoop less", "Protects the spine from compression fractures"],
       how: ["Hold a light band at chest height, arms straight.", "Pull the band apart, squeezing your shoulder blades together.", "Return slowly to the start.", "No band? Use a towel and squeeze the same way."],
       safety: "Use a light band and keep your neck relaxed."
-    },
-    {
-      id: "ex_shoulder_squeeze", group: "posture", name: "Shoulder Blade Squeeze", level: "Easy",
-      durationSec: 40, reps: "10 squeezes (5 s hold)", img: "standing", video: null,
-      focus: ["upperBack"], focus2: ["shoulders", "neck"],
-      bones: ["Upper spine"],
-      benefits: ["Counteracts a rounded upper back", "Eases shoulder tension"],
-      how: ["Sit or stand tall, arms by your sides.", "Squeeze your shoulder blades together and slightly down.", "Hold for 5 seconds.", "Relax and repeat."],
-      safety: "Keep breathing. Don't shrug your shoulders up."
-    },
-    {
-      id: "ex_chin_tuck", group: "posture", name: "Chin Tuck", level: "Easy",
-      durationSec: 30, reps: "10 slow reps", img: "chair", video: null,
-      focus: ["neck"], focus2: ["upperBack"],
-      bones: ["Neck (cervical spine)"],
-      benefits: ["Reduces forward-head posture", "Less neck strain"],
-      how: ["Sit tall and look straight ahead.", "Gently slide your chin straight back, making a 'double chin'.", "Hold for 3 seconds.", "Relax and repeat."],
-      safety: "Small, gentle movement. Don't tip your head down."
-    },
-    {
-      id: "ex_wall_extension", group: "posture", name: "Wall Back Stretch", level: "Easy",
-      durationSec: 40, reps: "8 reps", img: "house", video: null,
-      focus: ["upperBack", "lowerBack"], focus2: ["shoulders"],
-      bones: ["Spine (vertebrae)"],
-      benefits: ["Strengthens the muscles that hold your spine up", "Lowers the risk of spine compression fractures"],
-      how: ["Stand facing a wall, toes a hand-length away.", "Place your hands on the wall at shoulder height.", "Slide your hands up as high as is comfortable, gently lifting your chest.", "Hold 3 seconds, then slide down."],
-      safety: "Lift your chest. Don't arch your lower back sharply."
     }
   ],
 
@@ -1743,14 +1888,14 @@ const BONE_SIP_DATA = {
   // MODULE 19: BONE SIP AI CHATBOT KNOWLEDGE BASE & INTENT ENGINE
   // --------------------------------------------------------------------------
   botKnowledge: {
-    systemPrompt: "You are the BONE SIP AI Clinical Bone Health & Nutrition Coach. Your goal is to guide users to invest in their bone capital, prevent falls, and understand clinical bone health with warm, clear, investment-grade medical wellness advice.",
+    // Offline answers + quick-question chips. The live AI prompt is built in server/assistant.js.
     quickSuggestions: [
-      { text: "Suggest high-calcium meals for my region", query: "meal_suggestion" },
-      { text: "How to reach 1200mg calcium today?", query: "calcium_gap" },
-      { text: "Best exercises for hip and spine strength?", query: "exercise_advice" },
-      { text: "Explain DXA scan T-score results", query: "dxa_explanation" },
-      { text: "What is my Daily Streak Score?", query: "streak_score" },
-      { text: "How does Vitamin D3 unlock calcium?", query: "d3_mechanism" }
+      { text: "🍽️ What should I eat today?", query: "meal_suggestion" },
+      { text: "🏃 Today's exercises", query: "exercise_advice" },
+      { text: "📊 Explain my score", query: "streak_score" },
+      { text: "🥛 Reach 1,200 mg calcium", query: "calcium_gap" },
+      { text: "🦴 What is a DXA T-score?", query: "dxa_explanation" },
+      { text: "🛡️ Prevent falls at home", query: "fall_prevention" }
     ],
     topicAnswers: {
       "3-2-1 rule": "The BONE SIP 3-2-1 Rule is our core daily nutritional deposit:\n• 3 servings of Calcium-rich foods (~1000–1200 mg/day: Milk, Curd, Paneer, Ragi, Sesame, Moringa)\n• 2 servings of Protein (~60–80 g/day: Dal, Soya, Eggs, Fish, Sprouts)\n• 1 Vitamin D3 source (15 mins safe morning sunlight or clinical D3 supplement).",

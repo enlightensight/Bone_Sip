@@ -4,6 +4,19 @@
   publish = "dist"
   command = "rm -rf dist && mkdir dist && cp -r index.html manifest.webmanifest sw.js robots.txt css js assets dist/"
 
+# AI assistant: a Netlify Function holds the Groq key (set GROQ_API_KEY in the site's
+# environment variables) and is served at /api/chat.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  included_files = ["js/data.js", "server/assistant.js"]
+
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/chat"
+  status = 200
+  force = true
+
 [[headers]]
   for = "/*"
   [headers.values]
