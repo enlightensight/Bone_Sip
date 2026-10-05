@@ -128,6 +128,7 @@
       Saturday: new Set(),
       Sunday: new Set()
     },
+    checkedDietItems: {},
     activeStreakDays: 0,
 
     // Exercise Workout Timer
@@ -1652,6 +1653,7 @@
           acc[k] = Array.from(state.checkedDietMilestones[k] || []);
           return acc;
         }, {}),
+        checkedDietItems: state.checkedDietItems || {},
         checkedExerciseMilestones: Object.keys(state.checkedExerciseMilestones || {}).reduce((acc, k) => {
           acc[k] = Array.from(state.checkedExerciseMilestones[k] || []);
           return acc;
@@ -1754,6 +1756,9 @@
           Object.keys(data.checkedDietMilestones).forEach(k => {
             state.checkedDietMilestones[k] = new Set(data.checkedDietMilestones[k]);
           });
+        }
+        if (data.checkedDietItems && typeof data.checkedDietItems === 'object') {
+          state.checkedDietItems = data.checkedDietItems;
         }
         if (data.checkedExerciseMilestones) {
           Object.keys(data.checkedExerciseMilestones).forEach(k => {
@@ -2260,6 +2265,19 @@
     `;
   }
 
+  function getCheckedItemIndices(dateKey, slotId, totalItems) {
+    if (state.checkedDietItems && state.checkedDietItems[dateKey] && Array.isArray(state.checkedDietItems[dateKey][slotId])) {
+      return state.checkedDietItems[dateKey][slotId];
+    }
+    const dietSet = state.checkedDietMilestones[dateKey] || new Set();
+    if (dietSet.has(slotId)) {
+      const allIndices = [];
+      for (let i = 0; i < (totalItems || 1); i++) allIndices.push(i);
+      return allIndices;
+    }
+    return [];
+  }
+
   // --------------------------------------------------------------------------
   // MODULE: DAILY BONE HEALTH SCORE ENGINE (0 TO 100)
   // --------------------------------------------------------------------------
@@ -2267,10 +2285,18 @@
     const todayISO = getTodayISODate();
     const effectiveKey = dateKey || state.selectedCalendarDate || todayISO;
 
-    // 1. Diet Milestones (5 items * 8 pts = 40 pts)
+    // 1. Diet Milestones (5 items * 8 pts = 40 pts, proportional by item)
+    const dayMilestones = resolveDailyMilestones(effectiveKey, null)
+      .sort((a, b) => SLOT_ORDER.indexOf(a.id) - SLOT_ORDER.indexOf(b.id));
+    let dietPts = 0;
     const dietSet = state.checkedDietMilestones[effectiveKey] || new Set();
-    const checkedDietCount = Math.min(5, dietSet.size);
-    const dietPts = checkedDietCount * 8; // Max 40
+    dayMilestones.forEach(m => {
+      const items = m.meal.items || splitMealComponents(m.meal);
+      const totalItems = Math.max(1, items.length);
+      const checked = getCheckedItemIndices(effectiveKey, m.id, totalItems);
+      dietPts += (checked.length / totalItems) * 8;
+    });
+    dietPts = Math.min(40, Math.round(dietPts));
 
     // 2. Exercise Milestones (4 movements * 7.5 pts = 30 pts)
     const exSet = state.checkedExerciseMilestones[effectiveKey] || new Set();
@@ -2287,8 +2313,9 @@
       if (yesCount >= 1) safeRoomsCount++;
     });
     const homeAuditPts = Math.min(10, Math.round((safeRoomsCount / Math.max(1, rooms.length)) * 10));
-    const d3Done = dietSet.has('m_sun_d3') ? 10 : 0;
-    const safePts = homeAuditPts + d3Done; // Max 20
+    const sunItems = getCheckedItemIndices(effectiveKey, 'm_sun_d3', 2);
+    const d3Done = dietSet.has('m_sun_d3') ? 10 : (sunItems.length > 0 ? Math.round((sunItems.length / 2) * 10) : 0);
+    const safePts = Math.min(20, homeAuditPts + d3Done); // Max 20
 
     // 4. Continuous Streak Bonus (Max 10 pts)
     const streakBonus = Math.min(10, (state.activeStreakDays || 0) * 2);
@@ -3966,15 +3993,21 @@
     const has = (text, words) => words.some(w => text.includes(w));
 
     resolvedMilestones.forEach(m => {
-      if (!activeSet.has(m.id)) return;
-      got.cal += m.meal.calcium || 0;
-      got.pro += m.meal.protein || 0;
-      const text = `${m.meal.name || ''} ${m.meal.desc || ''} ${m.slot || ''}`.toLowerCase();
-      // Co-factor estimates from ingredient keywords (indicative, not lab values).
-      got.d3 += m.id === 'm_sun_d3' ? 800 : has(text, ['fortified', 'egg', 'fish', 'mushroom', 'badam milk']) ? 100 : 25;
-      got.k2 += has(text, ['curd', 'dahi', 'paneer', 'chhena', 'dosa', 'idli', 'chaas', 'fermented']) ? 22 : has(text, ['palak', 'saag', 'methi', 'greens', 'spinach']) ? 16 : 6;
-      got.mg += has(text, ['til', 'sesame', 'makhana', 'almond', 'badam', 'ragi', 'bajra', 'jowar', 'dal', 'chana', 'seeds']) ? 85 : 45;
-      got.vitC += has(text, ['amla', 'guava', 'lemon', 'moringa', 'drumstick', 'mint', 'salad']) ? 20 : has(text, ['greens', 'spinach', 'fruit']) ? 12 : 4;
+      const items = m.meal.items || splitMealComponents(m.meal);
+      const totalItems = Math.max(1, items.length);
+      const checkedIndices = getCheckedItemIndices(currentDateKey, m.id, totalItems);
+      if (checkedIndices.length === 0) return;
+
+      items.forEach((c, idx) => {
+        if (!checkedIndices.includes(idx)) return;
+        got.cal += (c.calcium || Math.round((m.meal.calcium || 0) / totalItems));
+        got.pro += (c.protein || Math.round((m.meal.protein || 0) / totalItems));
+        const text = `${c.name || ''} ${m.meal.name || ''} ${m.meal.desc || ''}`.toLowerCase();
+        got.d3 += m.id === 'm_sun_d3' ? Math.round(800 / totalItems) : has(text, ['fortified', 'egg', 'fish', 'mushroom', 'badam milk']) ? Math.round(100 / totalItems) : Math.round(25 / totalItems);
+        got.k2 += has(text, ['curd', 'dahi', 'paneer', 'chhena', 'dosa', 'idli', 'chaas', 'fermented']) ? Math.round(22 / totalItems) : has(text, ['palak', 'saag', 'methi', 'greens', 'spinach']) ? Math.round(16 / totalItems) : Math.round(6 / totalItems);
+        got.mg += has(text, ['til', 'sesame', 'makhana', 'almond', 'badam', 'ragi', 'bajra', 'jowar', 'dal', 'chana', 'seeds']) ? Math.round(85 / totalItems) : Math.round(45 / totalItems);
+        got.vitC += has(text, ['amla', 'guava', 'lemon', 'moringa', 'drumstick', 'mint', 'salad']) ? Math.round(20 / totalItems) : has(text, ['greens', 'spinach', 'fruit']) ? Math.round(12 / totalItems) : Math.round(4 / totalItems);
+      });
     });
 
     const rings = [
@@ -4038,13 +4071,15 @@
 
     listEl.innerHTML = resolvedMilestones.map((item, i) => {
       const meta = SLOT_META[item.id] || { name: 'Meal', time: '' };
-      const isChecked = activeSet.has(item.id);
-      const hidden = state.activeSlotFilter && state.activeSlotFilter !== 'all' && state.activeSlotFilter !== item.id;
-      const justDone = isChecked && state.lastToggledMilestone === item.id;
-      const action = isPast ? 'BoneApp.showPastDayNotice()' : `BoneApp.toggleDietMilestone('${currentDateKey}', '${item.id}')`;
       const items = item.meal.items || splitMealComponents(item.meal);
+      const totalItems = Math.max(1, items.length);
+      const checkedIndices = getCheckedItemIndices(currentDateKey, item.id, totalItems);
+      const isSlotDone = checkedIndices.length >= totalItems;
+      const hidden = state.activeSlotFilter && state.activeSlotFilter !== 'all' && state.activeSlotFilter !== item.id;
+      const justDone = isSlotDone && state.lastToggledMilestone === item.id;
+
       return `
-        <div class="meal-card fade-up ${isChecked ? 'completed' : ''} ${justDone ? 'just-done' : ''}" data-slot-id="${item.id}" id="mealSlotCard_${item.id}" style="--i: ${i}; ${hidden ? 'display: none;' : ''}">
+        <div class="meal-card fade-up ${isSlotDone ? 'completed' : ''} ${justDone ? 'just-done' : ''}" data-slot-id="${item.id}" id="mealSlotCard_${item.id}" style="--i: ${i}; ${hidden ? 'display: none;' : ''}">
           <div class="meal-head">
             <div class="meal-ico">
               ${meta.img ? `<img src="assets/icons3d/${meta.img}.webp" alt="" class="i3d meal-ico-img" width="34" height="34">` : `<i class="${meta.icon || 'fa-solid fa-utensils'}"></i>`}
@@ -4052,27 +4087,30 @@
             <div class="meal-head-text">
               <b>${meta.name}</b>
               <span>${meta.time} · ${item.meal.calcium || 0} mg calcium · ${item.meal.protein || 0} g protein</span>
-              ${item.meal.clinicalNote ? `<div class="meal-clinical-badge"><i class="fa-solid fa-heart-pulse"></i> ${escapeHtml(item.meal.clinicalNote)}</div>` : ''}
             </div>
             ${!isPast ? `
               <div class="meal-head-nav">
                 <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', -1)" aria-label="${t('Previous {meal} idea', { meal: tr(meta.name) })}"><i class="fa-solid fa-chevron-left"></i></button>
                 <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', 1)" aria-label="${t('Next {meal} idea', { meal: tr(meta.name) })}"><i class="fa-solid fa-chevron-right"></i></button>
               </div>` : ''}
-            <button class="meal-check ${isPast ? 'locked' : ''}" onclick="${action}" aria-pressed="${isChecked}" aria-label="${t(isChecked ? 'Undo: {meal}' : 'Mark done: {meal}', { meal: tr(meta.name) })}">
-              <i class="fa-solid ${isPast && !isChecked ? 'fa-lock' : 'fa-check'}"></i>
-            </button>
           </div>
           <div class="meal-items">
             ${items.map((c, idx) => {
               const b = itemBenefit(c.name);
+              const isItemDone = checkedIndices.includes(idx);
+              const itemAction = isPast ? 'BoneApp.showPastDayNotice()' : `BoneApp.toggleDietItem('${currentDateKey}', '${item.id}', ${idx}, ${totalItems})`;
               return `
-                <div class="meal-item ${c.swapped ? 'swapped' : ''}">
+                <div class="meal-item ${isItemDone ? 'item-completed' : ''} ${c.swapped ? 'swapped' : ''}">
                   <div class="mi-text">
                     <b>${escapeHtml(c.name)}</b>
                     <span>${c.portion ? `${escapeHtml(c.portion)} · ` : ''}${b.text} <em class="mi-tag"><i class="fa-solid ${b.icon}"></i> ${b.tag}</em></span>
                   </div>
-                  ${!isPast ? `<button class="mi-opt" onclick="BoneApp.openItemOptions('${item.id}', ${idx})">View options <i class="fa-solid fa-chevron-right"></i></button>` : ''}
+                  <div class="mi-actions">
+                    ${!isPast ? `<button class="mi-opt" onclick="BoneApp.openItemOptions('${item.id}', ${idx})">View options <i class="fa-solid fa-chevron-right"></i></button>` : ''}
+                    <button type="button" class="meal-item-check ${isItemDone ? 'checked' : ''} ${isPast ? 'locked' : ''}" onclick="${itemAction}" aria-pressed="${isItemDone}" aria-label="${escapeHtml(t(isItemDone ? 'Undo item: {name}' : 'Mark item done: {name}', { name: c.name }))}">
+                      <i class="fa-solid ${isItemDone ? 'fa-check' : (isPast ? 'fa-lock' : '')}"></i>
+                    </button>
+                  </div>
                 </div>`;
             }).join('')}
           </div>
@@ -4093,12 +4131,20 @@
     else if (slotId === 'm_dinner') slotType = 'dinner';
     else if (slotId === 'm_sun_d3') slotType = 'sun_d3';
 
-    let candidates = catalog.filter(m => m.slot === slotType && m.region === userReg && (userDiet === 'all' || m.diet === userDiet));
-    if (candidates.length === 0) {
-      candidates = catalog.filter(m => m.slot === slotType && (userDiet === 'all' || m.diet === userDiet));
-    }
-    if (candidates.length === 0) {
-      candidates = catalog.filter(m => m.slot === slotType);
+    let candidates = [];
+    if (slotType === 'sun_d3') {
+      candidates = catalog.filter(m => m.slot === 'sun_d3' && (userDiet === 'all' || m.diet === userDiet || m.diet === 'veg' || m.diet === 'vegan'));
+      if (candidates.length <= 1) {
+        candidates = catalog.filter(m => m.slot === 'sun_d3');
+      }
+    } else {
+      candidates = catalog.filter(m => m.slot === slotType && m.region === userReg && (userDiet === 'all' || m.diet === userDiet));
+      if (candidates.length === 0) {
+        candidates = catalog.filter(m => m.slot === slotType && (userDiet === 'all' || m.diet === userDiet));
+      }
+      if (candidates.length === 0) {
+        candidates = catalog.filter(m => m.slot === slotType);
+      }
     }
     if (candidates.length === 0) return;
 
@@ -4217,6 +4263,10 @@
   }
 
   function toggleDietMilestone(dateKey, milestoneId) {
+    if (!milestoneId) {
+      milestoneId = dateKey;
+      dateKey = state.selectedCalendarDate || getTodayISODate();
+    }
     const todayISO = getTodayISODate();
     if (dateKey < todayISO) {
       showPastDayNotice();
@@ -4233,12 +4283,77 @@
     const set = state.checkedDietMilestones[dateKey];
     markDayForSync(dateKey);
     const wasDone = set.has(milestoneId);
-    if (wasDone) set.delete(milestoneId);
-    else set.add(milestoneId);
+    if (wasDone) {
+      set.delete(milestoneId);
+      if (state.checkedDietItems && state.checkedDietItems[dateKey]) {
+        delete state.checkedDietItems[dateKey][milestoneId];
+      }
+    } else {
+      set.add(milestoneId);
+      if (!state.checkedDietItems) state.checkedDietItems = {};
+      if (!state.checkedDietItems[dateKey]) state.checkedDietItems[dateKey] = {};
+      state.checkedDietItems[dateKey][milestoneId] = [0, 1, 2, 3, 4];
+    }
     state.lastToggledMilestone = wasDone ? null : milestoneId;
 
     updateActiveStreak();
     if (!wasDone && set.size === 5) {
+      playSound('success');
+      celebrate('big');
+      showToast(`All 5 done! ${state.activeStreakDays}-day streak 🔥`, 'fa-fire');
+    }
+
+    BoneDB.save();
+    renderBuildDietView();
+  }
+
+  function toggleDietItem(dateKey, slotId, itemIdx, totalItems) {
+    if (typeof itemIdx === 'undefined') {
+      slotId = dateKey;
+      dateKey = state.selectedCalendarDate || getTodayISODate();
+      itemIdx = 0;
+      totalItems = 1;
+    }
+    const todayISO = getTodayISODate();
+    if (dateKey < todayISO) {
+      showPastDayNotice();
+      return;
+    }
+    if (dateKey > todayISO) {
+      playSound('tap');
+      showToast('You can tick this off on the day', 'fa-calendar-day');
+      return;
+    }
+
+    playSound('check');
+    if (!state.checkedDietItems) state.checkedDietItems = {};
+    if (!state.checkedDietItems[dateKey]) state.checkedDietItems[dateKey] = {};
+
+    const tot = Math.max(1, totalItems || 1);
+    let current = getCheckedItemIndices(dateKey, slotId, tot).slice();
+    const pos = current.indexOf(itemIdx);
+    if (pos >= 0) {
+      current.splice(pos, 1);
+    } else {
+      current.push(itemIdx);
+    }
+    state.checkedDietItems[dateKey][slotId] = current;
+
+    if (!(state.checkedDietMilestones[dateKey] instanceof Set)) state.checkedDietMilestones[dateKey] = new Set();
+    const set = state.checkedDietMilestones[dateKey];
+    markDayForSync(dateKey);
+
+    const wasSlotDone = set.has(slotId);
+    if (current.length >= tot) {
+      set.add(slotId);
+      state.lastToggledMilestone = slotId;
+    } else {
+      set.delete(slotId);
+      state.lastToggledMilestone = null;
+    }
+
+    updateActiveStreak();
+    if (!wasSlotDone && set.size === 5) {
       playSound('success');
       celebrate('big');
       showToast(`All 5 done! ${state.activeStreakDays}-day streak 🔥`, 'fa-fire');
@@ -6890,6 +7005,7 @@
     jumpToTodayCalendar,
     renderBuildDietView,
     toggleDietMilestone,
+    toggleDietItem,
     toggleExerciseMilestone,
     showPastDayNotice,
     switchGlobalCoach,

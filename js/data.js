@@ -1567,11 +1567,17 @@ const BONE_SIP_DATA = {
     { id: "fd_e_vg_8", name: "Shorshe Palak & Chana Dal (Spinach Mustard Lentils) + Brown Rice", region: "east", diet: "vegan", slot: "dinner", calcium: 350, protein: 18, desc: "Isothiocyanates from mustard seed pair with spinach folate and calcium", conditions: ["diabetes", "hypertension", "dyslipidemia"] },
 
     // --- D3 / SUNLIGHT & HYDRATION BOOSTERS (DAILY 5TH MILESTONE) ---
-    { id: "fd_d3_1", name: "15 mins Safe Midday Sunlight Exposure + 2.5L Hydration", region: "north", diet: "veg", slot: "sun_d3", calcium: 200, protein: 5, desc: "Triggers 10,000 IU natural skin synthesis of cholecalciferol (D3)" },
+    { id: "fd_d3_1", name: "15 mins Safe Midday Sunlight Exposure + 2.5L Hydration", region: "north", diet: "veg", slot: "sun_d3", calcium: 200, protein: 5, desc: "Triggers natural skin synthesis of cholecalciferol (D3)" },
+    { id: "fd_d3_1b", name: "Early Morning Sun Walk (20 mins) + Lemon Methi Water", region: "north", diet: "veg", slot: "sun_d3", calcium: 220, protein: 6, desc: "Gentle UVB sun rays paired with electrolyte hydration" },
+    { id: "fd_d3_1c", name: "Balcony Sun Stretch (15 mins) + Soaked Almonds & Water", region: "north", diet: "veg", slot: "sun_d3", calcium: 240, protein: 7, desc: "Natural sunlight absorption with vitamin E and healthy fats" },
     { id: "fd_d3_2", name: "Morning Sun Walk (Face & Arms exposed) + 1 Glass Fortified D3 Milk", region: "south", diet: "veg", slot: "sun_d3", calcium: 280, protein: 9, desc: "Sun ultraviolet-B activation paired with digestive milk lipids" },
+    { id: "fd_d3_2b", name: "Balcony Morning Sunlight (15 mins) + Tender Coconut Water & Chia Seeds", region: "south", diet: "veg", slot: "sun_d3", calcium: 240, protein: 5, desc: "Natural sun absorption and mineral-rich electrolyte balance" },
     { id: "fd_d3_3", name: "Midday Balcony Sunlight Break + Soaked Sesame Seeds & Water", region: "west", diet: "veg", slot: "sun_d3", calcium: 250, protein: 6, desc: "Combined dermal D3 synthesis and plant calcium catalyst" },
+    { id: "fd_d3_3b", name: "Morning Terrace Sun Walk (15 mins) + Soaked Flaxseed Water", region: "west", diet: "veg", slot: "sun_d3", calcium: 230, protein: 6, desc: "Sunlight D3 synthesis with omega-3 fatty acid absorption" },
     { id: "fd_d3_4", name: "Natural Sunlight Exposure + Vitamin D3 Drops as Doctor Advised", region: "east", diet: "veg", slot: "sun_d3", calcium: 200, protein: 5, desc: "Clinical guideline maintenance for indoor workers" },
-    { id: "fd_d3_5", name: "Outdoor Brisk Walk + Fortified Plant Milk with Vitamin D2/D3", region: "continental", diet: "vegan", slot: "sun_d3", calcium: 260, protein: 8, desc: "100% plant-based bone catalyst routine" }
+    { id: "fd_d3_4b", name: "Morning Rooftop Sun Soak (15 mins) + Fresh Coconut Water", region: "east", diet: "veg", slot: "sun_d3", calcium: 210, protein: 4, desc: "Gentle sunlight exposure and natural hydration" },
+    { id: "fd_d3_5", name: "Outdoor Brisk Walk + Fortified Plant Milk with Vitamin D2/D3", region: "continental", diet: "vegan", slot: "sun_d3", calcium: 260, protein: 8, desc: "100% plant-based bone catalyst routine" },
+    { id: "fd_d3_5b", name: "Park Sun & Deep Breathing (20 mins) + Chia Seed Infused Water", region: "continental", diet: "vegan", slot: "sun_d3", calcium: 220, protein: 5, desc: "Energizing morning sun routine with antioxidant hydration" }
   ],
 
   // --------------------------------------------------------------------------

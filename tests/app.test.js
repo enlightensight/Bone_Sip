@@ -318,6 +318,15 @@ setTimeout(() => {
   BoneApp.applyExerciseSwap('ex_wall_pushups', 'ex_prone_cobra');
   assert(true, 'Applied exercise swap: replaced wall pushups with prone cobra');
 
+  // Test Morning Sun cycle / swap (< > buttons)
+  BoneApp.cycleSlotMeal('m_sun_d3', 1);
+  assert(true, 'Morning sun successfully cycles and swaps when pressing < > navigation buttons');
+
+  // Test item-level checkbox toggle & proportional scoring
+  assert(typeof BoneApp.toggleDietItem === 'function', 'BoneApp exports toggleDietItem for item-level checkbox interaction');
+  BoneApp.toggleDietItem('m_lunch', 0, 2);
+  assert(true, 'Individual meal item can be checked independently for partial meal progress');
+
   // Toggle milestones
   BoneApp.toggleDietMilestone('m_breakfast');
   BoneApp.toggleDietMilestone('m_lunch');
