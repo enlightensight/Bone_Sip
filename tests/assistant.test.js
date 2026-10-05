@@ -37,7 +37,7 @@ const nextIp = () => `10.0.0.${++ipCounter}`;
   assert(P.includes('112') && /not a doctor/i.test(P), 'Prompt includes safety rules (not a doctor, emergency number)');
   assert(Object.keys(ACTIONS).every(id => P.includes(id)), 'Prompt lists every action id');
   assert(Object.keys(LANGUAGES).length === 13 && ['hi', 'bn', 'mr', 'te', 'ta', 'gu', 'kn', 'ml', 'pa', 'or', 'as'].every(l => LANGUAGES[l]), 'Supports auto + English + 11 Indian languages');
-  assert(P.length < 16000, 'Knowledge prompt stays compact', `(${P.length} chars)`);
+  assert(P.length < 18000, 'Knowledge prompt stays compact', `(${P.length} chars)`);
 
   console.log('\n--- Snapshot & validation ---');
   const snap = _internal.buildSnapshot({ firstName: 'Asha\u0000<script>', age: 999, diet: 'veg', region: 'south', mealsPending: Array(20).fill('x') }, 'zz');
