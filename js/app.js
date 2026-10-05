@@ -607,8 +607,8 @@
   function renderPillarBottomNav() {
     const pillars = [
       { id: 'build', label: 'Build', btn: 'pillarBtnBuild', icon: 'iconPillarBuild', img: 'biceps' },
-      { id: 'protect', label: 'Protect', btn: 'pillarBtnProtect', icon: 'iconPillarProtect', img: 'shield' },
-      { id: 'strengthen', label: 'Strengthen', btn: 'pillarBtnStrengthen', icon: 'iconPillarStrengthen', img: 'chart' }
+      { id: 'protect', label: 'Protect', btn: 'pillarBtnProtect', icon: 'iconPillarProtect', img: 'protect_shield_3d' },
+      { id: 'strengthen', label: 'Strengthen', btn: 'pillarBtnStrengthen', icon: 'iconPillarStrengthen', img: 'strengthen_bone_3d' }
     ];
     pillars.forEach(p => {
       const btn = document.getElementById(p.btn);
@@ -748,8 +748,8 @@
         </div>
         <div class="pillar-stack" style="margin-top: 18px;">
           ${pillarRow({ kind: 'build', img: 'biceps', title: 'Build', sub: 'Food · Vitamin D · Exercise', num: 1, i: 3 })}
-          ${pillarRow({ kind: 'protect', img: 'shield', title: 'Protect', sub: 'Fall-proof home · Good shoes', num: 2, i: 4 })}
-          ${pillarRow({ kind: 'strengthen', img: 'stethoscope', title: 'Strengthen', sub: 'Bone scan · Doctor review', num: 3, i: 5 })}
+          ${pillarRow({ kind: 'protect', img: 'protect_shield_3d', title: 'Protect', sub: 'Fall-proof home · Good shoes', num: 2, i: 4 })}
+          ${pillarRow({ kind: 'strengthen', img: 'strengthen_bone_3d', title: 'Strengthen', sub: 'Bone scan · Doctor review', num: 3, i: 5 })}
         </div>
         <div class="wiz-footer">
           <button class="cta-btn" onclick="BoneApp.setBuildAssessmentStep('build_education')">Start my plan <i class="fa-solid fa-arrow-right"></i></button>
@@ -2521,8 +2521,8 @@
   }
 
   function renderClinicalDietGuidance(userConditions, userDiet, userReg) {
-    const active = (userConditions || []).filter(c => c && c !== 'none');
-    if (!active.length) return '';
+    const list = Array.isArray(userConditions) ? userConditions : (Array.isArray(state.userProfile.conditions) ? state.userProfile.conditions : (state.userProfile.healthConditions || []));
+    const active = list.filter(c => c && c !== 'none');
 
     const condNames = active.map(c => {
       const opt = (BONE_SIP_DATA.healthConditionOptions || []).find(o => o.id === c);
@@ -2594,16 +2594,43 @@
       });
     }
 
+    // Baseline clinical protocol if no specific conditions are active
+    if (!tips.length) {
+      tips.push(
+        {
+          icon: 'fa-bone',
+          title: '3-2-1 Calcium Scaffolding',
+          desc: 'Target 1,000–1,200 mg calcium daily spaced across meals to maintain continuous serum calcium and prevent skeletal resorption.'
+        },
+        {
+          icon: 'fa-sun',
+          title: 'D3 Matrix Mineralization',
+          desc: '15 mins safe morning sunlight exposure catalyzes Vitamin D synthesis, essential for active intestinal calcium transport.'
+        },
+        {
+          icon: 'fa-dumbbell',
+          title: 'Protein-Collagen Scaffold',
+          desc: 'Adequate daily protein provides structural amino acids to build flexible Type-1 collagen matrix before mineral deposition.'
+        },
+        {
+          icon: 'fa-leaf',
+          title: 'Magnesium & K2 Synergy',
+          desc: 'Dark greens, seeds, and curd supply Vitamin K2 & Magnesium to direct calcium into bones and away from arterial walls.'
+        }
+      );
+    }
+
     return `
       <div class="clinical-diet-banner fade-up" role="region" aria-label="${t('Clinical Guidance')}">
         <div class="cdb-header">
           <div class="cdb-badge"><i class="fa-solid fa-stethoscope"></i> ${t('Clinical Guidance')}</div>
           <div class="cdb-conditions">
-            ${condNames.map(cn => `<span class="cdb-cond-chip">${escapeHtml(t(cn))}</span>`).join('')}
+            ${active.length ? condNames.map(cn => `<span class="cdb-cond-chip">${escapeHtml(t(cn))}</span>`).join('') : `<span class="cdb-cond-chip"><i class="fa-solid fa-shield-heart"></i> ${t('Bone Mineralization Protocol')}</span>`}
+            <button type="button" class="cdb-edit-btn" onclick="BoneApp.openUserProfileModal()" aria-label="${t('Edit health conditions')}"><i class="fa-solid fa-pen"></i></button>
           </div>
         </div>
         <div class="cdb-title">${t('Personalized for {region}', { region: formatRegionName(userReg) })} · ${formatDietName(userDiet)}</div>
-        <div class="cdb-desc">${t('Diet tailored to your selected metabolic profile to optimize bone mineralization while supporting overall systemic health.')}</div>
+        <div class="cdb-desc">${active.length ? t('Diet tailored to your selected metabolic profile to optimize bone mineralization while supporting overall systemic health.') : t('Clinical nutritional protocol tailored to optimize bone density and skeletal remodeling.')}</div>
         <div class="cdb-tips-grid">
           ${tips.map(tItem => `
             <div class="cdb-tip-item">
