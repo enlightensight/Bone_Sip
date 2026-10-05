@@ -3936,11 +3936,6 @@
     }
 
     // 3. Hero copy
-    const themeBadge = document.getElementById('dietDayThemeBadge');
-    if (themeBadge) {
-      themeBadge.textContent = dayData.theme;
-      themeBadge.className = `step-chip ${isPast ? 'muted' : 'build'}`;
-    }
     const dayTitle = document.getElementById('dietDayTitle');
     if (dayTitle) {
       const tag = isPast ? '<span class="past-tag"><i class="fa-solid fa-lock"></i> View only</span>' : '';
