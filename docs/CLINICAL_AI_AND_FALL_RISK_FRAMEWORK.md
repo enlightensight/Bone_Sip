@@ -1,239 +1,148 @@
-# BONE SIP: Clinical Architecture, AI Engine & Fall Risk Framework
-
-*A practical technical and clinical guide to how BONE SIP personalizes nutrition, powers its AI assistant (Ojas), and screens for fall risks in older adults.*
-
----
-
-## 1. What Content We Feed into the AI Chatbot (Ojas)
-
-Our conversational AI assistant is called **Ojas** (a Sanskrit term representing core vitality, strength, and immunity). When a user chats with Ojas, the backend (`server/assistant.js`) combines two distinct layers of information: a **comprehensive domain knowledge base** and a **live per-user medical snapshot**. 
-
-Here is exactly how that pipeline works and what data gets passed into it.
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│ 1. SYSTEM KNOWLEDGE BASE (Cached at Server Edge)                        │
-│    • Clinical safety boundaries (not a doctor, emergency triage 112/108)│
-│    • 10 filmed exercise regimens (form cues, bones targeted, safety)    │
-│    • 100+ Indian regional bone-building foods (calcium & protein values)│
-│    • 8 metabolic disease decision rules (diabetes, thyroid, renal, etc.)│
-│    • App navigation pathways & action triggers                          │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │
-                                     ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│ 2. LIVE USER CONTEXT SNAPSHOT (Appended on Every User Turn)             │
-│    • Vitals & Body Metrics: Age, height, weight, computed live BMI      │
-│    • Regional & Lifestyle Identity: Cuisine (North/South/etc.), Diet    │
-│    • Medical Background: Active health flags (hypertension, thyroid)    │
-│    • Today's Progress: Bone score (0–100), checked meals, active streak │
-│    • UI Screen: What page or modal the user currently has open          │
-│    • Filtered Meal Ideas: Top local dishes matching their conditions    │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │
-                                     ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│ 3. MULTILINGUAL DIALOGUE ENGINE                                         │
-│    Responds in user's chosen language (English + 11 Indian scripts)     │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+# BONE SIP Technical & Clinical Framework
+**Author:** BONE SIP Engineering & Clinical Nutrition Team  
+**Last Updated:** October 2026  
+**Target:** Internal Platform Documentation, Clinical Reviewers & API Integration
 
 ---
 
-### A. The Static Knowledge Base (`buildKnowledgePrompt`)
-The static prompt acts as Ojas's core medical and platform training. Because it stays constant across requests, our backend uses Groq prompt caching so it does not consume unnecessary rate limits or add latency.
+## 1. AI Assistant Context Pipeline (`server/assistant.js`)
 
-1. **Medical Guardrails & Emergency Triage**:
-   - Ojas explicitly states it is an educational AI guide, not a treating physician. It never changes prescription doses or suggests stopping prescribed medicines.
-   - **Emergency Red Flag Protocol**: If a user mentions a recent fall accompanied by severe hip/back pain, inability to bear weight, dizziness, chest tightness, or loss of consciousness, Ojas halts routine advice and instructs them to call emergency services immediately (**112** or **108** in India).
-   - **Osteoporosis Precautions**: For users with low bone density, Ojas flags movements to avoid—specifically loaded forward spine flexion (like touching toes or sit-ups), rapid twisting, and high-impact jumping.
+BONE SIP uses a server-side handler for its AI guide (Ojas) that runs in `server/assistant.js` and feeds completions to Groq's OpenAI-compatible API (`https://api.groq.com/openai/v1/chat/completions`). 
 
-2. **The 10 Filmed Exercise Modules**:
-   - Ojas knows every exercise in the BONE SIP library across **Strength** (e.g., Chair Sit-to-Stand, Heel Raises), **Balance** (Single-Leg Stand, Tandem Walk), and **Posture** (Seated Band Pull-Apart).
-   - It knows the exact coaching cues, the primary bones being loaded (femoral neck, lumbar spine, distal radius), and safety advice (e.g., keeping a chair nearby for support).
+To keep latency low and avoid burning rate limits on repetitive tokens, the prompt is divided into two parts: a static cached prompt containing medical and platform rules, and a dynamic runtime snapshot generated on every user request.
 
-3. **Regional Indian Food & Mineral Database**:
-   - Contains over 100 authentic dishes tailored to 5 culinary traditions: **North Indian, South Indian, West Indian, East Indian, and Global/Continental**.
-   - Contains exact nutrient counts (calcium in mg, protein in g) per everyday Indian serving (katori, roti, glass, tablespoon).
-   - Prioritizes accessible Indian calcium powerhouses:
-     - **Ragi (Finger Millet)**: ~340 mg calcium per 100g.
-     - **Roasted White Sesame (Til)**: ~1,400 mg/100g unhulled (~180 mg in 2 teaspoons).
-     - **Moringa (Drumstick Leaves)**: ~440 mg per 100g.
-     - **Poppy Seeds (Khus Khus)**: ~1,400 mg per 100g.
-     - **Dairy Staples**: Fresh Curd/Dahi (~300 mg per bowl), Paneer (~200–350 mg per 100g).
+### 1.1 The Static Knowledge Prompt (`buildKnowledgePrompt`)
+The static prompt compiles data directly from `js/data.js` when the server starts. Because the system instructions remain identical across requests, the inference provider caches the prefix.
 
-4. **Metabolic Disease Adaptation Rules**:
-   When a user has pre-existing conditions, Ojas automatically alters its meal recommendations:
-   - **Diabetes**: Recommends low-glycaemic millets (Ragi, Jowar, Bajra), moong sprouts, and high-fiber legumes. Explains why elevated blood glucose creates Advanced Glycation End-products (AGEs) that weaken collagen cross-links in bone.
-   - **Hypertension**: Enforces sodium restriction (< 2,000 mg/day) following DASH guidelines. Highlights that excess sodium forces the kidneys to dump calcium into urine (*hypercalciuria*).
-   - **Obesity / Weight Management**: Focuses on high-satiety, lean proteins (tofu, sprouts, egg whites, boiled chana) at 1.0–1.2 g/kg body weight so bone-supporting muscles stay nourished while managing calories.
-   - **High Cholesterol (Dyslipidemia)**: Focuses on soluble fiber (methi seeds, oats) and plant-based Omega-3s (flaxseeds, walnuts) to reduce chronic systemic inflammation that triggers bone resorption.
-   - **Thyroid Disorders**: Enforces the **4-Hour Calcium Spacing Rule**—thyroid hormone (Levothyroxine) must be taken first thing in the morning with plain water, and any calcium-rich food, milk, curd, or tablet must wait at least 4 hours.
-   - **Lactose Intolerance**: Replaces dairy with fortified soy milk, firm tofu, ragi rotis, sesame chutneys, and leafy greens.
-   - **Nut Allergies**: Strictly excludes almonds, peanuts, cashews, and walnuts, swapping in pumpkin seeds, sunflower seeds, and roasted chana.
+Key components included in this prompt:
 
-5. **In-App Navigation & Interactive Action Buttons**:
-   Ojas can attach deep-link action pills to its responses so older adults do not have to hunt through menus:
-   - `[[action:open_diet]]` — Takes user straight to today's 3-2-1 meal tracker.
-   - `[[action:start_workout]]` — Launches the full-screen guided workout player.
-   - `[[action:open_report]]` — Opens the comprehensive bone health report and score breakdown.
-   - `[[action:open_protect]]` — Opens the fall risk and room-by-room safety audit.
-   - `[[action:open_strengthen]]` — Opens the "Ask Your Doctor" checklist and DXA T-Score guide.
-   - `[[action:open_profile]]` — Opens the profile screen to adjust height, weight, diet, or conditions.
+1. **Clinical boundaries and safety rules**:
+   - The assistant explicitly disclaims physician status and is barred from prescribing medications, altering drug regimens, or recommending specific supplement dosages.
+   - Emergency triage triggers: If a user reports severe acute pain after a fall, inability to bear weight, sudden neurological symptoms, or chest pain, the assistant must direct them to call Indian emergency services (112 or 108).
+   - Osteoporosis movement restrictions: The assistant warns against loaded forward flexion (e.g. traditional sit-ups, bending to touch toes with stiff knees) and rapid spinal rotation for users with low T-scores.
 
----
+2. **Exercise library coverage**:
+   - All 10 filmed exercises in `js/data.js` are cataloged across Strength (Chair Sit-to-Stand, Heel Raises), Balance (Single-Leg Stand, Tandem Walk), and Posture (Seated Band Pull-Apart).
+   - Details include step-by-step cues, targeted anatomical bones (femoral neck, spine, distal radius), and safety considerations (such as keeping a wall or chair within reach).
 
-### B. The Live Per-User Snapshot (`buildSnapshot`)
-Whenever a user sends a message, the app generates a lightweight JSON summary of their current state. This allows Ojas to answer personal questions like *"What should I have for dinner tonight?"* or *"Why is my score only 65?"* with total accuracy.
+3. **Regional nutrition catalog**:
+   - Nutrient mappings covering over 100 Indian dishes across North, South, West, East, and Continental cuisines.
+   - Elemental calcium and protein values are indexed using standard Indian household units (katoris, rotis, tablespoons, glasses).
+   - Includes high-calcium regional staples: finger millet (Ragi), unhulled sesame seeds (Til), drumstick leaves (Moringa), poppy seeds (Khus Khus), paneer, and curd.
 
-```javascript
-// Example of the live snapshot sent to the model with every prompt
-{
-  "First name": "Meera",
-  "Age": 58,
-  "Height cm": 158,
-  "Weight kg": 62,
-  "BMI": 24.8,
-  "Diet": "Vegetarian",
-  "Cuisine": "South Indian",
-  "Activity": "Light daily walks",
-  "Health & metabolic conditions": ["Hypertension", "Thyroid"],
-  "Clinical nutrition directive": "Strictly personalize recommendations to: Hypertension, Thyroid",
-  "Bone score today": "72/100 (Active Capital Builder): diet 32/40, exercise 20/30, safety 10/20, streak 10/10",
-  "Streak days": 5,
-  "Today's meals ticked": ["Breakfast (Ragi Dosa + Chutney)", "Lunch (Sambar + Curd + Brown Rice)"],
-  "Pending boosters": ["Evening snack", "Dinner", "Sunlight & Vitamin D"],
-  "Screen open": "Diet Tab",
-  "Filtered meal ideas": [
-    "snack: Roasted Makhana with sesame (~160 mg Ca)",
-    "dinner: Methi Tofu Bhurji with Phulka (~280 mg Ca)"
-  ]
-}
+4. **Metabolic condition rules**:
+   - **Diabetes**: Emphasizes low-glycaemic millets (Ragi, Jowar, Bajra) and pulses; avoids refined carbohydrates.
+   - **Hypertension**: Follows DASH guidelines (< 2,000 mg sodium/day) to prevent excess urinary calcium excretion.
+   - **Thyroid medication**: Enforces the 4-hour spacing rule between morning levothyroxine and calcium-rich foods or supplements.
+   - **Lactose intolerance & Nut allergies**: Replaces dairy with fortified plant milks, tofu, ragi, and sesame; replaces nuts with pumpkin and sunflower seeds.
+
+5. **Action tag deep-linking**:
+   - The assistant appends UI action tags (e.g. `[[action:open_diet]]`, `[[action:start_workout]]`, `[[action:open_report]]`) to route users directly to specific app views without manual navigation.
+
+### 1.2 The Dynamic Runtime Snapshot (`buildSnapshot`)
+On each user turn, the client passes a sanitized state object `ctx`. The server transforms this into a brief plain-text context block:
+
+```text
+Today: 2026-10-05
+Screen open: diet_tab
+First name: Meera
+Age: 58
+Height cm: 158
+Weight kg: 62
+BMI: 24.8
+Diet: Vegetarian
+Cuisine: South Indian
+Activity: Light
+Health & metabolic conditions: Hypertension, Thyroid
+Clinical nutrition directive: Strictly personalize diet charts and recommendations to these conditions: Hypertension, Thyroid.
+Unlocked pillars: build, protect
+Bone score today: 72/100 (Active Capital Builder): diet 32/40, exercise 20/30, safety 10/20, streak bonus 10/10
+Streak days: 5
+Today's meals ticked: breakfast: Ragi Dosa; lunch: Sambar + Curd
+Pending boosters: snack, dinner, sun_d3
 ```
 
 ---
 
-## 2. The "3-2-1 Calcium Scaffolding" Clinical Methodology
+## 2. The 3-2-1 Nutritional Model: Clinical Rationale
 
-The **3-2-1 Scaffolding** is BONE SIP's clinical framework designed around how the human gut actually absorbs calcium and how bone cells build structural strength.
+The 3-2-1 rule is BONE SIP's daily nutrition baseline for adults aged 50 and above:
+- **3 Calcium Servings** (~1,000–1,200 mg/day elemental calcium)
+- **2 Protein Portions** (~1.0–1.2 g/kg body weight/day)
+- **1 Vitamin D3 Source** (15–20 min safe sunlight or clinical supplementation)
 
-```
-       ┌─────────────────────────────────────────────────────────────┐
-       │               THE BONE SIP 3-2-1 DAILY RULE                 │
-       ├─────────────────────────────────────────────────────────────┤
-       │  3  │  CALCIUM MOMENTS   │ ~1,000–1,200 mg across 3 meals   │
-       │  2  │  PROTEIN ANCHORS   │ 1.0–1.2 g/kg across 2 main meals │
-       │  1  │  VITAMIN D3 SOURCE │ 15–20 min sun or clinical D3     │
-       └─────────────────────────────────────────────────────────────┘
-```
+### 2.1 Why 3 Calcium Servings?
+Active intestinal calcium transport occurs in the duodenum and upper jejunum via TRPV6 channels and calbindin-D9k. Kinetic studies (Heaney et al., 1988) show that active transport saturates when single-dose elemental calcium exceeds 400–500 mg. 
 
-### Why Do We Call It "Scaffolding"?
+When a user consumes 1,000–1,200 mg in a single meal or tablet, fractional absorption drops significantly. Dividing intake across 3 meal occasions (Breakfast, Lunch, and Dinner/Snack) ensures the saturable carrier system operates at optimal efficiency throughout the day.
 
-1. **Intestinal Receptor Saturation (Why 3 Servings?)**:
-   - Calcium is absorbed in the small intestine through two pathways: active transcellular transport (via the **TRPV6** channel and **Calbindin-D9k** protein) and passive paracellular diffusion.
-   - The active transport pathway **saturates at roughly 400 to 500 mg of elemental calcium per meal**. 
-   - If someone consumes their entire daily 1,200 mg target in a single massive meal or large tablet, absorption drops below 15–20%, and the excess is lost through the stool.
-   - **The 3-Serving Solution**: BONE SIP breaks daily intake into **three 300–400 mg deposits** (Breakfast, Lunch, and Dinner/Snack). This keeps the gut transporters working at maximum efficiency throughout the day.
+### 2.2 Why 2 Protein Portions?
+Bone is approximately 50% protein by volume, primarily structured as a Type-I collagen matrix upon which hydroxyapatite crystals deposit (Bonjour, 2005). 
 
-2. **Building the Protein Matrix (Why 2 Anchors?)**:
-   - Many people think bone is just hard mineral chalk. In reality, **50% of bone volume is an organic protein matrix**, made almost entirely of **Type-I Collagen**. Calcium crystals (hydroxyapatite) attach onto this collagen structure like bricks onto steel reinforcement rods.
-   - Dietary protein stimulates the liver to produce **IGF-1 (Insulin-like Growth Factor 1)**. IGF-1 signals the kidneys to reabsorb calcium and activates osteoblasts (bone-forming cells).
-   - Furthermore, adequate protein prevents **sarcopenia** (muscle wasting) in adults over 50. Strong quadriceps and glutes are the primary shock absorbers that protect the hip from breaking during a stumble.
-   - **The 2-Anchor Solution**: Two dedicated protein portions per day (~50–70g total, or 1.0–1.2 g per kg of body weight) from dal, paneer, curd, soya, sprouts, eggs, or fish.
+Dietary protein intake of 1.0–1.2 g/kg/day supports circulating Insulin-like Growth Factor 1 (IGF-1), which stimulates osteoblast activity and renal tubular calcium reabsorption. In aging adults, adequate protein also preserves muscle mass (countering sarcopenia), maintaining physical strength to prevent falls.
 
-3. **Active Mineralization (Why 1 Vitamin D3 Source?)**:
-   - Without active Vitamin D ($1,25(\text{OH})_2\text{D}_3$), the intestine cannot produce Calbindin-D9k, and calcium absorption plummets to under 10–15%.
-   - **The 1-Source Solution**: A daily deposit of either 15–20 minutes of safe mid-morning sun exposure on the arms and legs (between 10:00 AM and 1:00 PM for optimal UVB synthesis) or a doctor-prescribed Vitamin D3 supplement.
+### 2.3 Why 1 Vitamin D3 Source?
+Vitamin D is required for the synthesis of calbindin-D9k. Without sufficient 1,25-dihydroxyvitamin D, intestinal calcium absorption falls below 10–15% (Holick, 2007). 
+
+BONE SIP tracks either 15–20 minutes of daily mid-morning sun exposure on arms and legs (between 10:00 AM and 1:00 PM for peak UVB) or a clinical oral supplement prescribed by the user's doctor.
+
+### 2.4 Meal Timing & Absorption Rules
+- **Levothyroxine (Thyroid) Spacing**: Calcium carbonate and dietary calcium bind to levothyroxine in the stomach, forming unabsorbable chelates (Singh et al., 2000). The app enforces taking thyroid medication first thing in the morning with water, spacing all calcium intake at least 4 hours later.
+- **Tea and Coffee Tannins**: Polyphenols and phytates in Indian chai bind divalent cations. The app recommends separating tea or coffee by at least 1 hour from calcium-rich meals.
+- **Sodium and Hypercalciuria**: High sodium intake shares proximal renal clearance pathways with calcium, increasing urinary calcium loss. Daily recipes are formulated with moderate sodium to prevent silent calcium wasting.
 
 ---
 
-### The Supporting Biochemical Co-Factors & Meal Timing Rules
+## 3. Fall Risk Screening & Home Hazard Assessment
 
-- **Vitamin K2 (MK-7)**: Vitamin K2 acts like a traffic cop for calcium. It activates *osteocalcin* (through gamma-carboxylation), which binds free calcium into the bone crystal matrix instead of letting it deposit into blood vessel walls.
-- **Magnesium**: Magnesium is required by the liver and kidneys to convert raw Vitamin D into its active form. It also helps regulate Parathyroid Hormone (PTH).
-- **Thyroid Medication Separation**: Levothyroxine chemically binds to calcium ions in the stomach, forming an insoluble clump that blocks absorption of both the hormone and the mineral. BONE SIP strictly mandates taking thyroid medication first on an empty stomach and waiting **at least 4 hours** before having milk, curd, paneer, or calcium tablets.
-- **Tea & Coffee Spacing**: Tannins, phytates, and polyphenols in Indian chai and coffee bind to dietary calcium. BONE SIP advises having tea/coffee **at least 1 hour before or after** main 3-2-1 meals.
-- **Sodium Cap**: Excessive salt causes the kidneys to excrete calcium alongside sodium. We keep recipes low in added salt to prevent silent urinary calcium loss.
+Falls account for the majority of non-vertebral fractures in older adults. BONE SIP's **Protect** module implements a two-stage screening tool based on validated clinical guidelines.
 
----
+### 3.1 Personal Fall Risk Screening (6 Clinical Warning Signs)
+Adapted from the CDC STEADI (Stopping Elderly Accidents, Deaths, & Injuries) screening algorithm ("Stay Independent" tool; Stevens et al., 2014) and the American Geriatrics Society / British Geriatrics Society (AGS/BGS) clinical guidelines:
 
-## 3. Fall Risk Screening: Clinical Questionnaires & Sources
+1. **Fell in the last year (`risk_fall`)**: A previous fall within the past 12 months is the single strongest clinical predictor of a future fall.
+2. **Unsteady walking (`risk_unsteady`)**: Screens for lower-extremity weakness, gait asymmetry, and proprioceptive deficits.
+3. **Dizziness when standing (`risk_dizziness`)**: Identifies potential orthostatic hypotension or vestibular dysfunction.
+4. **Fear of falling (`risk_fear`)**: Detects self-limiting activity avoidance (kinesiophobia), which leads to deconditioning and muscle atrophy.
+5. **Vision problems (`risk_vision`)**: Flags reduced visual acuity and contrast sensitivity, common causes of misjudging steps.
+6. **4+ daily prescription medications (`risk_meds`)**: Polypharmacy increases the risk of sedative, hypotensive, and anticholinergic side effects.
 
-Most osteoporotic fractures do not happen spontaneously—they occur when a fragile bone experiences the impact of a simple, ground-level fall. To protect our users, BONE SIP incorporates a **two-tier clinical fall screening tool**.
+**Risk Tiers**:
+- **0–1 Warning Signs**: Low Risk — Routine balance maintenance and baseline home checks.
+- **2–4 Warning Signs**: Moderate Risk — Targeted balance drills, environmental modifications, and medication review.
+- **5–6 Warning Signs**: High Risk — Recommends clinical evaluation, physical therapy assessment, and supervised mobility.
 
----
+### 3.2 5-Room Home Hazard Audit (15 Checkpoints)
+Adapted from the CDC STEADI "Check for Safety" home assessment and the National Institute on Aging (NIA/NIH) home safety guidelines:
 
-### A. Personal Fall Risk Screening (6 Clinical Warning Signs)
-
-#### Clinical Origin & Validation:
-- **Primary Source**: **CDC STEADI (Stopping Elderly Accidents, Deaths, & Injuries)** algorithm, specifically the validated **"Stay Independent"** screening tool created by the U.S. Centers for Disease Control and Prevention.
-- **Endorsing Guidelines**: 
-  - **AGS/BGS (American Geriatrics Society & British Geriatrics Society)** Clinical Practice Guidelines for Fall Prevention in Older Adults.
-  - **WHO ICOPE (Integrated Care for Older People)** Clinical Protocol on Mobility Loss and Falls.
-
-#### The 6 Warning Signs Screened in BONE SIP:
-
-| Factor ID | Question / Warning Sign | Why This Matters Clinically |
+| Room | Checkpoint | Clinical Objective |
 |---|---|---|
-| `risk_fall` | **Fell in the last year** | Having fallen once in the past 12 months is the single strongest statistical predictor of a future fall and fracture. |
-| `risk_unsteady` | **Unsteady walking or balance** | Highlights gait abnormalities, lower-body weakness, or peripheral sensory loss in the feet. |
-| `risk_dizziness` | **Dizziness when standing up** | Screens for orthostatic hypotension (sudden blood pressure drop), vestibular issues, or heart rhythm fluctuations. |
-| `risk_fear` | **Fear of falling** | Fear causes people to limit their daily activities. This leads to rapid muscle atrophy, worsening balance, and paradoxically *increases* fall risk. |
-| `risk_vision` | **Vision problems** | Reduced contrast sensitivity, cataracts, or misjudging step heights in dim lighting frequently cause trips. |
-| `risk_meds` | **4 or more daily medicines** | Polypharmacy (especially combinations of blood pressure drugs, sedatives, antidepressants, or sleep aids) significantly increases disorientation and balance loss. |
-
-#### Risk Stratification in the App:
-- **0–1 Warning Signs**: **Low Risk** — The user focuses on maintenance workouts (Heel-to-Toe walking, Chair Sit-to-Stand) and basic home safety.
-- **2–4 Warning Signs**: **Moderate Risk** — Prompts the user to start daily balance training, inspect home hazards, and discuss medication side effects with their doctor.
-- **5–6 Warning Signs**: **High Risk** — Recommends a clinical medical checkup, physical therapy evaluation, and using assistive support when moving outdoors.
-
----
-
-### B. The 5-Room Home Hazard Safety Audit (15 Environmental Checkpoints)
-
-#### Clinical Origin:
-- **Primary Source**: **CDC STEADI "Check for Safety: A Home Fall Prevention Checklist for Older Adults"**.
-- **Supporting Research**: **National Institute on Aging (NIA / NIH)** Home Fall-Proofing and Environmental Hazard Guidelines.
-
-Over 60% of all falls in older adults happen right inside their own homes. BONE SIP guides the user room-by-room through 15 actionable checkpoints:
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                   BONE SIP 5-ROOM HOME SAFETY AUDIT                     │
-├─────────────────┬───────────────────────────────────────────────────────┤
-│ 1. Bedroom      │ • Clear walkway from bed to door (no loose throw rugs)│
-│                 │ • Bedside touch lamp or switch within easy arm's reach│
-│                 │ • Bed height allows feet to rest flat on the floor    │
-├─────────────────┼───────────────────────────────────────────────────────┤
-│ 2. Bathroom     │ • Sturdy wall-anchored grab bars near shower & toilet │
-│ (Highest Risk)  │ • Heavy-duty suction non-slip rubber floor mats       │
-│                 │ • Motion-sensor night light for midnight trips        │
-├─────────────────┼───────────────────────────────────────────────────────┤
-│ 3. Stairs       │ • Secure handrails on both sides of the staircase     │
-│                 │ • High-contrast non-slip adhesive treads on step edges│
-│                 │ • Dual light switches at both top and bottom landings │
-├─────────────────┼───────────────────────────────────────────────────────┤
-│ 4. Kitchen      │ • Frequently used dishes & spices kept at waist height│
-│                 │ • Non-skid rubber-backed mat in front of the sink     │
-│                 │ • Immediate mop protocol for water or cooking oil     │
-├─────────────────┼───────────────────────────────────────────────────────┤
-│ 5. Living Room  │ • Loose area rugs removed or taped down securely      │
-│                 │ • Electrical wires routed along walls and baseboards  │
-│                 │ • Wide, open walking paths between tables and chairs  │
-└─────────────────┴───────────────────────────────────────────────────────┘
-```
+| **Bedroom** | Pathway clear of rugs and cables | Eliminates tripping hazards between bed and doorway. |
+| | Bedside light within easy reach | Prevents walking in darkness when waking up. |
+| | Feet rest flat on floor when seated on bed | Ensures stable posture before standing. |
+| **Bathroom** | Grab bars near toilet and shower | Provides anchored support during transfers (replaces towel racks). |
+| | Non-slip suction mats inside/outside bath | Prevents slipping on wet tile surfaces. |
+| | Night light or continuous illumination | Ensures clear visibility during nocturnal bathroom visits. |
+| **Stairs** | Handrails on both sides | Provides continuous bilateral upper-body support. |
+| | Non-slip adhesive step treads | Improves shoe grip and step-edge contrast. |
+| | Dual switches at top and bottom landings | Ensures stairways are never climbed or descended in the dark. |
+| **Kitchen** | Frequently used items at waist-to-shoulder height | Eliminates the need to climb on stools or overreach. |
+| | Non-skid mat near the sink | Reduces slipping risks in splash zones. |
+| | Immediate cleanup protocol for spills | Prevents slick spots on kitchen flooring. |
+| **Living Room**| Area rugs removed or taped down | Fixes loose rug edges that catch walking canes or footwear. |
+| | Electrical wires tucked along baseboards | Removes loose cords crossing foot corridors. |
+| | Clear walking paths between furniture | Maintains wide, unobstructed movement paths. |
 
 ---
 
-## 4. Summary Quick Reference
+## 4. References & Clinical Literature
 
-| System Component | What It Does | Grounded Clinical / Evidence Source |
-|---|---|---|
-| **Ojas Knowledge Base** | Gives accurate, safe, Indian-diet-friendly bone guidance without prescribing | `server/assistant.js`, built directly from `js/data.js` |
-| **Ojas User Snapshot** | Injects real-time age, BMI, metabolic flags, and today's meal status into every prompt | Dynamic context engine (`buildSnapshot()`) |
-| **3-2-1 Scaffolding** | 3 calcium deposits (~1,200 mg), 2 protein anchors (1.0–1.2 g/kg), 1 D3 source | TRPV6 intestinal saturation kinetics & Collagen matrix synthesis |
-| **Personal Fall Screening** | Identifies 6 core clinical risk factors (prior falls, gait, dizziness, polypharmacy) | **CDC STEADI ("Stay Independent")**, **AGS/BGS**, **WHO ICOPE** |
-| **5-Room Safety Audit** | Audits 15 physical hazards across Bedroom, Bathroom, Stairs, Kitchen & Living Area | **CDC STEADI ("Check for Safety")**, **NIA/NIH Guidelines** |
-
----
-*BONE SIP Clinical & AI Architecture Reference Guide*
+1. **Heaney RP, Saville PD, Recker RR.** (1975). *Estimation of true calcium absorption.* Annals of Internal Medicine, 83(2), 174-177.
+2. **Heaney RP, Weaver CM, Fitzsimmons ML.** (1988). *Absorption of calcium from calcium carbonate and calcium citrate.* Journal of Bone and Mineral Research, 3(5), 525-530.
+3. **Bonjour JP.** (2005). *Dietary protein: an essential nutrient for bone health.* Journal of the American College of Nutrition, 24(sup6), 526S-536S.
+4. **Rizzoli R, et al.** (2018). *Benefits and safety of dietary protein for bone health—an expert consensus paper endorsed by ESCEO.* Osteoporosis International, 29(9), 1933-1948.
+5. **Holick MF.** (2007). *Vitamin D deficiency.* New England Journal of Medicine, 357(3), 266-281.
+6. **Singh N, Singh PN, Hershman JM.** (2000). *Effect of calcium carbonate on the absorption of levothyroxine.* JAMA, 283(21), 2822-2825.
+7. **Stevens JA, Ballesteros MF, Phelan EA.** (2014). *The STEADI tool kit: A resource for health care providers to prevent older adult falls.* Journal of Safety Research, 48, 109-115.
+8. **Panel on Prevention of Falls in Older Persons, AGS/BGS.** (2011). *Summary of the Updated American Geriatrics Society/British Geriatrics Society clinical practice guideline for prevention of falls in older persons.* Journal of the American Geriatrics Society, 59(1), 148-157.
+9. **National Institute on Aging (NIA/NIH).** (2022). *Fall-Proofing Your Home: A Room-by-Room Checklist.* U.S. Department of Health and Human Services.
