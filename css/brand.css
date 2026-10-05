@@ -2922,6 +2922,67 @@ button > i, .cta-btn > i, .btn > i { flex-shrink: 0; }
 .psx-habit { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 12px 6px; border-radius: 16px; background: var(--bg-card-hover); border: 1px solid var(--border-subtle); }
 .psx-habit b { font-size: 0.78rem; font-weight: 700; line-height: 1.25; color: var(--text-secondary); }
 
+/* ---------- Protect: collapsible room check dropdown card ---------- */
+.room-check-card {
+  border-radius: 24px;
+  transition: box-shadow var(--transition-normal);
+}
+.room-check-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 0;
+  transition: opacity var(--transition-fast);
+}
+.room-check-dropdown-header:hover {
+  opacity: 0.9;
+}
+.room-check-dropdown-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.room-check-head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.room-check-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border-subtle);
+  background: #fff;
+  color: var(--text-secondary);
+  cursor: pointer;
+  pointer-events: none;
+  transition: transform var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+.room-check-dropdown-header:hover .room-check-toggle-btn {
+  background: var(--bg-card-hover);
+  border-color: var(--protect);
+  color: var(--protect);
+}
+.room-check-chevron {
+  font-size: 0.9rem;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.room-check-chevron.open {
+  transform: rotate(180deg);
+}
+.room-check-collapse-body {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+  animation: fadeIn 0.3s ease both;
+}
+
 /* ---------- Strengthen: tabs ---------- */
 .sx-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; background: #fff; border: 1px solid var(--border-subtle); border-radius: 22px; padding: 6px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
 .sx-tab { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px 7px; border: none; background: none; border-radius: 16px; cursor: pointer; font-family: var(--font-heading); font-weight: 700; font-size: 0.74rem; color: var(--text-muted); transition: background var(--transition-normal), color var(--transition-normal), transform var(--transition-fast); min-width: 0; }

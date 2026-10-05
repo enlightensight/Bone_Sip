@@ -417,17 +417,25 @@
         </div>
       </div>
 
-      <div class="glass-card">
-        <div class="card-head">
-          <h3><img src="assets/icons3d/house.webp" alt="" width="28" height="28"> Room check</h3>
-          <span class="badge badge-blue" id="hubHomeScoreBadge">0 safe</span>
-        </div>
-        <div class="room-audit-tabs" id="hubRoomTabs"></div>
-        <div class="qa-list" id="hubRoomQuestionsList"></div>
-      </div>
-
-      <!-- SAFETY RISK ANALYSIS & ACTION SUGGESTIONS AFTER COMPLETION -->
+      <!-- SAFETY RISK ANALYSIS & ACTION SUGGESTIONS FIRST (ABOVE) -->
       <div class="glass-card protect-safety-summary-card" id="protectSafetyAnalysisCard"></div>
+
+      <!-- ROOM CHECK CARD WITH DROPDOWN MENU ACCORDION (BELOW) -->
+      <div class="glass-card room-check-card" id="protectRoomCheckCard">
+        <div class="card-head room-check-dropdown-header" id="hubRoomCheckDropdownHeader" onclick="BoneApp.toggleRoomCheckDropdown()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();BoneApp.toggleRoomCheckDropdown();}" role="button" tabindex="0" aria-expanded="false" aria-controls="hubRoomCheckCollapseBody" aria-label="Toggle Room Check Questions Dropdown">
+          <h3><img src="assets/icons3d/house.webp" alt="" width="28" height="28"> <span id="hubRoomCheckHeaderTitle">Room check</span></h3>
+          <div class="room-check-head-right">
+            <span class="badge badge-blue" id="hubHomeScoreBadge">0 of 15 safe</span>
+            <button type="button" class="room-check-toggle-btn" id="hubRoomCheckToggleBtn" aria-label="Toggle questions">
+              <i class="fa-solid fa-chevron-down room-check-chevron" id="roomCheckDropdownChevron"></i>
+            </button>
+          </div>
+        </div>
+        <div class="room-check-collapse-body" id="hubRoomCheckCollapseBody" style="display: none;">
+          <div class="room-audit-tabs" id="hubRoomTabs"></div>
+          <div class="qa-list" id="hubRoomQuestionsList"></div>
+        </div>
+      </div>
     </section>
 
     <!-- =========================================================================

@@ -157,7 +157,7 @@ const elementIds = [
   'exerciseSwapModal', 'exerciseSwapOptionsGrid', 'assessmentStageContainer', 'calendarMonthYearText',
   'dietDayTabs', 'lifeAssetGrid', 'goalsContinueBtn', 'assetSelectedCount', 'healthConditionsList',
   'clinicalDietGuidanceContainer', 'dietMilestonesList', 'protectSuggestionBannerContainer',
-  'protectSafetyAnalysisCard', 'protectRiskStatusBadge', 'hubHomeScoreBadge', 'hubRoomTabs', 'hubRoomQuestionsList',
+  'protectSafetyAnalysisCard', 'protectRoomCheckCard', 'hubRoomCheckDropdownHeader', 'hubRoomCheckCollapseBody', 'roomCheckDropdownChevron', 'protectRiskStatusBadge', 'hubHomeScoreBadge', 'hubRoomTabs', 'hubRoomQuestionsList',
   'strengthenContentContainer', 'printDoc', 'stTab_dxa_risk', 'stTab_labs_biomarkers', 'stTab_meds_timing', 'stTab_spine_safety', 'stTab_doctor_brief',
   'view-assessment', 'view-auth', 'view-build', 'view-protect', 'view-strengthen'
 ];
@@ -481,6 +481,15 @@ setTimeout(() => {
   const afterFix = mockElements['protectSafetyAnalysisCard'].innerHTML;
   assert((afterFix.match(/class="psx-fix"/g) || []).length === 1 && !afterFix.includes('Clear rugs & cables'),
     '"Fixed" removes the hazard from the list and saves the answer');
+
+  // Test Protect Room Check Dropdown & Clean UI Toggle
+  assert(typeof BoneApp.toggleRoomCheckDropdown === 'function', 'BoneApp exports toggleRoomCheckDropdown function');
+  BoneApp.toggleRoomCheckDropdown(false);
+  assert(mockElements['hubRoomCheckCollapseBody'].style.display === 'none', 'Room check dropdown can be collapsed to keep UI clean');
+  BoneApp.toggleRoomCheckDropdown(true);
+  assert(mockElements['hubRoomCheckCollapseBody'].style.display === 'block', 'Room check dropdown expands on open');
+  BoneApp.scrollToRoomCheck();
+  assert(mockElements['hubRoomCheckCollapseBody'].style.display === 'block', 'scrollToRoomCheck automatically expands dropdown');
 
   // ---------------------------------------------------------------------------
   // STEP 7: Test Backward Migration (Sanitizing Legacy Dummy Cache)

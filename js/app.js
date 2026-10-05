@@ -5182,8 +5182,43 @@
   }
 
   // --------------------------------------------------------------------------
+  // --------------------------------------------------------------------------
   // MODULE 4: PROTECT HUB VIEW
   // --------------------------------------------------------------------------
+  function isRoomCheckOpen() {
+    if (typeof state.protectRoomCheckOpen === 'boolean') {
+      return state.protectRoomCheckOpen;
+    }
+    const answered = homeSafetySummary().answered;
+    return answered > 0 && answered < 15;
+  }
+
+  function toggleRoomCheckDropdown(forceOpen) {
+    if (typeof forceOpen === 'boolean') {
+      state.protectRoomCheckOpen = forceOpen;
+    } else {
+      state.protectRoomCheckOpen = !isRoomCheckOpen();
+    }
+    playSound('tap');
+    updateRoomCheckDropdownUI();
+  }
+
+  function updateRoomCheckDropdownUI() {
+    const open = isRoomCheckOpen();
+    const body = document.getElementById('hubRoomCheckCollapseBody');
+    const chevron = document.getElementById('roomCheckDropdownChevron');
+    const header = document.getElementById('hubRoomCheckDropdownHeader');
+    if (body) {
+      body.style.display = open ? 'block' : 'none';
+    }
+    if (chevron) {
+      chevron.classList.toggle('open', open);
+    }
+    if (header) {
+      header.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+  }
+
   function renderProtectHubView(animate = false) {
     const badge = document.getElementById('protectRiskStatusBadge');
     if (badge) badge.textContent = `${getRiskLevel(state.protectRiskChecked.size).label} risk`;
@@ -5206,6 +5241,7 @@
     }
 
     renderProtectSafetyAnalysis(animate);
+    updateRoomCheckDropdownUI();
   }
 
   // Short, visual summary under the room check: a score ring, a "fix these"
@@ -5325,10 +5361,15 @@
     const firstOpen = rooms.find(r => r.questions.some(q => !(state.protectHomeAuditAnswers[r.id] || {})[q.id]));
     if (firstOpen && firstOpen.id !== state.selectedAuditRoom) {
       state.selectedAuditRoom = firstOpen.id;
-      renderProtectHubView();
     }
-    const tabs = document.getElementById('hubRoomTabs');
-    if (tabs) tabs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    state.protectRoomCheckOpen = true;
+    renderProtectHubView();
+    const target = document.getElementById('protectRoomCheckCard') || document.getElementById('hubRoomTabs');
+    if (target) {
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
   }
 
   function markHazardFixed(roomId, questionId) {
@@ -6944,6 +6985,7 @@
     dismissProtectBanner,
     renderProtectSuggestionBanner,
     renderProtectSafetyAnalysis,
+    toggleRoomCheckDropdown,
     shareProtectSafetyWhatsApp,
     askAiAboutFallSafety,
     markHazardFixed,
