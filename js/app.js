@@ -6905,7 +6905,24 @@
     // Skip on local dev servers so edits show up immediately; add ?sw=1 to test offline mode locally.
     const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
     if (isLocal && !/[?&]sw=1\b/.test(location.search)) return;
-    const register = () => navigator.serviceWorker.register('sw.js').catch(err => console.warn('Service worker registration failed:', err));
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+
+    const register = () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => {
+          if (reg && typeof reg.update === 'function') {
+            reg.update().catch(() => {});
+          }
+        })
+        .catch(err => console.warn('Service worker registration failed:', err));
+    };
     if (document.readyState === 'complete') register();
     else window.addEventListener('load', register);
   }

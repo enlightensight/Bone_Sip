@@ -1,6 +1,6 @@
 // BONE SIP service worker — offline app shell + runtime caching.
 // Bump CACHE_VERSION whenever you deploy changed files (or let your build step do it).
-const CACHE_VERSION = 'bonesip-v3.7.0';
+const CACHE_VERSION = 'bonesip-v3.8.0';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -8,12 +8,12 @@ const APP_SHELL = [
   "./",
   "index.html",
   "manifest.webmanifest",
-  "css/style.css?v=3.2.4",
-  "css/brand.css?v=3.7.0",
-  "js/config.js?v=3.6.0",
-  "js/data.js?v=3.5.0",
-  "js/i18n.js?v=3.7.0",
-  "js/app.js?v=3.7.0",
+  "css/style.css?v=3.8.0",
+  "css/brand.css?v=3.8.0",
+  "js/config.js?v=3.8.0",
+  "js/data.js?v=3.8.0",
+  "js/i18n.js?v=3.8.0",
+  "js/app.js?v=3.8.0",
   "js/vendor/confetti.browser.min.js",
   "assets/images/bonesip_logo_720.webp",
   "assets/images/ojas-avatar.svg",
@@ -30,7 +30,9 @@ const APP_SHELL = [
   "assets/icons3d/bell.webp",
   "assets/icons3d/biceps.webp",
   "assets/icons3d/bone.webp",
+  "assets/icons3d/bone_report_3d.webp",
   "assets/icons3d/bowl.webp",
+  "assets/icons3d/bp_cuff.webp",
   "assets/icons3d/bulb.webp",
   "assets/icons3d/calendar.webp",
   "assets/icons3d/cane.webp",
@@ -38,6 +40,7 @@ const APP_SHELL = [
   "assets/icons3d/chart.webp",
   "assets/icons3d/check.webp",
   "assets/icons3d/cheese.webp",
+  "assets/icons3d/cholesterol.webp",
   "assets/icons3d/clipboard.webp",
   "assets/icons3d/coffee.webp",
   "assets/icons3d/cooking.webp",
@@ -54,10 +57,13 @@ const APP_SHELL = [
   "assets/icons3d/flatbread.webp",
   "assets/icons3d/glasses.webp",
   "assets/icons3d/globe.webp",
+  "assets/icons3d/glucose.webp",
   "assets/icons3d/hearts.webp",
   "assets/icons3d/hourglass.webp",
   "assets/icons3d/house.webp",
   "assets/icons3d/hug.webp",
+  "assets/icons3d/kidney.webp",
+  "assets/icons3d/lactose.webp",
   "assets/icons3d/ladder.webp",
   "assets/icons3d/laptop.webp",
   "assets/icons3d/leafy.webp",
@@ -67,14 +73,17 @@ const APP_SHELL = [
   "assets/icons3d/lotus.webp",
   "assets/icons3d/milk.webp",
   "assets/icons3d/money.webp",
+  "assets/icons3d/nut_allergy.webp",
   "assets/icons3d/party.webp",
   "assets/icons3d/peanuts.webp",
   "assets/icons3d/phone.webp",
   "assets/icons3d/pill.webp",
   "assets/icons3d/poultry.webp",
+  "assets/icons3d/protect_shield_3d.webp",
   "assets/icons3d/robot.webp",
   "assets/icons3d/running.webp",
   "assets/icons3d/salad.webp",
+  "assets/icons3d/scale.webp",
   "assets/icons3d/seedling.webp",
   "assets/icons3d/shield.webp",
   "assets/icons3d/shoe.webp",
@@ -82,10 +91,12 @@ const APP_SHELL = [
   "assets/icons3d/standing.webp",
   "assets/icons3d/stethoscope.webp",
   "assets/icons3d/stopwatch.webp",
+  "assets/icons3d/strengthen_bone_3d.webp",
   "assets/icons3d/stuffed.webp",
   "assets/icons3d/sun.webp",
   "assets/icons3d/sunrise.webp",
   "assets/icons3d/target.webp",
+  "assets/icons3d/thyroid.webp",
   "assets/icons3d/trophy.webp",
   "assets/icons3d/walking.webp",
   "assets/icons3d/warning.webp",
@@ -138,6 +149,23 @@ self.addEventListener('fetch', (event) => {
           return res;
         })
         .catch(() => caches.match('index.html'))
+    );
+    return;
+  }
+
+  // Core application scripts and styles: network first to immediately pick up newly deployed updates
+  const isAppCode = url.origin === self.location.origin && (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'));
+  if (isAppCode) {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(SHELL_CACHE).then((c) => c.put(request, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }

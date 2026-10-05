@@ -191,47 +191,69 @@ h1, h2, h3, h4, h5 { font-family: var(--font-heading); letter-spacing: -0.01em; 
 
 .header-report-btn {
   background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  padding: 2px !important;
-  margin: 0;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-style: none !important;
+  outline: 0 !important;
+  outline-style: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: none !important;
   border-radius: 0 !important;
   cursor: pointer;
   transition: transform var(--transition-bounce), filter var(--transition-fast);
 }
 .header-report-btn:hover {
   background: transparent !important;
-  border: none !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
   box-shadow: none !important;
   transform: scale(1.12);
   filter: drop-shadow(0 4px 8px rgba(181, 39, 87, 0.25));
 }
-.header-report-btn:active {
+.header-report-btn:active,
+.header-report-btn:focus,
+.header-report-btn:focus-visible {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
   transform: scale(0.92);
 }
 .header-report-btn img,
 .header-report-img {
-  width: 38px !important;
-  height: 38px !important;
+  width: 40px !important;
+  height: 40px !important;
   object-fit: contain;
   display: block;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
   transition: transform var(--transition-bounce);
 }
 @media (max-width: 520px) {
   .header-report-btn {
     background: transparent !important;
-    border: none !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    outline: 0 !important;
     padding: 0 !important;
     box-shadow: none !important;
   }
   .header-report-btn img,
   .header-report-img {
-    width: 36px !important;
-    height: 36px !important;
+    width: 38px !important;
+    height: 38px !important;
   }
 }
 .avatar-btn { position: relative; width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--grad-brand); color: #fff; font-size: 1rem; cursor: pointer; display: grid; place-items: center; box-shadow: var(--shadow-brand); transition: transform var(--transition-fast); }
