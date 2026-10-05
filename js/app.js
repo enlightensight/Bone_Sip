@@ -83,7 +83,8 @@
     protectHomeAuditAnswers: {},
     selectedAuditRoom: 'room_bathroom',
 
-    // Strengthen Clinical Medical & Bone Care Portal State (V3.5)
+    // Strengthen View State: 'simple' (Clean Doctor Review & DXA Guide) | 'clinical' (Advanced Portal)
+    strengthenMode: 'simple',
     strengthenActiveSubTab: 'dxa_risk',
     // The user's bone health file: only what they enter (no sample values).
     scans: [],      // [{ id, date, spine, neck, hip }] DXA T-scores
@@ -1656,6 +1657,7 @@
           return acc;
         }, {}),
         protectBannerDismissed: !!state.protectBannerDismissed,
+        strengthenMode: state.strengthenMode || 'simple',
         strengthenActiveSubTab: state.strengthenActiveSubTab || 'dxa_risk',
         fraxInputs: state.fraxInputs || {},
         spineInputs: state.spineInputs || {},
@@ -1730,6 +1732,7 @@
         if (Array.isArray(data.chatHistory)) state.chatHistory = data.chatHistory;
         if (typeof data.chatLanguage === 'string' && /^[a-z]{2,4}$/.test(data.chatLanguage)) state.chatLanguage = data.chatLanguage;
         if (typeof data.protectBannerDismissed === 'boolean') state.protectBannerDismissed = data.protectBannerDismissed;
+        if (data.strengthenMode) state.strengthenMode = data.strengthenMode;
         if (data.strengthenActiveSubTab) state.strengthenActiveSubTab = data.strengthenActiveSubTab;
         if (data.fraxInputs) state.fraxInputs = Object.assign(state.fraxInputs, data.fraxInputs);
         if (data.spineInputs) state.spineInputs = Object.assign(state.spineInputs, data.spineInputs);
@@ -1851,7 +1854,19 @@
   }
 
   function isCloudUser() {
-    return !!(state.auth.isVerified && state.auth.cloud && accountsApi());
+    return !!(state.auth && state.auth.isVerified && state.auth.cloud && accountsApi());
+  }
+
+  function isLoggedIn() {
+    const hasVerified = !!(state.auth && state.auth.isVerified);
+    const phone = (state.auth && state.auth.phone) || (state.userProfile && state.userProfile.phone) || '';
+    const hasValidPhone = /^[6-9]\d{9}$/.test(phone);
+    return (hasVerified && hasValidPhone) || (hasValidPhone && state.auth && state.auth.cloud) || hasVerified;
+  }
+
+  function loggedInPhone() {
+    const phone = (state.auth && state.auth.phone) || (state.userProfile && state.userProfile.phone) || '';
+    return /^[6-9]\d{9}$/.test(phone) ? phone : '';
   }
 
   function readPendingDays() {
@@ -1937,8 +1952,7 @@
   }
 
   function cloudSessionEnded() {
-    state.auth.cloud = false;
-    state.auth.isVerified = false;
+    if (state.auth) state.auth.cloud = false;
     try { localStorage.setItem(BoneDB.KEY, JSON.stringify(BoneDB.payload())); } catch (e) { /* ignore */ }
     updateHeaderProfileBadge();
     if (!cloud.warnedExpired) {
@@ -2048,8 +2062,14 @@
     playSound('tap');
     if (!confirm(t('Log out of this phone? Your data stays safe in your account.'))) return;
     clearTimeout(cloud.timer);
-    await syncToCloud();
-    try { await apiCall('POST', '/auth/logout', {}); } catch (e) { /* offline: the session just expires */ }
+    if (isCloudUser()) {
+      try { await syncToCloud(); } catch (e) { /* ignore */ }
+      try { await apiCall('POST', '/auth/logout', {}); } catch (e) { /* offline: the session just expires */ }
+    }
+    state.auth.isVerified = false;
+    state.auth.phone = '';
+    state.auth.cloud = false;
+    state.userProfile.phone = '';
     clearLocalAccountData();
     showToast(t('Logged out'), 'fa-right-from-bracket');
     setTimeout(() => window.location.reload(), 600);
@@ -3202,11 +3222,12 @@
     const regSelect = document.getElementById('profSelectRegion');
     const dietSelect = document.getElementById('profSelectDiet');
 
+    const phone = loggedInPhone();
     if (nameInput) nameInput.value = state.userProfile.fullName || '';
     if (phoneInput) {
-      phoneInput.value = state.auth.phone || state.userProfile.phone || '';
-      phoneInput.readOnly = !!state.auth.isVerified;
-      phoneInput.title = state.auth.isVerified ? 'Verified number' : '';
+      phoneInput.value = phone || state.userProfile.phone || '';
+      phoneInput.readOnly = isLoggedIn();
+      phoneInput.title = isLoggedIn() ? 'Verified number' : '';
     }
     if (hInput) hInput.value = state.userProfile.heightCm || 165;
     if (wInput) wInput.value = state.userProfile.weightKg || 62;
@@ -3241,31 +3262,34 @@
     const box = document.getElementById('profileAccountBox');
     const note = document.getElementById('profilePrivacyNote');
     const reset = document.getElementById('profileResetBtn');
+    const loggedIn = isLoggedIn();
+    const phone = loggedInPhone();
     const inCloud = isCloudUser();
-    if (reset) reset.hidden = inCloud;
-    if (note) note.innerHTML = `<i class="fa-solid fa-lock"></i> ${inCloud ? t('Saved safely to your account. Only you can see it.') : t('Your data stays on this device.')}`;
+
+    if (reset) reset.hidden = loggedIn;
+    if (note) {
+      note.innerHTML = `<i class="fa-solid fa-lock"></i> ${loggedIn ? t('Saved safely to your account. Only you can see it.') : t('Your data stays on this device.')}`;
+    }
     if (!box) return;
-    if (inCloud) {
+
+    if (loggedIn) {
+      const formattedPhone = phone ? `+91 ${escapeHtml(phone.slice(0, 5))} ${escapeHtml(phone.slice(5))}` : t('Logged in');
       box.innerHTML = `
         <div class="pa-row">
-          <span class="pa-icon"><i class="fa-solid fa-cloud"></i></span>
-          <div><b>+91 ${escapeHtml(state.auth.phone.slice(0, 5))} ${escapeHtml(state.auth.phone.slice(5))}</b><span>${t('Logged in · saved to your account')}</span></div>
+          <span class="pa-icon"><i class="fa-solid ${inCloud ? 'fa-cloud' : 'fa-mobile-screen-button'}"></i></span>
+          <div><b>${formattedPhone}</b><span>${inCloud ? t('Logged in · saved to your account') : t('Logged in · verified mobile')}</span></div>
         </div>
         <div class="pa-actions">
           <button type="button" class="btn btn-outline" onclick="BoneApp.logout()"><i class="fa-solid fa-right-from-bracket"></i> ${t('Log out')}</button>
           <button type="button" class="link-btn danger" onclick="BoneApp.deleteAccount()"><i class="fa-solid fa-user-xmark"></i> ${t('Delete account')}</button>
         </div>`;
-    } else if (accountsApi()) {
+    } else {
       box.innerHTML = `
         <div class="pa-row">
           <span class="pa-icon guest"><i class="fa-solid fa-mobile-screen"></i></span>
-          ${state.auth.isVerified
-            ? `<div><b>${t('Save to your account')}</b><span>${t('Your number is verified on this phone only. Log in once to save your plan and history to your account.')}</span></div>`
-            : `<div><b>${t('Keep your data safe')}</b><span>${t('Log in with your mobile to save your plan and history to your account.')}</span></div>`}
+          <div><b>${t('Keep your data safe')}</b><span>${t('Log in with your mobile to save your plan and history to your account.')}</span></div>
         </div>
         <button type="button" class="cta-btn btn-full" onclick="BoneApp.openLogin()"><i class="fa-solid fa-right-to-bracket"></i> ${t('Log in')}</button>`;
-    } else {
-      box.innerHTML = '';
     }
   }
 
@@ -3286,7 +3310,7 @@
 
     if (nameInput) state.userProfile.fullName = nameInput.value.trim().slice(0, 60);
     // A typed number is only a contact detail; verification still requires the OTP flow.
-    if (phoneInput && !state.auth.isVerified) {
+    if (phoneInput && !isLoggedIn()) {
       state.userProfile.phone = phoneInput.value.replace(/\D/g, '').slice(-10);
     }
     const h = parseInt(hInput && hInput.value, 10);
@@ -3319,7 +3343,7 @@
   function updateHeaderProfileBadge() {
     const userProf = document.getElementById('userHeaderProfile');
     if (!userProf) return;
-    const verified = !!(state.auth.isVerified && state.auth.phone);
+    const verified = isLoggedIn();
     userProf.innerHTML = `
       <button class="avatar-btn" id="loginHeaderBtn" aria-label="${verified ? 'Open profile (verified)' : 'Open profile'}" title="My profile">
         <i class="fa-solid fa-user"></i>
@@ -5399,17 +5423,112 @@
     { id: 'other', name: 'Other medicine', icon: '💊', time: '09:00' }
   ];
 
+  function setStrengthenMode(mode) {
+    playSound('tap');
+    state.strengthenMode = mode === 'clinical' ? 'clinical' : 'simple';
+    BoneDB.save();
+    renderStrengthenHubView(true);
+  }
+
   function switchStrengthenSubTab(tabId) {
     playSound('tap');
+    state.strengthenMode = 'clinical';
     state.strengthenActiveSubTab = tabId;
     state.strengthenForm = null;
     BoneDB.save();
     renderStrengthenHubView(true);
   }
 
+  function toggleHubDoctor(docId) {
+    playSound('check');
+    if (!(state.strengthenDoctorChecked instanceof Set)) {
+      state.strengthenDoctorChecked = new Set(state.strengthenDoctorChecked || []);
+    }
+    if (state.strengthenDoctorChecked.has(docId)) state.strengthenDoctorChecked.delete(docId);
+    else state.strengthenDoctorChecked.add(docId);
+    BoneDB.save();
+    renderStrengthenHubView();
+  }
+
+  function shareDoctorReviewWhatsApp() {
+    playSound('tap');
+    const checkedSet = state.strengthenDoctorChecked instanceof Set
+      ? state.strengthenDoctorChecked
+      : new Set(state.strengthenDoctorChecked || []);
+    const questions = (BONE_SIP_DATA.doctorReviewChecklist || [])
+      .filter(q => checkedSet.has(q.id))
+      .map((q, idx) => `${idx + 1}. ${tr(q.text)}`);
+    if (!questions.length) {
+      showToast(t('Tick at least one question first'), 'fa-circle-info');
+      return;
+    }
+    const msg = [
+      `*${t('BONE SIP — Questions for my doctor')}*`,
+      '',
+      ...questions,
+      '',
+      t('Invest in Bones. Invest in Life.')
+    ].join('\n');
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+  }
+
   // `animate` replays the entrance animation; plain re-renders after an input
   // change skip it so the screen does not flicker while typing.
   function renderStrengthenHubView(animate = false) {
+    const isClinical = state.strengthenMode === 'clinical';
+    const simpleContainer = document.getElementById('strengthenSimpleContainer');
+    const clinicalContainer = document.getElementById('strengthenClinicalContainer');
+    const heroTitle = document.getElementById('strengthenHeroTitle');
+    const heroSub = document.getElementById('strengthenHeroSubtitle');
+    const modeBar = document.getElementById('strengthenModeBar');
+
+    if (heroTitle) {
+      heroTitle.textContent = isClinical ? t('Bone care & scans') : t('Talk to your doctor');
+    }
+    if (heroSub) {
+      heroSub.textContent = isClinical ? t('Scans, tests and medicines made simple.') : t('Take these questions to your next visit.');
+    }
+
+    if (modeBar) {
+      modeBar.innerHTML = isClinical
+        ? `<button type="button" class="btn btn-sm btn-outline sx-mode-btn" onclick="BoneApp.setStrengthenMode('simple')"><i class="fa-solid fa-clipboard-check"></i> ${t('Switch to Simple Doctor Checklist')}</button>`
+        : `<button type="button" class="btn btn-sm btn-outline sx-mode-btn" onclick="BoneApp.setStrengthenMode('clinical')"><i class="fa-solid fa-notes-medical"></i> ${t('Switch to Advanced Clinical Portal')}</button>`;
+    }
+
+    if (simpleContainer) simpleContainer.style.display = isClinical ? 'none' : 'block';
+    if (clinicalContainer) clinicalContainer.style.display = isClinical ? 'block' : 'none';
+
+    if (!isClinical) {
+      const listEl = document.getElementById('hubDoctorChecklist');
+      if (listEl && BONE_SIP_DATA.doctorReviewChecklist) {
+        listEl.innerHTML = BONE_SIP_DATA.doctorReviewChecklist.map(q => {
+          const isChecked = state.strengthenDoctorChecked instanceof Set
+            ? state.strengthenDoctorChecked.has(q.id)
+            : (Array.isArray(state.strengthenDoctorChecked) && state.strengthenDoctorChecked.includes(q.id));
+          return `
+            <button type="button" class="doc-row ${isChecked ? 'selected' : ''}" onclick="BoneApp.toggleHubDoctor('${q.id}')" aria-pressed="${Boolean(isChecked)}">
+              ${img3d(q.img || 'clipboard', '', 34)}
+              <span>${escapeHtml(tr(q.text))}</span>
+              <span class="tick"><i class="fa-solid fa-check"></i></span>
+            </button>`;
+        }).join('');
+      }
+
+      const dxaEl = document.getElementById('hubDxaRangesList');
+      const guide = BONE_SIP_DATA.dxaInterpretationGuide;
+      if (dxaEl && guide && guide.ranges) {
+        const colors = ['#1E9E62', '#D97706', '#B1315D'];
+        dxaEl.innerHTML = guide.ranges.map((r, i) => `
+          <div class="dxa-item" style="--dxa-c: ${colors[i] || '#6B6580'};">
+            <div>
+              <b>${escapeHtml(tr(r.category))}</b>
+              <p><strong>${escapeHtml(tr(r.score))}.</strong> ${escapeHtml(tr(r.meaning))}</p>
+            </div>
+          </div>`).join('');
+      }
+      return;
+    }
+
     const tabs = ['dxa_risk', 'labs_biomarkers', 'meds_timing', 'spine_safety', 'doctor_brief'];
     const activeTab = tabs.includes(state.strengthenActiveSubTab) ? state.strengthenActiveSubTab : 'dxa_risk';
 
@@ -5430,8 +5549,10 @@
       spine_safety: renderSpineSafetySubTab,
       doctor_brief: renderDoctorBriefSubTab
     }[activeTab];
-    container.classList.toggle('sx-anim', animate);
-    container.innerHTML = render();
+    if (render) {
+      container.classList.toggle('sx-anim', animate);
+      container.innerHTML = render();
+    }
   }
 
   const sxHead = (img, title, sub = '', action = '') => `
@@ -6650,14 +6771,34 @@
       }
     });
 
-    // Account sync: catch up on start, when back online, and when the app is put away.
+    // Account sync & session check
     scheduleCloudSync(1500);
-    window.addEventListener('online', () => scheduleCloudSync(500));
+    checkCloudSession();
+    window.addEventListener('online', () => { scheduleCloudSync(500); checkCloudSession(); });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden' && isCloudUser()) syncToCloud();
     });
 
     registerServiceWorker();
+  }
+
+  async function checkCloudSession() {
+    if (!accountsApi()) return;
+    try {
+      const res = await apiCall('GET', '/me');
+      if (res.ok && res.json && res.json.user) {
+        state.auth.isVerified = true;
+        state.auth.phone = res.json.user.phone;
+        state.auth.cloud = true;
+        state.userProfile.phone = res.json.user.phone;
+        if (res.json.user.createdAt) state.auth.createdAt = res.json.user.createdAt;
+        BoneDB.save();
+        updateHeaderProfileBadge();
+        renderProfileAccountBox();
+      }
+    } catch (err) {
+      // offline or unreachable: do not reset verified state
+    }
   }
 
   // Public API exposure for DOM Event Handlers
@@ -6814,8 +6955,11 @@
     scrollToRoomCheck,
 
     // Strengthen Clinical Medical & Bone Care Portal (V3.5)
+    setStrengthenMode,
     switchStrengthenSubTab,
     renderStrengthenHubView,
+    toggleHubDoctor,
+    shareDoctorReviewWhatsApp,
     toggleFraxFactor,
     setSpineHeight,
     openStrengthenForm,

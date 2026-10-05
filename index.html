@@ -439,42 +439,78 @@
         <img class="i3d i3d-lg float" src="assets/icons3d/stethoscope.webp" alt="" width="72" height="72">
         <div>
           <span class="step-chip strengthen">Strengthen</span>
-          <h2>Bone care &amp; scans</h2>
-          <p>Scans, tests and medicines made simple.</p>
+          <h2 id="strengthenHeroTitle">Talk to your doctor</h2>
+          <p id="strengthenHeroSubtitle">Take these questions to your next visit.</p>
         </div>
       </div>
 
-      <!-- STRENGTHEN SUB-TABS -->
-      <div class="sx-tabs" id="strengthenSubTabs" role="tablist" aria-label="Strengthen">
-        <button class="sx-tab active" id="stTab_dxa_risk" onclick="BoneApp.switchStrengthenSubTab('dxa_risk')" role="tab" aria-selected="true">
-          <img src="assets/icons3d/xray.webp" alt="" width="34" height="34">
-          <span>Scan</span>
-        </button>
-        <button class="sx-tab" id="stTab_labs_biomarkers" onclick="BoneApp.switchStrengthenSubTab('labs_biomarkers')" role="tab" aria-selected="false">
-          <img src="assets/icons3d/barchart.webp" alt="" width="34" height="34">
-          <span>Tests</span>
-        </button>
-        <button class="sx-tab" id="stTab_meds_timing" onclick="BoneApp.switchStrengthenSubTab('meds_timing')" role="tab" aria-selected="false">
-          <img src="assets/icons3d/pill.webp" alt="" width="34" height="34">
-          <span>Medicines</span>
-        </button>
-        <button class="sx-tab" id="stTab_spine_safety" onclick="BoneApp.switchStrengthenSubTab('spine_safety')" role="tab" aria-selected="false">
-          <img src="assets/icons3d/standing.webp" alt="" width="34" height="34">
-          <span>Spine</span>
-        </button>
-        <button class="sx-tab" id="stTab_doctor_brief" onclick="BoneApp.switchStrengthenSubTab('doctor_brief')" role="tab" aria-selected="false">
-          <img src="assets/icons3d/clipboard.webp" alt="" width="34" height="34">
-          <span>Doctor</span>
+      <!-- Mode switcher -->
+      <div class="sx-mode-bar" id="strengthenModeBar">
+        <button type="button" class="btn btn-sm btn-outline sx-mode-btn" onclick="BoneApp.setStrengthenMode('clinical')">
+          <i class="fa-solid fa-notes-medical"></i> Switch to Advanced Clinical Portal
         </button>
       </div>
 
-      <!-- ACTIVE SUB-TAB (rendered by renderStrengthenHubView) -->
-      <div id="strengthenContentContainer"></div>
+      <!-- Simple Mode Container (Previous Clean Version) -->
+      <div id="strengthenSimpleContainer">
+        <div class="glass-card">
+          <div class="card-head">
+            <h3><img src="assets/icons3d/clipboard.webp" alt="" width="28" height="28"> Ask your doctor</h3>
+            <div class="card-head-actions">
+              <button class="btn btn-sm btn-outline" onclick="BoneApp.shareDoctorReviewWhatsApp()" aria-label="Share on WhatsApp"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> <span class="hide-mobile">WhatsApp</span></button>
+              <button class="btn btn-sm btn-primary" onclick="window.print()" aria-label="Save as PDF"><i class="fa-solid fa-file-arrow-down"></i> <span class="hide-mobile">PDF</span></button>
+            </div>
+          </div>
+          <div class="qa-list" id="hubDoctorChecklist"></div>
+        </div>
 
-      <div class="ask-ai-card" onclick="BoneApp.askAiAboutStrengthenTopic('general')" role="button" tabindex="0">
-        <img class="i3d i3d-md" src="assets/images/ojas-avatar.svg" alt="" width="44" height="44">
-        <div><b>Questions about scans or medicines?</b><span>Ask Ojas, your AI bone-health assistant · 11 languages</span></div>
-        <i class="fa-solid fa-chevron-right"></i>
+        <div class="glass-card">
+          <div class="card-head">
+            <h3><img src="assets/icons3d/xray.webp" alt="" width="28" height="28"> Your DXA T-score</h3>
+          </div>
+          <div class="tscore-scale" aria-hidden="true">
+            <div class="tscore-zone danger"><b>Osteoporosis</b><span>below -2.5</span></div>
+            <div class="tscore-zone warn"><b>Osteopenia</b><span>-1 to -2.5</span></div>
+            <div class="tscore-zone ok"><b>Normal</b><span>above -1</span></div>
+          </div>
+          <div class="dxa-list" id="hubDxaRangesList"></div>
+        </div>
+      </div>
+
+      <!-- Clinical Mode Container (Updated Advanced Version) -->
+      <div id="strengthenClinicalContainer" style="display: none;">
+        <!-- STRENGTHEN SUB-TABS -->
+        <div class="sx-tabs" id="strengthenSubTabs" role="tablist" aria-label="Strengthen">
+          <button class="sx-tab active" id="stTab_dxa_risk" onclick="BoneApp.switchStrengthenSubTab('dxa_risk')" role="tab" aria-selected="true">
+            <img src="assets/icons3d/xray.webp" alt="" width="34" height="34">
+            <span>Scan</span>
+          </button>
+          <button class="sx-tab" id="stTab_labs_biomarkers" onclick="BoneApp.switchStrengthenSubTab('labs_biomarkers')" role="tab" aria-selected="false">
+            <img src="assets/icons3d/barchart.webp" alt="" width="34" height="34">
+            <span>Tests</span>
+          </button>
+          <button class="sx-tab" id="stTab_meds_timing" onclick="BoneApp.switchStrengthenSubTab('meds_timing')" role="tab" aria-selected="false">
+            <img src="assets/icons3d/pill.webp" alt="" width="34" height="34">
+            <span>Medicines</span>
+          </button>
+          <button class="sx-tab" id="stTab_spine_safety" onclick="BoneApp.switchStrengthenSubTab('spine_safety')" role="tab" aria-selected="false">
+            <img src="assets/icons3d/standing.webp" alt="" width="34" height="34">
+            <span>Spine</span>
+          </button>
+          <button class="sx-tab" id="stTab_doctor_brief" onclick="BoneApp.switchStrengthenSubTab('doctor_brief')" role="tab" aria-selected="false">
+            <img src="assets/icons3d/clipboard.webp" alt="" width="34" height="34">
+            <span>Doctor</span>
+          </button>
+        </div>
+
+        <!-- ACTIVE SUB-TAB (rendered by renderStrengthenHubView) -->
+        <div id="strengthenContentContainer"></div>
+
+        <div class="ask-ai-card" onclick="BoneApp.askAiAboutStrengthenTopic('general')" role="button" tabindex="0">
+          <img class="i3d i3d-md" src="assets/images/ojas-avatar.svg" alt="" width="44" height="44">
+          <div><b>Questions about scans or medicines?</b><span>Ask Ojas, your AI bone-health assistant · 11 languages</span></div>
+          <i class="fa-solid fa-chevron-right"></i>
+        </div>
       </div>
     </section>
   </main>

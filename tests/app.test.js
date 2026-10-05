@@ -629,6 +629,65 @@ setTimeout(() => {
   assert(!migratedChat.includes('Sunita Sharma'), 'Migration test: Stale chat history containing Sunita Sharma was discarded and reset');
   assert(migratedChat.includes('Namaste! I') && mockElements['chatContextStrip'].innerHTML.includes('Guest'), 'Migration test: Platform cleanly defaulted to Guest state');
 
+  console.log('\n--- 8. Testing Strengthen Dual Mode & Profile Login Persistence ---');
+  // Strengthen default simple mode
+  BoneApp.setStrengthenMode('simple');
+  BoneApp.renderStrengthenHubView();
+  assert(mockElements['hubDoctorChecklist'].innerHTML.includes('doc-row'), 'Simple mode renders doctor review checklist');
+  assert(mockElements['hubDxaRangesList'].innerHTML.includes('dxa-item'), 'Simple mode renders DXA T-Score scale ranges');
+
+  // Toggle doctor questions in simple mode
+  BoneApp.toggleHubDoctor('doc_risk');
+  assert(mockElements['hubDoctorChecklist'].innerHTML.includes('selected'), 'Doctor review question can be ticked');
+
+  // Switch to clinical mode
+  BoneApp.setStrengthenMode('clinical');
+  BoneApp.switchStrengthenSubTab('dxa_risk');
+  assert(mockElements['strengthenContentContainer'].innerHTML.includes('No scan saved yet') || mockElements['strengthenContentContainer'].innerHTML.includes('Lowest T-score'), 'Clinical mode renders clinical subtab content');
+
+  // Profile modal: Guest state shows Log in
+  BoneApp.openUserProfileModal();
+  assert(mockElements['profileAccountBox'].innerHTML.includes('Log in'), 'Guest profile shows Log in button');
+
+  // Profile modal: Verified user shows phone number and Log out button, not Log in button
+  mockLocalStorage.setItem('BONE_SIP_PRODUCTION_DB_V3', JSON.stringify({
+    version: 4,
+    auth: { isVerified: true, phone: '9555355555', cloud: false },
+    userProfile: { phone: '9555355555' }
+  }));
+  const verifiedSandbox = {
+    BONE_SIP_DATA: BONE_DATA,
+    window: {
+      BONE_SIP_DATA: BONE_DATA,
+      addEventListener: () => {},
+      scrollTo: () => {},
+      open: () => {},
+      location: { reload: () => {} }
+    },
+    document: mockDocument,
+    localStorage: mockLocalStorage,
+    Audio: class { play() {} },
+    setTimeout: setTimeout,
+    clearTimeout: clearTimeout,
+    setInterval: setInterval,
+    clearInterval: clearInterval,
+    console: console,
+    requestAnimationFrame: (cb) => setTimeout(() => cb(Date.now()), 0),
+    cancelAnimationFrame: (id) => clearTimeout(id),
+    performance: { now: () => Date.now() }
+  };
+  verifiedSandbox.window.window = verifiedSandbox.window;
+  verifiedSandbox.window.document = mockDocument;
+  verifiedSandbox.window.localStorage = mockLocalStorage;
+  vm.createContext(verifiedSandbox);
+  vm.runInContext(appCode, verifiedSandbox);
+
+  const verifiedApp = verifiedSandbox.window.BoneApp;
+  verifiedApp.openUserProfileModal();
+  assert(mockElements['profileAccountBox'].innerHTML.includes('+91 95553 55555'), 'Verified user profile displays phone number');
+  assert(mockElements['profileAccountBox'].innerHTML.includes('Log out'), 'Verified user profile displays Log out button');
+  assert(!mockElements['profileAccountBox'].innerHTML.includes('openLogin()'), 'Verified user profile does NOT show Log in button');
+
   // ---------------------------------------------------------------------------
   // FINAL SUMMARY
   // ---------------------------------------------------------------------------
