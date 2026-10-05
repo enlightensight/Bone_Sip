@@ -146,8 +146,8 @@
         <button class="icon-pill lang-pill" id="headerLangBtn" onclick="BoneApp.openLanguagePicker()" title="Language" aria-label="Change language">
           <i class="fa-solid fa-language" aria-hidden="true"></i> <span id="headerLangLabel" translate="no">English</span>
         </button>
-        <button class="icon-pill" onclick="BoneApp.openProgressiveReportModal()" title="My health report" aria-label="Open my health report">
-          <img src="assets/icons3d/barchart.webp" alt="" width="22" height="22"> <span class="hide-mobile">Report</span>
+        <button class="icon-pill header-report-btn" onclick="BoneApp.openProgressiveReportModal()" title="My health report" aria-label="Open my health report">
+          <img src="assets/icons3d/bone_report_3d.webp" alt="" class="header-report-img" width="32" height="32"> <span class="hide-mobile">Report</span>
         </button>
         <div id="userHeaderProfile" onclick="BoneApp.openUserProfileModal()">
           <button class="avatar-btn" id="loginHeaderBtn" aria-label="Open profile" title="My profile">
@@ -453,12 +453,7 @@
         </div>
       </div>
 
-      <!-- Mode switcher -->
-      <div class="sx-mode-bar" id="strengthenModeBar">
-        <button type="button" class="btn btn-sm btn-outline sx-mode-btn" onclick="BoneApp.setStrengthenMode('clinical')">
-          <i class="fa-solid fa-notes-medical"></i> Switch to Advanced Clinical Portal
-        </button>
-      </div>
+
 
       <!-- Simple Mode Container (Previous Clean Version) -->
       <div id="strengthenSimpleContainer">
