@@ -3220,22 +3220,26 @@
 
   function togglePrefCondition(cond) {
     playSound('tap');
-    if (!state.userProfile.conditions) {
-      state.userProfile.conditions = ['bone'];
+    if (!Array.isArray(state.userProfile.healthConditions)) {
+      state.userProfile.healthConditions = Array.isArray(state.userProfile.conditions) ? [...state.userProfile.conditions] : [];
     }
-    const idx = state.userProfile.conditions.indexOf(cond);
-    if (idx !== -1) {
-      state.userProfile.conditions.splice(idx, 1);
+    let list = state.userProfile.healthConditions;
+    if (cond === 'none') {
+      state.userProfile.healthConditions = list.includes('none') ? [] : ['none'];
     } else {
-      if (cond === 'healthy') {
-        state.userProfile.conditions = ['healthy'];
+      list = list.filter(c => c !== 'none');
+      const idx = list.indexOf(cond);
+      if (idx !== -1) {
+        list.splice(idx, 1);
       } else {
-        state.userProfile.conditions = state.userProfile.conditions.filter(c => c !== 'healthy');
-        state.userProfile.conditions.push(cond);
+        list.push(cond);
       }
+      state.userProfile.healthConditions = list;
     }
+    state.userProfile.conditions = state.userProfile.healthConditions;
+
     document.querySelectorAll('#profHealthPills .pref-pill').forEach(btn => {
-      btn.classList.toggle('active', state.userProfile.conditions.includes(btn.dataset.cond));
+      btn.classList.toggle('active', state.userProfile.healthConditions.includes(btn.dataset.cond));
     });
   }
 
@@ -3261,11 +3265,13 @@
     if (regSelect) regSelect.value = state.userProfile.regionalFood || 'north';
     if (dietSelect) dietSelect.value = state.userProfile.diet || 'veg';
 
-    // Sync pill classes matching Image 4
+    // Sync pill classes
     const userDiet = state.userProfile.diet || 'veg';
     const userReg = state.userProfile.regionalFood || 'north';
     const userAct = state.userProfile.activityLevel || 'light';
-    const userConds = state.userProfile.conditions || ['bone'];
+    const userConds = Array.isArray(state.userProfile.healthConditions)
+      ? state.userProfile.healthConditions
+      : (Array.isArray(state.userProfile.conditions) ? state.userProfile.conditions : []);
 
     document.querySelectorAll('#profDietPills .pref-pill').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.diet === userDiet);
@@ -3347,6 +3353,12 @@
     if (h >= 100 && h <= 230 && w >= 25 && w <= 250) state.userProfile.baselineSet = true;
     if (regSelect) state.userProfile.regionalFood = regSelect.value;
     if (dietSelect) state.userProfile.diet = dietSelect.value;
+
+    const activeHealthPills = Array.from(document.querySelectorAll('#profHealthPills .pref-pill.active'))
+      .map(btn => btn.dataset.cond)
+      .filter(Boolean);
+    state.userProfile.healthConditions = activeHealthPills;
+    state.userProfile.conditions = activeHealthPills;
 
     calculateBMI();
     BoneDB.save();
@@ -3743,6 +3755,45 @@
     const diet = user.diet || 'veg';
     const catalog = BONE_SIP_DATA.fullDietCatalog || [];
 
+    // 0A. EDIT / REMOVE HEALTH CONDITIONS (e.g. Obesity, Thyroid, Kidney)
+    if (
+      (text.includes('remove') || text.includes('change') || text.includes('edit') || text.includes('delete') || text.includes('uncheck') || text.includes('how can i change') || text.includes('how can i edit')) &&
+      (text.includes('obes') || text.includes('condition') || text.includes('health') || text.includes('thyroid') || text.includes('kidney') || text.includes('cholesterol') || text.includes('sugar') || text.includes('diabetes') || text.includes('lactose'))
+    ) {
+      const condWord = text.includes('obes') ? 'Obesity'
+        : (text.includes('thyroid') ? 'Thyroid'
+        : (text.includes('kidney') ? 'Kidney'
+        : (text.includes('cholesterol') ? 'High cholesterol'
+        : (text.includes('diabet') || text.includes('sugar') ? 'Diabetes'
+        : (text.includes('lactose') ? 'Lactose-free' : 'any condition')))));
+
+      return `To edit or remove **${condWord}** from your health profile:\n\n1. Tap your **Profile icon** (person avatar) in the top-right header.\n2. In the **"My profile"** window, look at the **"Health & metabolic conditions"** section.\n3. Tap the **${condWord}** pill to uncheck/deselect it (it turns from red/active to white/inactive).\n4. Tap the green **Save** button at the bottom.\n\nYour 3-2-1 daily diet plan and clinical guidance will immediately update to match your corrected profile!`;
+    }
+
+    // 0B. BMI & OBESITY VALIDATION
+    if (text.includes('do i have obesity') || text.includes('am i obese') || text.includes('do you think that i have obesity') || text.includes('why my diet plan accordingly obesity') || text.includes('why is my diet for obesity')) {
+      const bmiNum = parseFloat(bmi);
+      let cat = 'Normal weight';
+      if (bmiNum < 18.5) cat = 'Underweight';
+      else if (bmiNum >= 25 && bmiNum < 30) cat = 'Overweight';
+      else if (bmiNum >= 30) cat = 'Obese';
+
+      if (bmiNum < 25) {
+        return `Your current BMI is **${bmi}** (${user.weightKg || 62} kg, ${user.heightCm || 165} cm), which is in the **${cat}** range—**you do not have obesity**.\n\nIf "Obesity" was previously selected in your initial assessment:\n1. Tap your **Profile icon** at the top right.\n2. Under **"Health & metabolic conditions"**, tap **Obesity** to deselect it.\n3. Tap **Save** at the bottom.\n\nYour diet will then focus directly on bone building and healthy weight maintenance!`;
+      }
+    }
+
+    // 0C. WHAT'S MY BMI
+    if (text.includes('whats my bmi') || text.includes('what is my bmi') || text === 'bmi') {
+      const bmiNum = parseFloat(bmi);
+      let cat = 'Normal weight';
+      if (bmiNum < 18.5) cat = 'Underweight';
+      else if (bmiNum >= 25 && bmiNum < 30) cat = 'Overweight';
+      else if (bmiNum >= 30) cat = 'Obese';
+
+      return `Your BMI is **${bmi}** (${user.heightCm || 165} cm, ${user.weightKg || 62} kg), which is in the **${cat}** category.\n\n• **Healthy BMI range:** 18.5 – 24.9\n• **Bone Health Note:** Maintaining a healthy body weight provides natural mechanical loading to stimulate osteoblasts without placing excess strain on joints.`;
+    }
+
     // 0. PERSONALIZED METABOLIC DIET CHART
     const isMetabolicDietQuery =
       raw === 'personalized_diet_chart' ||
@@ -3907,9 +3958,9 @@
       }
     }
 
-    // 9. PLATFORM FLOW & GATING
-    if (text.includes('platform') || text.includes('how to use') || text.includes('unlock') || text.includes('pillar')) {
-      return `🌟 **How BONE SIP Works:**\n\n1. **Build:** Daily 3-2-1 Diet + 4 Bone Loading Movements with calendar tracking.\n2. **Protect:** 5-Room Home Hazard Audit and fall-risk elimination.\n3. **Strengthen:** Doctor consultation checklist and DXA interpretation guide.\n\n*Complete the Build assessment & verify your mobile to unlock Protect, then complete Protect to unlock Strengthen!*`;
+    // 9. PLATFORM FLOW & WHERE EVERYTHING IS
+    if (text.includes('platform') || text.includes('how to use') || text.includes('where is') || text.includes('unlock') || text.includes('pillar') || text.includes('how does this platform work')) {
+      return `🌟 **How BONE SIP Works & Where Everything Is:**\n\n• **Top Header:**\n  - **BONE SIP Logo:** Tap anytime to return to the Build home.\n  - **Language Picker:** Tap the language pill to switch between English and 11 Indian languages.\n  - **Health Report Icon:** Tap the clipboard/chart icon to view your live Bone Score (0–100), 7-day trend, WhatsApp summary, and PDF report.\n  - **Profile Avatar:** Tap the person icon at top-right to edit Height, Weight, Diet, Activity, Regional cuisine, and Health/Metabolic conditions.\n\n• **Three Core Pillars (Bottom Nav):**\n  1. **Build:** Daily 3-2-1 Diet checklist (Breakfast, Lunch, Snack, Dinner, Sun D3) + 4 guided video bone-loading workouts.\n  2. **Protect:** Fall-risk assessment and 5-room home safety hazard audit.\n  3. **Strengthen:** "Ask your doctor" printable checklist and DXA T-Score interpretation guide.\n\n• **AI Guide (Ojas):** Floating button at bottom-right for 24/7 personal answers!`;
     }
 
     // DEFAULT INTELLIGENT CLINICAL RESPONSE

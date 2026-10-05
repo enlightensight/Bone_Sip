@@ -829,12 +829,16 @@
       </div>
 
       <div class="pref-section">
-        <h4 class="pref-section-title">Health</h4>
+        <h4 class="pref-section-title">Health &amp; metabolic conditions</h4>
         <div class="pref-pill-group" id="profHealthPills">
-          <button class="pref-pill" data-cond="sugar" onclick="BoneApp.togglePrefCondition('sugar')">High sugar</button>
-          <button class="pref-pill" data-cond="cholesterol" onclick="BoneApp.togglePrefCondition('cholesterol')">High cholesterol</button>
-          <button class="pref-pill active" data-cond="bone" onclick="BoneApp.togglePrefCondition('bone')">Osteopenia / osteoporosis</button>
-          <button class="pref-pill" data-cond="healthy" onclick="BoneApp.togglePrefCondition('healthy')">None</button>
+          <button type="button" class="pref-pill" data-cond="diabetes" onclick="BoneApp.togglePrefCondition('diabetes')"><img src="assets/icons3d/glucose.webp" alt="" width="18" height="18"> Diabetes</button>
+          <button type="button" class="pref-pill" data-cond="hypertension" onclick="BoneApp.togglePrefCondition('hypertension')"><img src="assets/icons3d/bp_cuff.webp" alt="" width="18" height="18"> Hypertension</button>
+          <button type="button" class="pref-pill" data-cond="obesity" onclick="BoneApp.togglePrefCondition('obesity')"><img src="assets/icons3d/scale.webp" alt="" width="18" height="18"> Obesity</button>
+          <button type="button" class="pref-pill" data-cond="dyslipidemia" onclick="BoneApp.togglePrefCondition('dyslipidemia')"><img src="assets/icons3d/cholesterol.webp" alt="" width="18" height="18"> High cholesterol</button>
+          <button type="button" class="pref-pill" data-cond="thyroid" onclick="BoneApp.togglePrefCondition('thyroid')"><img src="assets/icons3d/thyroid.webp" alt="" width="18" height="18"> Thyroid</button>
+          <button type="button" class="pref-pill" data-cond="kidney" onclick="BoneApp.togglePrefCondition('kidney')"><img src="assets/icons3d/kidney.webp" alt="" width="18" height="18"> Kidney</button>
+          <button type="button" class="pref-pill" data-cond="lactose_intolerance" onclick="BoneApp.togglePrefCondition('lactose_intolerance')"><img src="assets/icons3d/lactose.webp" alt="" width="18" height="18"> Lactose-free</button>
+          <button type="button" class="pref-pill" data-cond="none" onclick="BoneApp.togglePrefCondition('none')"><img src="assets/icons3d/check.webp" alt="" width="18" height="18"> None</button>
         </div>
       </div>
 

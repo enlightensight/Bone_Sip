@@ -441,6 +441,18 @@ setTimeout(() => {
   assert(nutResp.includes('Nuts Allergy') && nutResp.includes('pumpkin seeds'),
     'AI Chatbot provides nut-free seed-powered guidance for nuts allergy');
 
+  const removeObesityResp = BoneApp.generateBotResponse('how can i change it and remove obesity ?');
+  assert(removeObesityResp.includes('Profile icon') && removeObesityResp.includes('Obesity') && removeObesityResp.includes('Save'),
+    'AI Chatbot provides step-by-step instructions to edit and remove conditions like Obesity');
+
+  const bmiCheckResp = BoneApp.generateBotResponse('do you think that i have obesity?');
+  assert(bmiCheckResp.includes('do not have obesity') || bmiCheckResp.includes('BMI'),
+    'AI Chatbot validates user BMI against obesity category accurately');
+
+  const bmiValueResp = BoneApp.generateBotResponse('whats my bmi?');
+  assert(bmiValueResp.includes('Your BMI is') && bmiValueResp.includes('Healthy BMI range'),
+    'AI Chatbot calculates and reports live BMI status');
+
   // 6. Test Login Transition to Build Home Page & Protect Precaution Suggestion
   BoneApp.completeBuildPillar();
   BoneApp.renderBuildDietView();

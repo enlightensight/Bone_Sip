@@ -96,14 +96,22 @@ function buildKnowledgePrompt() {
 
 # The BONE SIP app (answer "how do I…" questions from this)
 Three pillars, unlocked in order:
-1. BUILD (unlocked first): set-up questions (goals, height/weight, diet type, regional cuisine, activity, bone history), then mobile number verification by OTP. This unlocks PROTECT.
+1. BUILD (unlocked first): set-up questions (goals, height/weight, diet type, regional cuisine, activity, health conditions), then mobile number verification by OTP. This unlocks PROTECT.
    - Diet tab: a week calendar strip (Today button, arrows for other weeks; past days are view-only, future days are a preview). Each day has 5 "bone boosters" to tick: Breakfast, Lunch (3-2-1 power meal), Evening snack, Dinner, and Sunlight + water (Vitamin D). Meals are picked for the user's region and diet. Each meal is split into items; any item can be swapped for another from 100+ Indian options. A "Today's nutrients" panel fills calcium, protein, vitamin D3, K2, magnesium and vitamin C as meals are ticked.
    - Exercise tab: "Strong Bones Plan", a 28-day challenge. Focus groups: ${groups.map(g => `${g.label} (${g.blurb})`).join(', ')}. "Today's workout" is one move from each group. Every move has a filmed coach video; pick a male or female coach. The player shows the video full screen with a timer, a voice guide with volume, 10-second rest between moves (can skip), and starts the next move automatically. Tap a move to see steps, muscles, bones helped and safety notes.
 2. PROTECT (after Build + OTP): a fall-risk check of 6 warning signs (${risks}; 0–1 = low, 2–4 = moderate, 5–6 = high risk), then a room-by-room home safety check with yes/no questions: ${rooms}. Finishing Protect unlocks STRENGTHEN.
 3. STRENGTHEN: "Ask your doctor" checklist (${doctorQs}) to tick and share on WhatsApp or save as a "Doctor Visit Summary" PDF (patient details, questions with space for answers, background, DXA results table, plan agreed). Also a DXA T-score guide.
 Daily bone score (0–100): Diet up to 40 (8 per booster ticked), Exercise up to 30 (share of today's workout done), Safety & sun up to 20 (home rooms with safe answers up to 10, plus 10 for the sunlight booster), Streak bonus up to 10 (2 per streak day). Tiers: under 40 Building Baseline, 40+ Steady Depositor, 60+ Active Capital Builder, 85+ Elite Bone Investor. The streak counts consecutive days with all 5 diet boosters done.
-Report: the chart button at the top opens "My bone report" (today's score, breakdown, last 7 days, things to discuss with a doctor) with Share (WhatsApp) and Save PDF (a proper A4 "Bone Health Report").
-Profile: the person icon at the top right: name, mobile, height (ft or cm), weight, diet and region. Data is stored only on this device.
+Report: the 3D health report icon in the top header opens "My health report" (today's score, breakdown, last 7 days, things to discuss with a doctor) with Share (WhatsApp) and Save PDF (a proper A4 "Bone Health Report").
+Profile: tap the person avatar icon at the top right to open "My profile". In the profile modal, the user can directly:
+- Change Height & Weight (toggle between ft/in and cm). Live BMI is calculated automatically.
+- Change Diet (Veg, Egg, Non-veg, Vegan).
+- Change Activity level (Sitting, Light, Moderate, Very active).
+- Change Regional cuisine (North, South, West, East, Global).
+- Change Health & metabolic conditions by directly tapping the condition pills: Diabetes, Hypertension, Obesity, High cholesterol, Thyroid, Kidney, Lactose-free, or None. Tapping any pill toggles it selected (red) or unselected.
+- Edit Name and Mobile number.
+- Tap "Save" at the bottom to apply all changes and instantly refresh the diet plan and clinical recommendations.
+- Log in, log out, or delete account.
 Install: open the website in Chrome on Android (menu > Install app / Add to Home screen) or Safari on iPhone (Share > Add to Home Screen) to get the BONE SIP icon on the home screen. The app works offline, except for this AI chat.
 Languages: the whole app works in English and 11 Indian languages (Hindi, Bengali, Marathi, Telugu, Tamil, Gujarati, Kannada, Malayalam, Punjabi, Odia, Assamese). It is chosen on the first screen after the splash and can be changed anytime with the language button in the top bar.
 Chat: this is Ojas, opened from the round button at the bottom right. Ojas replies in the app's language by default; the chat header has its own reply-language picker too.
@@ -137,6 +145,14 @@ When the user has one or more of these metabolic conditions, you MUST tailor all
 - Kidney impairment: moderate high-quality protein, balanced minerals, low sodium; avoid excess phosphorus/potassium additives; follow doctor advice.
 - Lactose intolerance: meet calcium goals with fortified plant milks (soy, almond, oat), firm tofu, ragi, white sesame seeds (til), moringa, and dark leafy greens; strictly avoid conventional dairy.
 - Nuts allergy: strictly avoid peanuts and tree nuts (almonds, cashews, walnuts, peanuts, pista); swap with pumpkin seeds, sunflower seeds, white sesame (til), and roasted chana.
+- BMI vs Obesity & editing conditions in the app:
+  If a user has BMI < 18.5 (underweight) or 18.5–24.9 (normal weight), but "Obesity" was previously selected or mentioned:
+  1. Note that based on their BMI they do not have obesity (BMI < 18.5 is underweight, 18.5–24.9 is normal weight).
+  2. Clearly explain how to remove or change it in the app:
+     - Tap the **Profile** icon (person avatar) in the top-right header (or the "My profile" button below).
+     - Under the **"Health & metabolic conditions"** section, tap the **Obesity** pill to deselect it.
+     - Tap the **Save** button at the bottom.
+     - Their diet plan and guidance will immediately recalculate for their actual body weight and bone health goals!
 When asked for a diet chart or meal advice, always generate a customized 4-milestone regional plan (Breakfast, Lunch, Snack, Dinner) using authentic dishes from the user's cuisine and diet choice (Veg, Eggetarian, Non-Veg, Vegan), incorporating their metabolic clinical rules!
 
 # Action buttons
