@@ -1603,16 +1603,6 @@ const BONE_SIP_DATA = {
       safety: "Use a chair that won't slide. Keep a table or wall within reach."
     },
     {
-      id: "ex_calf_raises", group: "strength", name: "Heel Raises", level: "Easy",
-      durationSec: 45, reps: "15 reps", img: "shoe",
-      video: { male: "assets/exercises/male_rise_heels.mp4", female: "assets/exercises/female_rise_heels.mp4" },
-      focus: ["calves", "ankles"], focus2: ["thighs"],
-      bones: ["Ankle", "Shin bone", "Heel"],
-      benefits: ["Stronger push-off when walking", "Steadier ankles", "Loads the lower-leg bones"],
-      how: ["Stand behind a chair and hold the back lightly.", "Slowly rise up onto your toes.", "Hold for 2 seconds at the top.", "Lower your heels slowly back to the floor."],
-      safety: "Keep holding the chair the whole time."
-    },
-    {
       id: "ex_step_ups", group: "strength", name: "Step-Ups", level: "Moderate",
       durationSec: 45, reps: "10 per leg", img: "ladder",
       video: { male: "assets/exercises/male_stair_climbing.mp4", female: "assets/exercises/female_stair_climbing.mp4" },
@@ -1621,16 +1611,6 @@ const BONE_SIP_DATA = {
       benefits: ["Climb stairs with confidence", "Builds leg power", "Weight-bearing loads the hip"],
       how: ["Stand at the bottom stair, holding the handrail.", "Step up with your right foot, then bring the left foot up.", "Step down slowly: right foot first, then left.", "Halfway through, switch to leading with the other leg."],
       safety: "Always hold the handrail and use a low step."
-    },
-    {
-      id: "ex_dumbell_pull", group: "strength", name: "Dumbbell Pull", level: "Moderate",
-      durationSec: 45, reps: "10 per arm", img: "weights",
-      video: { male: "assets/exercises/male_dumbellpull.mp4", female: "assets/exercises/female_dumbellpull.mp4" },
-      focus: ["upperBack", "arms"], focus2: ["core", "shoulders"],
-      bones: ["Upper spine", "Forearm", "Wrist"],
-      benefits: ["Builds back & arm strength", "Loads the spine extensors to prevent stoop", "Improves grip and forearm density"],
-      how: ["Hinge forward slightly at your hips with a straight back and soft knees.", "Hold a light weight in one hand with your arm extended downward.", "Pull your elbow upward along your ribs, squeezing your back.", "Lower with control and repeat on both sides."],
-      safety: "Keep your spine straight and core engaged throughout."
     },
     {
       id: "ex_leg_side_raise", group: "strength", name: "Side Leg Raise", level: "Easy",
@@ -1643,6 +1623,16 @@ const BONE_SIP_DATA = {
       safety: "Keep your torso upright and do not swing your leg."
     },
     {
+      id: "ex_calf_raises", group: "balance", name: "Heel Raises", level: "Easy",
+      durationSec: 45, reps: "15 reps", img: "shoe",
+      video: { male: "assets/exercises/male_rise_heels.mp4", female: "assets/exercises/female_rise_heels.mp4" },
+      focus: ["calves", "ankles"], focus2: ["thighs"],
+      bones: ["Ankle", "Shin bone", "Heel"],
+      benefits: ["Stronger push-off when walking", "Steadier ankles", "Loads the lower-leg bones"],
+      how: ["Stand behind a chair and hold the back lightly.", "Slowly rise up onto your toes.", "Hold for 2 seconds at the top.", "Lower your heels slowly back to the floor."],
+      safety: "Keep holding the chair the whole time."
+    },
+    {
       id: "ex_one_leg_balance", group: "balance", name: "One-Leg Stand", level: "Easy",
       durationSec: 60, reps: "30 s each leg", img: "flamingo",
       video: { male: "assets/exercises/male_one_leg_balance.mp4", female: "assets/exercises/female_one_leg_balance.mp4" },
@@ -1651,6 +1641,16 @@ const BONE_SIP_DATA = {
       benefits: ["Fewer falls", "Steadier walking", "More confidence on uneven ground"],
       how: ["Stand behind a chair and hold it lightly.", "Lift one foot just off the floor.", "Hold for up to 30 seconds.", "Lower it and switch legs."],
       safety: "Keep support within reach. Stop if you feel dizzy."
+    },
+    {
+      id: "ex_dumbell_pull", group: "posture", name: "Dumbbell Pull", level: "Moderate",
+      durationSec: 45, reps: "10 per arm", img: "weights",
+      video: { male: "assets/exercises/male_dumbellpull.mp4", female: "assets/exercises/female_dumbellpull.mp4" },
+      focus: ["upperBack", "arms"], focus2: ["core", "shoulders"],
+      bones: ["Upper spine", "Forearm", "Wrist"],
+      benefits: ["Builds back & arm strength", "Loads the spine extensors to prevent stoop", "Improves grip and forearm density"],
+      how: ["Hinge forward slightly at your hips with a straight back and soft knees.", "Hold a light weight in one hand with your arm extended downward.", "Pull your elbow upward along your ribs, squeezing your back.", "Lower with control and repeat on both sides."],
+      safety: "Keep your spine straight and core engaged throughout."
     },
     {
       id: "ex_band_pull", group: "posture", name: "Band Pull-Apart", level: "Easy",

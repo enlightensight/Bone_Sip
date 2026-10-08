@@ -74,9 +74,9 @@ for (const m of BONE_DATA.fullDietCatalog) {
 }
 assert(allMealsValid, 'Every meal in 106-item catalog has valid ID, Name, Calcium > 0, Protein, and Rationale', invalidMealReason);
 
-// Validate 12 clinical exercises
+// Validate 15 clinical exercises
 assert(Array.isArray(BONE_DATA.fullExerciseCatalog), 'fullExerciseCatalog is an array');
-assert(BONE_DATA.fullExerciseCatalog.length === 12, `fullExerciseCatalog contains 12 clinical movements (actual: ${BONE_DATA.fullExerciseCatalog.length})`);
+assert(BONE_DATA.fullExerciseCatalog.length === 15, `fullExerciseCatalog contains 15 clinical movements (actual: ${BONE_DATA.fullExerciseCatalog.length})`);
 
 const exCategories = new Set(BONE_DATA.fullExerciseCatalog.map(e => e.category));
 assert(exCategories.size >= 3, `Exercises cover ${exCategories.size} diverse clinical domains (strength, balance, vertebral defense)`);
