@@ -6967,9 +6967,20 @@
 
     const splash = document.getElementById('appSplashScreen');
     if (hadSavedData && hasExistingJourney()) {
-      // Returning users skip the welcome screens and land where they left off.
-      if (splash) splash.classList.add('hidden');
-      resumeJourney();
+      // Returning users: show branded splash briefly on phone launch, then smoothly slide up into saved journey
+      let transitioned = false;
+      const advance = () => {
+        if (transitioned) return;
+        transitioned = true;
+        if (splash) splash.classList.add('dismissed');
+        resumeJourney();
+      };
+      if (splash) {
+        splash.addEventListener('click', advance, { once: true });
+        setTimeout(advance, 1400);
+      } else {
+        resumeJourney();
+      }
     } else {
       showView('assessment');
       renderAssessmentStage();
