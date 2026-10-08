@@ -1363,8 +1363,8 @@ body[data-view="assessment"] .bone-ai-fab, body[data-view="auth"] .bone-ai-fab {
 
 .ex-card { background: #fff; border: 1.5px solid var(--border-subtle); border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; transition: border-color var(--transition-fast); }
 .ex-card.completed { border-color: #F8C8D5; }
-.ex-media { position: relative; height: 240px; background: #EAECEC; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.ex-media video { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; background: #EAECEC; border: none !important; outline: none !important; }
+.ex-media { position: relative; height: 280px; background: #EEEEEE; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.ex-media video { width: 100%; height: 100%; aspect-ratio: 3 / 4; object-fit: contain; object-position: center; display: block; background: #EEEEEE; border: none !important; outline: none !important; }
 .ex-play { position: absolute; right: 12px; bottom: 12px; pointer-events: none; }
 .ex-play span { width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, 0.92); color: var(--build); display: grid; place-items: center; font-size: 1.2rem; box-shadow: var(--shadow-float); animation: pulseRing 2s infinite; }
 .ex-dur { position: absolute; top: 10px; left: 10px; background: rgba(255, 255, 255, 0.92); color: var(--text-primary); padding: 4px 10px; border-radius: var(--radius-full); font-size: 0.74rem; font-weight: 800; display: inline-flex; gap: 5px; align-items: center; }
@@ -1466,8 +1466,8 @@ body[data-view="assessment"] .bone-ai-fab, body[data-view="auth"] .bone-ai-fab {
 .timer-close { position: absolute; top: 14px; right: 14px; }
 .timer-title { font-size: 1.35rem; margin: 8px 0 2px; }
 .timer-sub { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 10px; }
-.modal-workout-video-wrap { height: 280px; max-height: 42vh; background: #EAECEC; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
-.modal-workout-video-wrap video, .modal-workout-video-wrap img { width: 100%; height: 100%; object-fit: contain; object-position: center; background: #EAECEC; border: none !important; outline: none !important; }
+.modal-workout-video-wrap { width: 100%; max-width: 320px; height: 320px; max-height: 44vh; background: #EEEEEE; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.modal-workout-video-wrap video, .modal-workout-video-wrap img { width: 100%; height: 100%; aspect-ratio: 3 / 4; object-fit: contain; object-position: center; background: #EEEEEE; border: none !important; outline: none !important; }
 .timer-ring { margin: 4px auto 12px; width: 132px; height: 132px; }
 .timer-count { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-heading); font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--text-primary); }
 .timer-ring .ring-fill { transition: stroke-dashoffset 0.95s linear; }
@@ -2016,10 +2016,10 @@ body { overflow-x: clip; }
 .wk-row:hover { border-color: var(--build); }
 .wk-row:active { transform: scale(0.99); }
 .wk-row.done { background: linear-gradient(120deg, #F1FBF6, #fff 60%); border-color: #BFE7D2; }
-.wk-thumb { position: relative; flex-shrink: 0; width: 76px; height: 76px; border-radius: 16px; overflow: hidden; background: #EAECEC; display: grid; place-items: center; }
-.wk-thumb img { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; background: #EAECEC; }
+.wk-thumb { position: relative; flex-shrink: 0; width: 72px; height: 96px; border-radius: 16px; overflow: hidden; background: #EEEEEE; display: grid; place-items: center; }
+.wk-thumb img { width: 100%; height: 100%; aspect-ratio: 3 / 4; object-fit: contain; object-position: center; display: block; background: #EEEEEE; }
 /* Absolute so the portrait clip can't size the grid cell (percent heights don't resolve there). */
-.wk-thumb video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; background: #EAECEC; border: none !important; outline: none !important; }
+.wk-thumb video { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: 3 / 4; object-fit: contain; object-position: center; display: block; background: #EEEEEE; border: none !important; outline: none !important; }
 .wk-thumb.illus { background: var(--grad-brand-soft); }
 .wk-thumb.illus img { width: 48px; height: 48px; object-fit: contain; }
 .wk-play { position: absolute; right: 5px; bottom: 5px; width: 24px; height: 24px; border-radius: 50%; background: rgba(255, 255, 255, 0.95); color: var(--build); font-size: 0.6rem; display: grid; place-items: center; box-shadow: var(--shadow-sm); }
@@ -2042,8 +2042,8 @@ body { overflow-x: clip; }
 @media (min-width: 640px) { .exd-card { border-radius: 28px; } }
 @keyframes sheetUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 #exDetailBody { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
-.exd-media { position: relative; height: min(45vh, 380px); background: #EAECEC; display: grid; place-items: center; overflow: hidden; }
-.exd-media video { width: 100%; height: 100%; object-fit: contain; object-position: center; background: #EAECEC; border: none !important; outline: none !important; }
+.exd-media { position: relative; height: min(48vh, 400px); background: #EEEEEE; display: grid; place-items: center; overflow: hidden; }
+.exd-media video { width: 100%; height: 100%; aspect-ratio: 3 / 4; object-fit: contain; object-position: center; background: #EEEEEE; border: none !important; outline: none !important; }
 .exd-illus { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--text-secondary); font-weight: 700; font-size: 0.92rem; }
 .exd-media:has(.exd-illus) { background: var(--grad-brand-soft); }
 .exd-close { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(255, 255, 255, 0.95); color: var(--text-primary); font-size: 1.1rem; cursor: pointer; box-shadow: var(--shadow-md); }
@@ -2081,7 +2081,7 @@ body { overflow-x: clip; }
 .exd-footer .cta-btn { flex: 1; min-height: 52px; font-size: 1.1rem; }
 
 /* ---------- Full-screen player ---------- */
-.player { position: fixed; inset: 0; z-index: 10080; background: #EAECEC; display: flex; flex-direction: column; overflow: hidden; }
+.player { position: fixed; inset: 0; z-index: 10080; background: #EEEEEE; display: flex; flex-direction: column; overflow: hidden; }
 .player[hidden] { display: none !important; }
 body.player-open { overflow: hidden; }
 body.player-open .pillar-bottom-nav, body.player-open .bone-ai-fab { display: none; }
@@ -2092,7 +2092,7 @@ body.player-open .pillar-bottom-nav, body.player-open .bone-ai-fab { display: no
   padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px;
   position: relative;
   z-index: 10;
-  background: #EAECEC;
+  background: #EEEEEE;
   flex-shrink: 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
@@ -2183,7 +2183,7 @@ body.player-open .pillar-bottom-nav, body.player-open .bone-ai-fab { display: no
   position: relative;
   flex: 1;
   min-height: 0;
-  background: #EAECEC;
+  background: #EEEEEE;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2203,17 +2203,18 @@ body.player-open .pillar-bottom-nav, body.player-open .bone-ai-fab { display: no
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #EAECEC;
+  background: #EEEEEE;
 }
 .pl-media video {
   width: 100%;
   height: 100%;
   max-width: 100%;
   max-height: 100%;
+  aspect-ratio: 3 / 4;
   object-fit: contain;
   object-position: center;
   display: block;
-  background: #EAECEC;
+  background: #EEEEEE;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
@@ -2265,8 +2266,8 @@ body.player-open .pillar-bottom-nav, body.player-open .bone-ai-fab { display: no
 .pl-rest-next-head span { display: block; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--build); }
 .pl-rest-next-head b { font-family: var(--font-heading); font-size: 1.15rem; }
 .pl-rest-time { font-family: var(--font-heading); font-weight: 800; font-size: 1rem; color: var(--text-muted); }
-.pl-rest-preview { flex: 1; min-height: 0; display: grid; place-items: center; margin-top: 8px; background: #EAECEC; border-radius: 18px 18px 0 0; overflow: hidden; position: relative; }
-.pl-rest-preview img { max-width: 100%; max-height: 100%; object-fit: contain; object-position: center; }
+.pl-rest-preview { flex: 1; min-height: 0; display: grid; place-items: center; margin-top: 8px; background: #EEEEEE; border-radius: 18px 18px 0 0; overflow: hidden; position: relative; }
+.pl-rest-preview img { max-width: 100%; max-height: 100%; aspect-ratio: 3 / 4; object-fit: contain; object-position: center; }
 .pl-rest-preview .i3d { width: 100px; height: 100px; }
 
 .pl-done { position: absolute; inset: 0; z-index: 30; background: radial-gradient(700px 400px at 50% 0%, #FDECF1, #fff 70%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px 22px calc(24px + env(safe-area-inset-bottom, 0px)); gap: 8px; overflow-y: auto; }
@@ -2299,9 +2300,9 @@ body.player-open .pillar-bottom-nav, body.player-open .bone-ai-fab { display: no
 
 /* Media boxes: pin video/images inside a clipped box so tall portrait clips can't overflow. */
 .exd-media, .pl-rest-preview { overflow: hidden; }
-.exd-media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; background: #EAECEC; }
+.exd-media > video { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: 3 / 4; object-fit: contain; object-position: center; background: #EEEEEE; }
 .pl-rest-preview { position: relative; }
-.pl-rest-preview > img:not(.i3d) { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; object-fit: contain; object-position: center; background: #EAECEC; }
+.pl-rest-preview > img:not(.i3d) { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; aspect-ratio: 3 / 4; object-fit: contain; object-position: center; background: #EEEEEE; }
 
 
 /* ==========================================================================

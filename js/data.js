@@ -1605,7 +1605,7 @@ const BONE_SIP_DATA = {
     {
       id: "ex_calf_raises", group: "strength", name: "Heel Raises", level: "Easy",
       durationSec: 45, reps: "15 reps", img: "shoe",
-      video: { male: "assets/exercises/male_rise_heels.mp4", female: "assets/exercises/femal_rise_hills.mp4" },
+      video: { male: "assets/exercises/male_rise_heels.mp4", female: "assets/exercises/female_rise_heels.mp4" },
       focus: ["calves", "ankles"], focus2: ["thighs"],
       bones: ["Ankle", "Shin bone", "Heel"],
       benefits: ["Stronger push-off when walking", "Steadier ankles", "Loads the lower-leg bones"],
@@ -1621,6 +1621,26 @@ const BONE_SIP_DATA = {
       benefits: ["Climb stairs with confidence", "Builds leg power", "Weight-bearing loads the hip"],
       how: ["Stand at the bottom stair, holding the handrail.", "Step up with your right foot, then bring the left foot up.", "Step down slowly: right foot first, then left.", "Halfway through, switch to leading with the other leg."],
       safety: "Always hold the handrail and use a low step."
+    },
+    {
+      id: "ex_dumbell_pull", group: "strength", name: "Dumbbell Pull", level: "Moderate",
+      durationSec: 45, reps: "10 per arm", img: "weights",
+      video: { male: "assets/exercises/male_dumbellpull.mp4", female: "assets/exercises/female_dumbellpull.mp4" },
+      focus: ["upperBack", "arms"], focus2: ["core", "shoulders"],
+      bones: ["Upper spine", "Forearm", "Wrist"],
+      benefits: ["Builds back & arm strength", "Loads the spine extensors to prevent stoop", "Improves grip and forearm density"],
+      how: ["Hinge forward slightly at your hips with a straight back and soft knees.", "Hold a light weight in one hand with your arm extended downward.", "Pull your elbow upward along your ribs, squeezing your back.", "Lower with control and repeat on both sides."],
+      safety: "Keep your spine straight and core engaged throughout."
+    },
+    {
+      id: "ex_leg_side_raise", group: "strength", name: "Side Leg Raise", level: "Easy",
+      durationSec: 45, reps: "12 per leg", img: "leg",
+      video: { male: "assets/exercises/male_legsideraise.mp4", female: "assets/exercises/female_legsideraise.mp4" },
+      focus: ["hips", "thighs"], focus2: ["core", "ankles"],
+      bones: ["Hip", "Thigh bone", "Pelvis"],
+      benefits: ["Directly loads the hip bone and femoral neck", "Steadies hips to prevent side trips and falls", "Improves walking balance"],
+      how: ["Stand tall next to a sturdy chair or wall for balance.", "Keep your toes pointed forward and lift your outer leg sideways.", "Hold for 1–2 seconds at the top without leaning.", "Lower slowly and switch legs after your set."],
+      safety: "Keep your torso upright and do not swing your leg."
     },
     {
       id: "ex_one_leg_balance", group: "balance", name: "One-Leg Stand", level: "Easy",
@@ -1641,6 +1661,16 @@ const BONE_SIP_DATA = {
       benefits: ["Stand taller and stoop less", "Protects the spine from compression fractures"],
       how: ["Hold a light band at chest height, arms straight.", "Pull the band apart, squeezing your shoulder blades together.", "Return slowly to the start.", "No band? Use a towel and squeeze the same way."],
       safety: "Use a light band and keep your neck relaxed."
+    },
+    {
+      id: "ex_chest_stretch", group: "posture", name: "Chest Stretch", level: "Easy",
+      durationSec: 45, reps: "Hold 20-30s x 2", img: "hug",
+      video: { male: "assets/exercises/male_cheststretch.mp4", female: "assets/exercises/female_cheststretch.mp4" },
+      focus: ["chest", "shoulders"], focus2: ["upperBack", "neck"],
+      bones: ["Collarbone", "Upper spine", "Ribs"],
+      benefits: ["Opens tight chest muscles that pull shoulders forward", "Restores upright posture and deep breathing", "Relieves neck and upper back strain"],
+      how: ["Stand upright with relaxed shoulders.", "Place your hands behind your lower back or hold a towel.", "Gently roll your shoulders back and open your chest.", "Breathe deeply and hold for 20–30 seconds."],
+      safety: "Stretch gently to a mild tension, never pain."
     }
   ],
 
@@ -1661,12 +1691,12 @@ const BONE_SIP_DATA = {
       biomechanics: "90° Knee Flexion · Hip Hinge · Upright Spine",
       femaleImg: "assets/exercises/female_chair_sit_down_up.mp4",
       maleImg: "assets/exercises/male_chair_sit_down_up.mp4",
-      femaleVideoWidth: 274,
-      femaleVideoHeight: 454,
-      femaleAspectRatio: "274 / 454",
-      videoWidth: 290,
-      videoHeight: 474,
-      aspectRatio: "290 / 474"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     },
     {
       id: "ex_one_leg_balance",
@@ -1681,12 +1711,12 @@ const BONE_SIP_DATA = {
       biomechanics: "Unilateral Pelvic Leveling · Core Bracing · Fix Gaze Ahead",
       femaleImg: "assets/exercises/female_one_leg_balance.mp4",
       maleImg: "assets/exercises/male_one_leg_balance.mp4",
-      femaleVideoWidth: 298,
-      femaleVideoHeight: 440,
-      femaleAspectRatio: "298 / 440",
-      videoWidth: 286,
-      videoHeight: 468,
-      aspectRatio: "286 / 468"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     },
     {
       id: "ex_calf_raises",
@@ -1699,14 +1729,14 @@ const BONE_SIP_DATA = {
       impactLevel: "Mechanical Loading",
       why: "Controlled heel lifts and controlled descents stimulate bone density along the tibia and calcaneus while building ankle defense.",
       biomechanics: "Triple Extension · Ankle Plantarflexion · Controlled Eccentric Drop",
-      femaleImg: "assets/exercises/femal_rise_hills.mp4",
+      femaleImg: "assets/exercises/female_rise_heels.mp4",
       maleImg: "assets/exercises/male_rise_heels.mp4",
-      femaleVideoWidth: 300,
-      femaleVideoHeight: 462,
-      femaleAspectRatio: "300 / 462",
-      videoWidth: 240,
-      videoHeight: 450,
-      aspectRatio: "240 / 450"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     },
     {
       id: "ex_step_ups",
@@ -1721,12 +1751,12 @@ const BONE_SIP_DATA = {
       biomechanics: "Hip Extension Drive · Knee Tracking Over Second Toe · Handrail Guidance",
       femaleImg: "assets/exercises/female_stair_climbing.mp4",
       maleImg: "assets/exercises/male_stair_climbing.mp4",
-      femaleVideoWidth: 282,
-      femaleVideoHeight: 456,
-      femaleAspectRatio: "282 / 456",
-      videoWidth: 246,
-      videoHeight: 460,
-      aspectRatio: "246 / 460"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     },
     {
       id: "ex_band_pull",
@@ -1741,12 +1771,72 @@ const BONE_SIP_DATA = {
       biomechanics: "Scapular Retraction · Neutral Cervical Spine · Controlled Elastic Tension",
       femaleImg: "assets/exercises/female_band_pull.mp4",
       maleImg: "assets/exercises/male_band_pull.mp4",
-      femaleVideoWidth: 370,
-      femaleVideoHeight: 358,
-      femaleAspectRatio: "370 / 358",
-      videoWidth: 422,
-      videoHeight: 582,
-      aspectRatio: "422 / 582"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
+    },
+    {
+      id: "ex_dumbell_pull",
+      name: "Dumbbell Pull & Back Row",
+      category: "Upper Body & Spine Strength",
+      targetBones: "Upper Spine, Ribs, Wrists, Forearm Bones",
+      targetMuscles: "Latissimus Dorsi, Rhomboids, Biceps, Core",
+      reps: "10–12 Reps per arm · 3 Sets",
+      durationSec: 45,
+      impactLevel: "Moderate Upper Load",
+      why: "Strengthens upper back extensors to anchor upright posture and stimulates bone density across wrists and arms.",
+      biomechanics: "Neutral Spine · Scapular Retraction · Controlled Elbow Drive",
+      femaleImg: "assets/exercises/female_dumbellpull.mp4",
+      maleImg: "assets/exercises/male_dumbellpull.mp4",
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
+    },
+    {
+      id: "ex_leg_side_raise",
+      name: "Standing Side Leg Raise",
+      category: "Hip & Lateral Stability",
+      targetBones: "Greater Trochanter, Femoral Neck, Pelvis",
+      targetMuscles: "Gluteus Medius, Tensor Fasciae Latae, Abductors",
+      reps: "12 Reps per leg · 3 Sets",
+      durationSec: 45,
+      impactLevel: "Hip Abduction Loading",
+      why: "Directly loads the hip bone and femoral neck while building side hip stabilizers for trip prevention.",
+      biomechanics: "Hip Abduction · Neutral Pelvis · Core Bracing",
+      femaleImg: "assets/exercises/female_legsideraise.mp4",
+      maleImg: "assets/exercises/male_legsideraise.mp4",
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
+    },
+    {
+      id: "ex_chest_stretch",
+      name: "Chest Opener & Stretch",
+      category: "Chest Opening & Posture",
+      targetBones: "Sternum, Clavicle, Thoracic Spine",
+      targetMuscles: "Pectoralis Major/Minor, Anterior Deltoids",
+      reps: "Hold 20–30s · 2 Sets",
+      durationSec: 45,
+      impactLevel: "Postural Flexibility",
+      why: "Opens tight anterior chest musculature to reverse rounding shoulders and take pressure off vertebral bodies.",
+      biomechanics: "Thoracic Extension · Scapular Retraction · Deep Diaphragmatic Breath",
+      femaleImg: "assets/exercises/female_cheststretch.mp4",
+      maleImg: "assets/exercises/male_cheststretch.mp4",
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     },
     {
       id: "ex_tandem_stand",
@@ -1761,12 +1851,12 @@ const BONE_SIP_DATA = {
       biomechanics: "Narrow Base of Support · Center of Gravity Alignment",
       femaleImg: "assets/exercises/female_one_leg_balance.mp4",
       maleImg: "assets/exercises/male_one_leg_balance.mp4",
-      femaleVideoWidth: 298,
-      femaleVideoHeight: 440,
-      femaleAspectRatio: "298 / 440",
-      videoWidth: 286,
-      videoHeight: 468,
-      aspectRatio: "286 / 468"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     },
     {
       id: "ex_heel_toe_walk",
@@ -1781,12 +1871,12 @@ const BONE_SIP_DATA = {
       biomechanics: "Dorsiflexion · Heel Strike · Ground Clearance",
       femaleImg: "assets/exercises/female_stair_climbing.mp4",
       maleImg: "assets/exercises/male_stair_climbing.mp4",
-      femaleVideoWidth: 282,
-      femaleVideoHeight: 456,
-      femaleAspectRatio: "282 / 456",
-      videoWidth: 246,
-      videoHeight: 460,
-      aspectRatio: "246 / 460"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     },
     {
       id: "ex_wall_pushups",
@@ -1801,12 +1891,12 @@ const BONE_SIP_DATA = {
       biomechanics: "45° Elbow Tuck · Scapular Retraction · Core Plank",
       femaleImg: "assets/exercises/female_band_pull.mp4",
       maleImg: "assets/exercises/male_band_pull.mp4",
-      femaleVideoWidth: 370,
-      femaleVideoHeight: 358,
-      femaleAspectRatio: "370 / 358",
-      videoWidth: 422,
-      videoHeight: 582,
-      aspectRatio: "422 / 582"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     },
     {
       id: "ex_prone_cobra",
@@ -1821,12 +1911,12 @@ const BONE_SIP_DATA = {
       biomechanics: "Thoracic Extension · External Shoulder Rotation",
       femaleImg: "assets/exercises/female_band_pull.mp4",
       maleImg: "assets/exercises/male_band_pull.mp4",
-      femaleVideoWidth: 370,
-      femaleVideoHeight: 358,
-      femaleAspectRatio: "370 / 358",
-      videoWidth: 422,
-      videoHeight: 582,
-      aspectRatio: "422 / 582"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     },
     {
       id: "ex_wall_sit",
@@ -1841,12 +1931,12 @@ const BONE_SIP_DATA = {
       biomechanics: "90° Hip & Knee Hold · Flat Back to Wall",
       femaleImg: "assets/exercises/female_chair_sit_down_up.mp4",
       maleImg: "assets/exercises/male_chair_sit_down_up.mp4",
-      femaleVideoWidth: 274,
-      femaleVideoHeight: 454,
-      femaleAspectRatio: "274 / 454",
-      videoWidth: 290,
-      videoHeight: 474,
-      aspectRatio: "290 / 474"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     },
     {
       id: "ex_bird_dog",
@@ -1861,12 +1951,12 @@ const BONE_SIP_DATA = {
       biomechanics: "Neutral Spine · Quadruped Cross-Sling Tension",
       femaleImg: "assets/exercises/female_band_pull.mp4",
       maleImg: "assets/exercises/male_band_pull.mp4",
-      femaleVideoWidth: 370,
-      femaleVideoHeight: 358,
-      femaleAspectRatio: "370 / 358",
-      videoWidth: 422,
-      videoHeight: 582,
-      aspectRatio: "422 / 582"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     },
     {
       id: "ex_heel_drops",
@@ -1879,14 +1969,14 @@ const BONE_SIP_DATA = {
       impactLevel: "Safe Impact Stimulus",
       why: "Creates a gentle vertical shockwave through long leg bones that activates mechanoreceptors to absorb calcium.",
       biomechanics: "Rise on Toes · Controlled Drop on Heels",
-      femaleImg: "assets/exercises/femal_rise_hills.mp4",
+      femaleImg: "assets/exercises/female_rise_heels.mp4",
       maleImg: "assets/exercises/male_rise_heels.mp4",
-      femaleVideoWidth: 300,
-      femaleVideoHeight: 462,
-      femaleAspectRatio: "300 / 462",
-      videoWidth: 240,
-      videoHeight: 450,
-      aspectRatio: "240 / 450"
+      femaleVideoWidth: 1080,
+      femaleVideoHeight: 1440,
+      femaleAspectRatio: "3 / 4",
+      videoWidth: 1080,
+      videoHeight: 1440,
+      aspectRatio: "3 / 4"
     }
   ],
 

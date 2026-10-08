@@ -86,7 +86,7 @@ console.log('\n--- 1b. Testing Guided Workout Library ---');
 const WL = BONE_DATA.workoutLibrary || [];
 const WG = (BONE_DATA.exerciseGroups || []).map(g => g.id);
 assert(['strength', 'balance', 'posture'].every(g => WG.includes(g)) && WG.length === 3, 'Exercise groups are Strength, Balance and Posture');
-assert(WL.length === 5 && WL.every(e => e.video && e.video.male && e.video.female), 'Every exercise has a filmed coach video (male and female)');
+assert(WL.length === 8 && WL.every(e => e.video && e.video.male && e.video.female), 'Every exercise has a filmed coach video (male and female)');
 assert(WG.every(g => WL.some(e => e.group === g)), 'Every exercise group has at least one move');
 assert(new Set(WL.map(e => e.id)).size === WL.length, 'Workout move IDs are unique');
 assert(WL.every(e => Array.isArray(e.how) && e.how.length >= 3 && e.safety && (e.benefits || []).length && e.durationSec >= 15),
