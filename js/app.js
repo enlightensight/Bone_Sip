@@ -6986,6 +6986,18 @@
       renderAssessmentStage();
     }
 
+    // Disable pinch-to-zoom and multi-touch gesture zoom for a native-app feel
+    try {
+      document.addEventListener('gesturestart', (e) => { if (e && e.preventDefault) e.preventDefault(); }, { passive: false });
+      document.addEventListener('gesturechange', (e) => { if (e && e.preventDefault) e.preventDefault(); }, { passive: false });
+      document.addEventListener('gestureend', (e) => { if (e && e.preventDefault) e.preventDefault(); }, { passive: false });
+      document.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches.length > 1 && e.preventDefault) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+    } catch (_) {}
+
     // Keyboard support for elements that act as buttons.
     document.addEventListener('keydown', (e) => {
       if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role="button"]')) {

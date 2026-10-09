@@ -6,6 +6,12 @@
    ========================================================================== */
 
 /* ---------- Base refinements ---------- */
+html, body {
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   background:
     radial-gradient(1200px 600px at 100% -10%, rgba(229, 48, 95, 0.06), transparent 60%),

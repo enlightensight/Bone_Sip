@@ -129,6 +129,9 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 button, input, select, textarea, optgroup {
@@ -4329,17 +4332,7 @@ body.portal-locked main.app-container {
 }
 
 .chat-context-strip {
-  background: #FFE4EC;
-  padding: 6px 14px;
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: #D6265A;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #F8D5DF;
-  overflow-x: auto;
-  white-space: nowrap;
+  display: none !important;
 }
 
 .chat-quick-chips {
