@@ -512,6 +512,10 @@ setTimeout(() => {
   BoneApp.scrollToRoomCheck();
   assert(mockElements['hubRoomCheckCollapseBody'].style.display === 'block', 'scrollToRoomCheck automatically expands dropdown');
 
+  // Test that Bathroom is the first room in Protect Room Check
+  assert(BONE_DATA.protectHomeAuditRooms[0].id === 'room_bathroom', 'Protect home audit starts with Bathroom');
+  assert(BONE_DATA.homeSafetyAuditRooms[0].id === 'room_bathroom', 'Home safety audit starts with Bathroom');
+
   // ---------------------------------------------------------------------------
   // STEP 7: Test Backward Migration (Sanitizing Legacy Dummy Cache)
   // ---------------------------------------------------------------------------

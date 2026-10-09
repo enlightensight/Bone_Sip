@@ -965,18 +965,6 @@ const BONE_SIP_DATA = {
 
   protectHomeAuditRooms: [
     {
-      id: "room_bedroom",
-      name: "Bedroom",
-      img: "bed",
-      icon: "fa-bed",
-      headline: "Clear pathways and immediate bedside visibility prevent morning and midnight falls.",
-      questions: [
-        { id: "bed_path", text: "Bed-to-door path free of rugs & cables?", tip: "Clear rugs & cables", fix: "Remove loose throw rugs, secure electrical cables with cord organizers, and keep a wide unobstructed walkway from bed to door." },
-        { id: "bed_lamp", text: "Bedside light within reach?", tip: "Keep a lamp by your bed", fix: "Place a touch lamp or nightlight within easy arm's reach from the pillow to avoid walking in the dark." },
-        { id: "bed_height", text: "Feet flat on floor when sitting on bed?", tip: "Adjust the bed height", fix: "Adjust bed height or mattress thickness so both feet rest flat and firmly on the floor when seated." }
-      ]
-    },
-    {
       id: "room_bathroom",
       name: "Bathroom",
       img: "bathtub",
@@ -986,6 +974,18 @@ const BONE_SIP_DATA = {
         { id: "bath_grab", text: "Grab bars near toilet & shower?", tip: "Fit grab bars", fix: "Install wall-anchored grab bars inside the shower stall and next to the toilet (avoid holding towel racks)." },
         { id: "bath_mats", text: "Non-slip mats on the floor?", tip: "Use non-slip mats", fix: "Place heavy-duty suction rubber mats inside the bathing area and non-skid absorbent mats outside." },
         { id: "bath_light", text: "Bright light, even at night?", tip: "Add a night light", fix: "Install bright shadow-free lighting and a plug-in motion sensor night light for late-night bathroom trips." }
+      ]
+    },
+    {
+      id: "room_bedroom",
+      name: "Bedroom",
+      img: "bed",
+      icon: "fa-bed",
+      headline: "Clear pathways and immediate bedside visibility prevent morning and midnight falls.",
+      questions: [
+        { id: "bed_path", text: "Bed-to-door path free of rugs & cables?", tip: "Clear rugs & cables", fix: "Remove loose throw rugs, secure electrical cables with cord organizers, and keep a wide unobstructed walkway from bed to door." },
+        { id: "bed_lamp", text: "Bedside light within reach?", tip: "Keep a lamp by your bed", fix: "Place a touch lamp or nightlight within easy arm's reach from the pillow to avoid walking in the dark." },
+        { id: "bed_height", text: "Feet flat on floor when sitting on bed?", tip: "Adjust the bed height", fix: "Adjust bed height or mattress thickness so both feet rest flat and firmly on the floor when seated." }
       ]
     },
     {

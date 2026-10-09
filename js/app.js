@@ -1063,28 +1063,49 @@
 
   function selectAuditRoom(roomId) {
     playSound('tap');
+    if (state.selectedAuditRoom === roomId) return;
     state.selectedAuditRoom = roomId;
     renderAssessmentStage();
+    const roomCard = document.querySelector('.stage-card .room-card') || document.querySelector('.room-card');
+    if (roomCard) {
+      roomCard.classList.remove('room-transition-out');
+      roomCard.classList.add('room-transition-in');
+      setTimeout(() => roomCard.classList.remove('room-transition-in'), 350);
+    }
   }
 
   function setHomeAuditAnswer(roomId, questionId, answer) {
     playSound('check');
     if (!state.protectHomeAuditAnswers[roomId]) state.protectHomeAuditAnswers[roomId] = {};
     state.protectHomeAuditAnswers[roomId][questionId] = answer;
+    BoneDB.save();
     renderAssessmentStage();
 
-    // When a room is fully answered, glide to the next unfinished room.
+    // When a room is fully answered, glide to the next room with transition animation.
     const rooms = BONE_SIP_DATA.protectHomeAuditRooms;
     const room = rooms.find(r => r.id === roomId);
-    const answers = state.protectHomeAuditAnswers[roomId];
+    const answers = state.protectHomeAuditAnswers[roomId] || {};
     if (room && room.questions.every(q => answers[q.id])) {
-      const next = rooms.find(r => r.questions.some(q => !(state.protectHomeAuditAnswers[r.id] || {})[q.id]));
+      const currIdx = rooms.findIndex(r => r.id === roomId);
+      const next = (currIdx >= 0 && currIdx + 1 < rooms.length)
+        ? rooms[currIdx + 1]
+        : rooms.find(r => r.questions.some(q => !(state.protectHomeAuditAnswers[r.id] || {})[q.id]));
       if (next && next.id !== roomId) {
+        const roomCard = document.querySelector('.stage-card .room-card') || document.querySelector('.room-card');
+        if (roomCard) {
+          roomCard.classList.add('room-transition-out');
+        }
         setTimeout(() => {
           if (state.assessmentPhase !== 'protect' || state.protectAssessmentStep !== 3) return;
           state.selectedAuditRoom = next.id;
+          BoneDB.save();
           renderAssessmentStage();
-        }, 450);
+          const newRoomCard = document.querySelector('.stage-card .room-card') || document.querySelector('.room-card');
+          if (newRoomCard) {
+            newRoomCard.classList.add('room-transition-in');
+            setTimeout(() => newRoomCard.classList.remove('room-transition-in'), 350);
+          }
+        }, 240);
       }
     }
   }
@@ -5617,8 +5638,15 @@
 
   function selectHubRoom(roomId) {
     playSound('tap');
+    if (state.selectedAuditRoom === roomId) return;
     state.selectedAuditRoom = roomId;
     renderProtectHubView();
+    const questionsEl = document.getElementById('hubRoomQuestionsList');
+    if (questionsEl) {
+      questionsEl.classList.remove('room-transition-out');
+      questionsEl.classList.add('room-transition-in');
+      setTimeout(() => questionsEl.classList.remove('room-transition-in'), 350);
+    }
   }
 
   function setHubRoomAnswer(roomId, questionId, answer) {
@@ -5627,6 +5655,34 @@
     state.protectHomeAuditAnswers[roomId][questionId] = answer;
     BoneDB.save();
     renderProtectHubView();
+
+    // When all questions in current room are answered, auto-advance to next room with slide transition
+    const rooms = BONE_SIP_DATA.protectHomeAuditRooms;
+    const room = rooms.find(r => r.id === roomId);
+    const answers = state.protectHomeAuditAnswers[roomId] || {};
+    if (room && room.questions && room.questions.length > 0 && room.questions.every(q => answers[q.id])) {
+      const currIdx = rooms.findIndex(r => r.id === roomId);
+      const next = (currIdx >= 0 && currIdx + 1 < rooms.length)
+        ? rooms[currIdx + 1]
+        : rooms.find(r => r.questions.some(q => !(state.protectHomeAuditAnswers[r.id] || {})[q.id]));
+
+      if (next && next.id !== roomId) {
+        const questionsEl = document.getElementById('hubRoomQuestionsList');
+        if (questionsEl) {
+          questionsEl.classList.add('room-transition-out');
+        }
+        setTimeout(() => {
+          state.selectedAuditRoom = next.id;
+          BoneDB.save();
+          renderProtectHubView();
+          const newQuestionsEl = document.getElementById('hubRoomQuestionsList');
+          if (newQuestionsEl) {
+            newQuestionsEl.classList.add('room-transition-in');
+            setTimeout(() => newQuestionsEl.classList.remove('room-transition-in'), 350);
+          }
+        }, 240);
+      }
+    }
   }
 
   function toggleHubDoctor(docId) {
