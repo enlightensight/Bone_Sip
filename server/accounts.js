@@ -203,8 +203,8 @@ function createAccounts({ db, env = process.env, prod = false }) {
       }
       return null;
     }
-    const isMaster = (row.role === 'master');
-    return { username: row.username, role: row.role, isMaster, tokenHash };
+    const isMaster = (row.role !== 'admin');
+    return { username: row.username, role: row.role || 'master', isMaster, tokenHash };
   }
 
   function sessionUser(headers, isAdmin) {

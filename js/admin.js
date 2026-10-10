@@ -171,7 +171,8 @@
     $('adLogin').hidden = true;
     $('adApp').hidden = false;
 
-    state.isMaster = !!(me.json && me.json.isMaster);
+    const isSubAdmin = !!(me.json && me.json.admin && me.json.admin.role === 'admin' && me.json.isMaster === false);
+    state.isMaster = !isSubAdmin;
 
     if ($('adNavAdmins')) $('adNavAdmins').hidden = !state.isMaster;
     if ($('adSidebarUser')) {
