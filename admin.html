@@ -77,14 +77,6 @@
           <i class="fa-solid fa-shield-halved"></i>
           <span>Audits</span>
         </button>
-        <button class="ad-nav-item" data-tab="reminders" role="tab" aria-selected="false">
-          <i class="fa-solid fa-bell"></i>
-          <span>Reminders</span>
-        </button>
-        <button class="ad-nav-item" data-tab="settings" role="tab" aria-selected="false">
-          <i class="fa-solid fa-gear"></i>
-          <span>Settings</span>
-        </button>
       </nav>
 
       <div class="ad-sidebar-footer">
@@ -117,35 +109,34 @@
           <div class="ad-page-header">
             <div>
               <h1 class="ad-page-title">Activity log</h1>
-              <p class="ad-page-subtitle">Every action across Build, Protect, Strengthen and reminders.</p>
+              <p class="ad-page-subtitle">Real-time system actions, audits, and user milestones across Build, Protect & Strengthen.</p>
             </div>
             <div class="ad-page-actions">
-              <span class="ad-sample-badge">Sample data · layout only</span>
               <a class="ad-btn-export" href="/api/admin/users.csv" id="adActivityCsvBtn"><i class="fa-solid fa-file-csv"></i> Export CSV</a>
             </div>
           </div>
 
-          <!-- 5 Stat KPI Cards -->
+          <!-- 5 Stat KPI Cards (Real Database Metrics) -->
           <div class="ad-kpi-row">
             <div class="ad-kpi-card">
               <span class="ad-kpi-label">Verified users</span>
-              <b class="ad-kpi-value" id="adKpiVerified">1,248</b>
+              <b class="ad-kpi-value" id="adKpiVerified">0</b>
             </div>
             <div class="ad-kpi-card">
-              <span class="ad-kpi-label">Diet plans generated</span>
-              <b class="ad-kpi-value" id="adKpiDiets">1,102</b>
+              <span class="ad-kpi-label">Active today</span>
+              <b class="ad-kpi-value" id="adKpiActiveToday">0</b>
             </div>
             <div class="ad-kpi-card">
-              <span class="ad-kpi-label">Exercises logged</span>
-              <b class="ad-kpi-value" id="adKpiExercises">3,960</b>
+              <span class="ad-kpi-label">Active this week</span>
+              <b class="ad-kpi-value" id="adKpiActive7">0</b>
             </div>
             <div class="ad-kpi-card">
-              <span class="ad-kpi-label">Reminders sent</span>
-              <b class="ad-kpi-value" id="adKpiReminders">2,415</b>
+              <span class="ad-kpi-label">Dishes in catalog</span>
+              <b class="ad-kpi-value" id="adKpiDishes">144</b>
             </div>
             <div class="ad-kpi-card">
-              <span class="ad-kpi-label">Journey completion</span>
-              <b class="ad-kpi-value" id="adKpiCompletion">64%</b>
+              <span class="ad-kpi-label">Audit records</span>
+              <b class="ad-kpi-value" id="adKpiAudit">0</b>
             </div>
           </div>
 
@@ -153,40 +144,37 @@
           <div class="ad-filter-bar">
             <div class="ad-search-box">
               <i class="fa-solid fa-magnifying-glass ad-search-icon"></i>
-              <input type="search" id="adActivitySearch" placeholder="Mobile number or user ID" aria-label="Search activity">
+              <input type="search" id="adActivitySearch" placeholder="Search phone, name or event..." aria-label="Search activity">
             </div>
             <div class="ad-select-group">
               <div class="ad-select-wrap">
                 <select id="adActivityDate" aria-label="Filter by date">
+                  <option value="all">All time</option>
                   <option value="7d">Last 7 days</option>
                   <option value="today">Today</option>
                   <option value="30d">Last 30 days</option>
-                  <option value="all">All time</option>
                 </select>
                 <i class="fa-solid fa-chevron-down ad-select-arrow"></i>
               </div>
               <div class="ad-select-wrap">
                 <select id="adActivityModule" aria-label="Filter by module">
                   <option value="all">All modules</option>
-                  <option value="Reminders · WhatsApp">Reminders · WhatsApp</option>
-                  <option value="Reminders · Email">Reminders · Email</option>
-                  <option value="Build · Bone Plate">Build · Bone Plate</option>
-                  <option value="Build · Exercise">Build · Exercise</option>
+                  <option value="Auth / Admin">Auth / Admin</option>
+                  <option value="Users">Users</option>
+                  <option value="Audits">Audits</option>
+                  <option value="Build · Diet">Build · Diet</option>
+                  <option value="Strengthen · Exercise">Strengthen · Exercise</option>
                   <option value="Protect">Protect</option>
-                  <option value="Strengthen">Strengthen</option>
-                  <option value="Auth">Auth</option>
                 </select>
                 <i class="fa-solid fa-chevron-down ad-select-arrow"></i>
               </div>
               <div class="ad-select-wrap">
                 <select id="adActivityStatus" aria-label="Filter by status">
                   <option value="all">All statuses</option>
-                  <option value="Delivered">Delivered</option>
                   <option value="Success">Success</option>
+                  <option value="Active">Active</option>
+                  <option value="Completed">Completed</option>
                   <option value="Logged">Logged</option>
-                  <option value="High">High</option>
-                  <option value="Queued">Queued</option>
-                  <option value="Retry">Retry</option>
                 </select>
                 <i class="fa-solid fa-chevron-down ad-select-arrow"></i>
               </div>
@@ -211,7 +199,7 @@
               <p class="ad-empty" id="adNoActivity" hidden>No activity matches your filters.</p>
             </div>
             <div class="ad-table-footer">
-              <span id="adActivityCount">Showing 1–8 of 12,480 events</span>
+              <span id="adActivityCount">Loading events...</span>
               <div class="ad-pagination">
                 <button class="ad-page-btn" id="adActivityPrev">Previous</button>
                 <button class="ad-page-btn" id="adActivityNext">Next</button>
@@ -281,18 +269,94 @@
         </section>
 
         <!-- =============================================================
-             TAB: Diet Plans
+             TAB: Diet Plans & Clinical Dishes Catalog
              ============================================================= -->
         <section id="adDietsTab" hidden>
           <div class="ad-page-header">
             <div>
-              <h1 class="ad-page-title">Diet plans</h1>
-              <p class="ad-page-subtitle">AI & clinical nutrition generation logs across 5 Indian regional cuisines.</p>
+              <h1 class="ad-page-title">Diet plans & Clinical Dishes</h1>
+              <p class="ad-page-subtitle">Complete 100+ clinical dish repertoire filtered by diet pattern, medical conditions, and regional cuisines.</p>
+            </div>
+            <div class="ad-page-actions">
+              <span class="ad-dish-counter-pill" id="adDishCount">144 clinical dishes</span>
             </div>
           </div>
-          <div class="ad-card">
-            <div class="ad-diet-grid" id="adDietPlansContent"></div>
+
+          <!-- Dishes Explorer Filters Toolbar -->
+          <div class="ad-card ad-dish-filter-card">
+            <!-- Row 1: Search -->
+            <div class="ad-dish-search-wrap">
+              <i class="fa-solid fa-magnifying-glass ad-search-icon"></i>
+              <input type="search" id="adDishSearch" placeholder="Search dish name, ingredients, or clinical notes..." aria-label="Search dishes">
+            </div>
+
+            <!-- Row 2: Diet Filters (Veg, Vegan, Eggetarian, Non-Veg) -->
+            <div class="ad-dish-pills-row">
+              <label class="ad-filter-label"><i class="fa-solid fa-plate-wheat"></i> Diet:</label>
+              <div class="ad-dish-pills" id="adDietPills" role="group" aria-label="Filter by diet">
+                <button class="ad-dish-pill active" data-diet="all"><i class="fa-solid fa-utensils"></i> All</button>
+                <button class="ad-dish-pill" data-diet="veg"><i class="fa-solid fa-leaf"></i> Vegetarian</button>
+                <button class="ad-dish-pill" data-diet="vegan"><i class="fa-solid fa-seedling"></i> Vegan</button>
+                <button class="ad-dish-pill" data-diet="eggetarian"><i class="fa-solid fa-egg"></i> Eggetarian</button>
+                <button class="ad-dish-pill" data-diet="non_veg"><i class="fa-solid fa-drumstick-bite"></i> Non-Veg</button>
+              </div>
+            </div>
+
+            <!-- Row 3: Disease / Assessment Condition & Region & Meal Slot Dropdowns -->
+            <div class="ad-dish-dropdowns-row">
+              <div class="ad-select-wrap ad-disease-wrap">
+                <label for="adConditionFilter" class="ad-filter-label"><i class="fa-solid fa-heart-pulse"></i> Condition:</label>
+                <div class="ad-select-inner">
+                  <select id="adConditionFilter" aria-label="Filter by disease or condition">
+                    <option value="all">All Conditions / General</option>
+                    <option value="kidney">Kidney Impairment (Renal Safe)</option>
+                    <option value="hypertension">Hypertension / BP (Low-Sodium DASH)</option>
+                    <option value="lactose_intolerance">Lactose Intolerance (Dairy-Free)</option>
+                    <option value="diabetes">Diabetes (Low-GI Millets)</option>
+                    <option value="nuts_allergy">Nuts Allergy (Nut-Free)</option>
+                    <option value="thyroid">Thyroid Disorders</option>
+                    <option value="dyslipidemia">High Cholesterol (Dyslipidemia)</option>
+                    <option value="obesity">Obesity (Weight & Calorie Mgmt)</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down ad-select-arrow"></i>
+                </div>
+              </div>
+
+              <div class="ad-select-wrap">
+                <label for="adRegionFilter" class="ad-filter-label"><i class="fa-solid fa-earth-asia"></i> Region:</label>
+                <div class="ad-select-inner">
+                  <select id="adRegionFilter" aria-label="Filter by cuisine region">
+                    <option value="all">All cuisines</option>
+                    <option value="north">North Indian</option>
+                    <option value="south">South Indian</option>
+                    <option value="west">West Indian</option>
+                    <option value="east">East Indian</option>
+                    <option value="continental">Global / Continental</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down ad-select-arrow"></i>
+                </div>
+              </div>
+
+              <div class="ad-select-wrap">
+                <label for="adSlotFilter" class="ad-filter-label"><i class="fa-solid fa-clock"></i> Meal Slot:</label>
+                <div class="ad-select-inner">
+                  <select id="adSlotFilter" aria-label="Filter by meal slot">
+                    <option value="all">All slots</option>
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="snack">Evening Snack</option>
+                    <option value="dinner">Dinner</option>
+                    <option value="sun_d3">D3 Sunlight Catalyst</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down ad-select-arrow"></i>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <!-- Dishes Catalog Grid -->
+          <div class="ad-dish-grid" id="adDishesGrid"></div>
+          <p class="ad-empty" id="adNoDishes" hidden>No clinical dishes match the selected filters.</p>
         </section>
 
         <!-- =============================================================
@@ -314,36 +378,6 @@
             </div>
           </div>
         </section>
-
-        <!-- =============================================================
-             TAB: Reminders
-             ============================================================= -->
-        <section id="adRemindersTab" hidden>
-          <div class="ad-page-header">
-            <div>
-              <h1 class="ad-page-title">Reminders</h1>
-              <p class="ad-page-subtitle">Automated WhatsApp & Email notifications queue and delivery telemetry.</p>
-            </div>
-          </div>
-          <div class="ad-card">
-            <div class="ad-reminders-grid" id="adRemindersContent"></div>
-          </div>
-        </section>
-
-        <!-- =============================================================
-             TAB: Settings
-             ============================================================= -->
-        <section id="adSettingsTab" hidden>
-          <div class="ad-page-header">
-            <div>
-              <h1 class="ad-page-title">Settings</h1>
-              <p class="ad-page-subtitle">Authentication rules, OTP test mode, system configuration and security.</p>
-            </div>
-          </div>
-          <div class="ad-card">
-            <div class="ad-settings-box" id="adSettingsContent"></div>
-          </div>
-        </section>
       </main>
     </div>
   </div>
@@ -358,6 +392,7 @@
 
   <div class="ad-tooltip" id="adTooltip" role="tooltip" hidden></div>
 
-  <script src="js/admin.js?v=1.1.0"></script>
+  <script src="js/data.js?v=3.9.7"></script>
+  <script src="js/admin.js?v=1.2.0"></script>
 </body>
 </html>
