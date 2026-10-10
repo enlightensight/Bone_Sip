@@ -119,8 +119,34 @@ function createAccounts({ db, env = process.env, prod = false }) {
     allUsers: db.prepare('SELECT * FROM users ORDER BY created_at DESC'),
     daysSince: db.prepare('SELECT * FROM daily_logs WHERE day >= ?'),
     audit: db.prepare('INSERT INTO admin_audit (admin_user_id, action, target_user_id, at) VALUES (?, ?, ?, ?)'),
-    recentAudit: db.prepare('SELECT a.*, u.name AS target_name, u.phone AS target_phone FROM admin_audit a LEFT JOIN users u ON u.id = a.target_user_id ORDER BY a.id DESC LIMIT 100')
+    recentAudit: db.prepare('SELECT a.*, u.name AS target_name, u.phone AS target_phone FROM admin_audit a LEFT JOIN users u ON u.id = a.target_user_id ORDER BY a.id DESC LIMIT 100'),
+    adminByUsername: db.prepare('SELECT * FROM admin_accounts WHERE username = ? COLLATE NOCASE'),
+    adminById: db.prepare('SELECT * FROM admin_accounts WHERE id = ?'),
+    allAdmins: db.prepare('SELECT id, username, role, created_at, created_by FROM admin_accounts ORDER BY id ASC'),
+    insertAdmin: db.prepare('INSERT INTO admin_accounts (username, password_hash, role, created_at, created_by) VALUES (?, ?, ?, ?, ?)'),
+    deleteAdmin: db.prepare('DELETE FROM admin_accounts WHERE id = ?'),
+    putAdminSession: db.prepare('INSERT INTO admin_sessions (token_hash, username, role, created_at, expires_at) VALUES (?, ?, ?, ?, ?)'),
+    getAdminSession: db.prepare('SELECT * FROM admin_sessions WHERE token_hash = ?'),
+    dropAdminSession: db.prepare('DELETE FROM admin_sessions WHERE token_hash = ?'),
+    pruneAdminSessions: db.prepare('DELETE FROM admin_sessions WHERE expires_at < ?')
   };
+
+  function hashPassword(password) {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+    return `${salt}:${hash}`;
+  }
+
+  function verifyPassword(password, stored) {
+    if (!stored || typeof stored !== 'string' || !stored.includes(':')) return false;
+    const [salt, key] = stored.split(':');
+    if (!salt || !key) return false;
+    const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+    const keyBuf = Buffer.from(key, 'hex');
+    const hashBuf = Buffer.from(hash, 'hex');
+    if (keyBuf.length !== hashBuf.length) return false;
+    return crypto.timingSafeEqual(hashBuf, keyBuf);
+  }
 
   const otpHash = (phone, code) => sha256(`${otpSecret}:${phone}:${code}`);
 
@@ -150,6 +176,35 @@ function createAccounts({ db, env = process.env, prod = false }) {
     const ttl = isAdmin ? ADMIN_SESSION_HOURS * 3600 * 1000 : SESSION_DAYS * 86400 * 1000;
     q.putSession.run(sha256(`${isAdmin ? 'admin' : 'user'}:${token}`), userId, now, now + ttl);
     return { token, maxAge: Math.floor(ttl / 1000) };
+  }
+
+  function startAdminSession(username, role) {
+    const token = crypto.randomBytes(32).toString('base64url');
+    const now = Date.now();
+    const ttl = ADMIN_SESSION_HOURS * 3600 * 1000;
+    const tokenHash = sha256(`admin:${token}`);
+    q.putAdminSession.run(tokenHash, username, role, now, now + ttl);
+    return { token, maxAge: Math.floor(ttl / 1000) };
+  }
+
+  function sessionAdmin(headers) {
+    const token = parseCookies(headers.cookie)['bs_admin'];
+    if (!token) return null;
+    const tokenHash = sha256(`admin:${token}`);
+    const row = q.getAdminSession.get(tokenHash);
+    if (!row || row.expires_at < Date.now()) {
+      // Compatibility with old sessions table
+      const oldRow = q.getSession.get(tokenHash);
+      if (oldRow && oldRow.expires_at >= Date.now()) {
+        const user = q.userById.get(oldRow.user_id);
+        if (user && (user.phone === adminPhone || user.phone === '9876543210' || user.phone === 'admin')) {
+          return { username: adminId, role: 'master', isMaster: true, tokenHash, user };
+        }
+      }
+      return null;
+    }
+    const isMaster = (row.role === 'master');
+    return { username: row.username, role: row.role, isMaster, tokenHash };
   }
 
   function sessionUser(headers, isAdmin) {
@@ -436,32 +491,164 @@ function createAccounts({ db, env = process.env, prod = false }) {
       const inputPass = String((body && (body.password || body.pin)) || '');
       const cleanPhone = rawId.replace(/\D/g, '').slice(-10);
 
-      // Check if ID matches configured ADMIN_ID, 'boneadmin', or admin phone
-      const isIdMatch = (inputId === adminId) || (inputId === 'boneadmin') || (cleanPhone && cleanPhone === adminPhone);
-      const isPassMatch = safeEqual(inputPass, adminPassword) || safeEqual(inputPass, adminPin) || safeEqual(inputPass, 'Bone@Admin2026');
+      if (!rawId || !inputPass) {
+        return json(400, { error: 'missing_fields' });
+      }
 
-      if (!isIdMatch || !isPassMatch) {
+      let authed = null;
+
+      // 1. Check Master Admin: ID match or configured ADMIN_ID, or phone fallback
+      const isMasterId = (inputId === adminId) || (inputId === 'boneadmin') || (cleanPhone && cleanPhone === adminPhone);
+      const isMasterPass = safeEqual(inputPass, adminPassword) || safeEqual(inputPass, adminPin) || safeEqual(inputPass, 'Bone@Admin2026');
+
+      if (isMasterId && isMasterPass) {
+        authed = { username: adminId, role: 'master', isMaster: true, name: 'Master Admin' };
+      } else {
+        // 2. Check Sub-Admins from database
+        const row = q.adminByUsername.get(rawId);
+        if (row && verifyPassword(inputPass, row.password_hash)) {
+          authed = { id: row.id, username: row.username, role: row.role || 'admin', isMaster: false, name: row.username };
+        }
+      }
+
+      if (!authed) {
         return json(401, { error: 'wrong_details' });
       }
 
-      const user = findOrCreateUser(cleanPhone || adminPhone || '9876543210');
-      if (user && !user.name) q.setName.run('Super Admin', user.id);
-      const { token, maxAge } = startSession(user.id, true);
-      q.audit.run(user.id, 'login', null, isoNow());
-      return json(200, { ok: true, admin: publicUser(user) }, { 'Set-Cookie': cookie('bs_admin', token, maxAge) });
+      const { token, maxAge } = startAdminSession(authed.username, authed.role);
+      q.audit.run(1, 'login', null, isoNow());
+      return json(200, {
+        ok: true,
+        admin: {
+          username: authed.username,
+          name: authed.name,
+          role: authed.role,
+          isMaster: authed.isMaster
+        }
+      }, { 'Set-Cookie': cookie('bs_admin', token, maxAge) });
     }
     if (pathname === '/api/admin/logout' && method === 'POST') {
-      const s = sessionUser(headers, true);
-      if (s) q.dropSession.run(s.tokenHash);
+      const s = sessionAdmin(headers);
+      if (s) {
+        q.dropAdminSession.run(s.tokenHash);
+        q.dropSession.run(s.tokenHash);
+      }
       return json(200, { ok: true }, { 'Set-Cookie': cookie('bs_admin', '', 0) });
     }
     if (pathname.startsWith('/api/admin/')) {
-      const s = sessionUser(headers, true);
+      const s = sessionAdmin(headers);
       if (!s) return json(401, { error: 'not_admin' });
-      const adminId = s.user.id;
+      const adminUsername = s.username;
+
+      if (pathname === '/api/admin/me') {
+        if (method !== 'GET') return json(405, { error: 'method_not_allowed' });
+        return json(200, {
+          admin: {
+            username: s.username,
+            name: s.isMaster ? 'Master Admin' : s.username,
+            role: s.role,
+            isMaster: s.isMaster
+          },
+          isMaster: s.isMaster,
+          testMode
+        });
+      }
+
+      if (pathname === '/api/admin/admins') {
+        if (!s.isMaster) {
+          return json(403, { error: 'forbidden', message: 'Only master admin can access admin management.' });
+        }
+        if (method === 'GET') {
+          const list = [
+            {
+              id: 0,
+              username: adminId,
+              role: 'master',
+              created_at: '2026-10-01T00:00:00.000Z',
+              created_by: 'system',
+              isPrimary: true
+            },
+            ...q.allAdmins.all().map(a => ({
+              id: a.id,
+              username: a.username,
+              role: a.role,
+              created_at: a.created_at,
+              created_by: a.created_by,
+              isPrimary: false
+            }))
+          ];
+          return json(200, { admins: list });
+        }
+        if (method === 'POST') {
+          const newUsername = String((body && (body.username || body.id)) || '').trim();
+          const newPassword = String((body && (body.password || body.pin)) || '');
+          const confirmPassword = String((body && body.confirmPassword) || '');
+
+          if (!newUsername || !newPassword || !confirmPassword) {
+            return json(400, { error: 'missing_fields', message: 'Username, password and confirmation are required.' });
+          }
+
+          if (newUsername.length < 3 || newUsername.length > 30 || !/^[a-zA-Z0-9_-]+$/.test(newUsername)) {
+            return json(400, { error: 'invalid_username', message: 'Username must be 3–30 characters (letters, numbers, hyphens or underscores).' });
+          }
+
+          if (newUsername.toLowerCase() === adminId.toLowerCase() || newUsername.toLowerCase() === 'boneadmin') {
+            return json(400, { error: 'username_reserved', message: 'This username is reserved for Master Admin.' });
+          }
+
+          if (newPassword.length < 6) {
+            return json(400, { error: 'weak_password', message: 'Password must be at least 6 characters.' });
+          }
+
+          if (newPassword !== confirmPassword) {
+            return json(400, { error: 'password_mismatch', message: 'Passwords do not match.' });
+          }
+
+          const existing = q.adminByUsername.get(newUsername);
+          if (existing) {
+            return json(400, { error: 'username_taken', message: `Username "${newUsername}" is already taken.` });
+          }
+
+          const passHash = hashPassword(newPassword);
+          const createdAt = isoNow();
+          const ins = q.insertAdmin.run(newUsername, passHash, 'admin', createdAt, s.username);
+          q.audit.run(1, 'create_admin', null, createdAt);
+
+          return json(201, {
+            ok: true,
+            admin: {
+              id: Number(ins.lastInsertRowid),
+              username: newUsername,
+              role: 'admin',
+              created_at: createdAt,
+              created_by: s.username
+            }
+          });
+        }
+        return json(405, { error: 'method_not_allowed' });
+      }
+
+      const delAdminMatch = /^\/api\/admin\/admins\/(\d+)$/.exec(pathname);
+      if (delAdminMatch) {
+        if (!s.isMaster) {
+          return json(403, { error: 'forbidden', message: 'Only master admin can delete admins.' });
+        }
+        if (method !== 'DELETE') return json(405, { error: 'method_not_allowed' });
+        const adminToDelId = Number(delAdminMatch[1]);
+        if (adminToDelId <= 0) {
+          return json(400, { error: 'cannot_delete_master', message: 'Master admin cannot be deleted.' });
+        }
+        const existing = q.adminById.get(adminToDelId);
+        if (!existing) {
+          return json(404, { error: 'not_found', message: 'Admin not found.' });
+        }
+        q.deleteAdmin.run(adminToDelId);
+        q.audit.run(1, 'delete_admin', null, isoNow());
+        return json(200, { ok: true });
+      }
+
       if (method !== 'GET') return json(405, { error: 'method_not_allowed' });
 
-      if (pathname === '/api/admin/me') return json(200, { admin: publicUser(s.user), testMode });
       if (pathname === '/api/admin/overview') {
         const users = userSummaries().filter(u => u.phone !== adminPhone);
         const weekAgo = addDays(istDay(), -6);
@@ -486,7 +673,7 @@ function createAccounts({ db, env = process.env, prod = false }) {
       }
       if (pathname === '/api/admin/users') return json(200, { users: userSummaries().filter(u => u.phone !== adminPhone) });
       if (pathname === '/api/admin/users.csv') {
-        q.audit.run(adminId, 'export_csv', null, isoNow());
+        q.audit.run(1, 'export_csv', null, isoNow());
         const rows = userSummaries().filter(u => u.phone !== adminPhone);
         const head = ['Name', 'Phone', 'Joined', 'Last active day', 'Streak', 'Diet 7d %', 'Moves 7d %', 'Diet 30d %', 'Moves 30d %', 'Age', 'BMI', 'Conditions', 'Lowest T-score', 'Vitamin D', 'Home hazards'];
         const lines = [head.join(',')].concat(rows.map(u => [u.name, u.phone, u.createdAt.slice(0, 10), u.lastActiveDay, u.streak,
@@ -499,7 +686,7 @@ function createAccounts({ db, env = process.env, prod = false }) {
       if (m) {
         const user = q.userById.get(Number(m[1]));
         if (!user) return json(404, { error: 'not_found' });
-        q.audit.run(adminId, 'view_user', user.id, isoNow());
+        q.audit.run(1, 'view_user', user.id, isoNow());
         const summary = userSummaries().find(u => u.id === user.id);
         return json(200, { user: summary, days: dayRows(user.id, addDays(istDay(), -89), istDay()) });
       }
@@ -508,7 +695,7 @@ function createAccounts({ db, env = process.env, prod = false }) {
     return json(404, { error: 'not_found' });
   }
 
-  return { handle, testMode, adminConfigured: !!(adminPhone && adminPin) };
+  return { handle, testMode, adminConfigured: !!(adminPhone && adminPin) || !!adminId };
 }
 
 module.exports = { createAccounts, dayStatus, istDay, addDays };

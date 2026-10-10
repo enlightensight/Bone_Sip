@@ -170,13 +170,28 @@
     if (!me || !me.ok) return showLogin();
     $('adLogin').hidden = true;
     $('adApp').hidden = false;
-    $('adTestBanner').hidden = !me.json.testMode;
+
+    state.isMaster = !!(me.json && me.json.isMaster);
+
+    if ($('adNavAdmins')) $('adNavAdmins').hidden = !state.isMaster;
+    if ($('adSidebarUser')) {
+      if (state.isMaster) {
+        $('adSidebarUser').textContent = 'Signed in as Master Admin';
+      } else {
+        const u = me.json.admin ? (me.json.admin.name || me.json.admin.username) : 'Admin';
+        $('adSidebarUser').textContent = `Signed in as Admin · ${u}`;
+      }
+    }
+
     await Promise.all([loadOverview(), loadUsers(), loadAudit()]);
     switchTab(state.currentTab);
   }
 
   // Tab switching
   function switchTab(tab) {
+    if (tab === 'admins' && !state.isMaster) {
+      tab = 'activity';
+    }
     state.currentTab = tab;
     document.querySelectorAll('.ad-nav-item').forEach(b => {
       const active = b.dataset.tab === tab;
@@ -189,11 +204,13 @@
     if ($('adUsersTab')) $('adUsersTab').hidden = tab !== 'users';
     if ($('adDietsTab')) $('adDietsTab').hidden = tab !== 'diets';
     if ($('adAuditsTab')) $('adAuditsTab').hidden = tab !== 'audits';
+    if ($('adAdminsTab')) $('adAdminsTab').hidden = tab !== 'admins';
 
     if (tab === 'activity') renderActivityLog();
     if (tab === 'users') renderUsers();
     if (tab === 'audits') loadAudit();
     if (tab === 'diets') renderDishesCatalog();
+    if (tab === 'admins') loadAdmins();
 
     if ($('adSidebar')) $('adSidebar').classList.remove('open');
   }
@@ -802,6 +819,165 @@
     tip.style.left = `${Math.min(window.innerWidth - tip.offsetWidth - 8, Math.max(8, r.left + r.width / 2 - tip.offsetWidth / 2))}px`;
     tip.style.top = `${Math.max(8, r.top - tip.offsetHeight - 8)}px`;
   });
+
+  // ------------------------------------------------------------- Admin Management (Master Admin Exclusive)
+  async function loadAdmins() {
+    if (!state.isMaster) return;
+    const tbody = $('adAdminsTableRows');
+    const countEl = $('adAdminCount');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="ad-muted" style="text-align:center; padding:24px;">Loading administrators...</td></tr>';
+    const res = await api('GET', '/admin/admins').catch(() => null);
+    if (!res || !res.ok || !res.json || !res.json.admins) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="ad-error" style="text-align:center; padding:24px;">Failed to load administrators.</td></tr>';
+      return;
+    }
+    const admins = res.json.admins || [];
+    if (countEl) countEl.textContent = `${admins.length} active administrator account${admins.length === 1 ? '' : 's'}`;
+
+    if (!admins.length) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="ad-muted" style="text-align:center; padding:24px;">No administrators found.</td></tr>';
+      return;
+    }
+
+    if (tbody) {
+      tbody.innerHTML = admins.map(a => {
+        const isMaster = a.isPrimary || a.role === 'master' || a.id === 0;
+        const icon = isMaster
+          ? '<i class="fa-solid fa-crown" style="color:#D97706; margin-right:8px;"></i>'
+          : '<i class="fa-solid fa-user-shield" style="color:var(--strengthen); margin-right:8px;"></i>';
+        const roleBadge = isMaster
+          ? '<span class="ad-role-badge master"><i class="fa-solid fa-crown"></i> Master Admin</span>'
+          : '<span class="ad-role-badge admin"><i class="fa-solid fa-shield-halved"></i> Admin</span>';
+        const createdText = isMaster ? 'Primary account' : `${fmtDate(a.created_at)} · by ${esc(a.created_by || 'master')}`;
+        const actionHtml = isMaster
+          ? '<span class="ad-protected-badge"><i class="fa-solid fa-lock"></i> Protected</span>'
+          : `<button class="ad-btn-del-admin" data-admin-id="${a.id}" data-admin-user="${esc(a.username)}"><i class="fa-solid fa-trash-can"></i> Revoke</button>`;
+
+        return `
+          <tr>
+            <td><strong>${icon}${esc(a.username)}</strong></td>
+            <td>${roleBadge}</td>
+            <td class="ad-muted">${createdText}</td>
+            <td>${actionHtml}</td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('.ad-btn-del-admin').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.adminId;
+          const user = btn.dataset.adminUser;
+          if (!confirm(`Are you sure you want to revoke admin access for "${user}"?`)) return;
+          const delRes = await api('DELETE', `/admin/admins/${id}`).catch(() => null);
+          if (delRes && delRes.ok) {
+            loadAdmins();
+          } else {
+            alert((delRes && delRes.json && delRes.json.message) || 'Failed to revoke admin.');
+          }
+        });
+      });
+    }
+  }
+
+  function setAdminFeedback(msg, type) {
+    const el = $('adAdminFeedback');
+    if (!el) return;
+    if (!msg) {
+      el.hidden = true;
+      el.textContent = '';
+      el.className = 'ad-feedback-box';
+      return;
+    }
+    el.hidden = false;
+    el.className = `ad-feedback-box ${type || 'error'}`;
+    const icon = type === 'success' ? '<i class="fa-solid fa-circle-check"></i>' : '<i class="fa-solid fa-circle-exclamation"></i>';
+    el.innerHTML = `${icon} <span>${esc(msg)}</span>`;
+  }
+
+  // Eye toggles for New Admin Password inputs
+  if ($('toggleNewPassBtn') && $('newAdminPass')) {
+    $('toggleNewPassBtn').addEventListener('click', () => {
+      const inp = $('newAdminPass');
+      const icon = $('toggleNewPassIcon');
+      const isPass = inp.type === 'password';
+      inp.type = isPass ? 'text' : 'password';
+      if (icon) {
+        icon.classList.toggle('fa-eye', !isPass);
+        icon.classList.toggle('fa-eye-slash', isPass);
+      }
+    });
+  }
+
+  if ($('toggleConfirmPassBtn') && $('newAdminConfirmPass')) {
+    $('toggleConfirmPassBtn').addEventListener('click', () => {
+      const inp = $('newAdminConfirmPass');
+      const icon = $('toggleConfirmPassIcon');
+      const isPass = inp.type === 'password';
+      inp.type = isPass ? 'text' : 'password';
+      if (icon) {
+        icon.classList.toggle('fa-eye', !isPass);
+        icon.classList.toggle('fa-eye-slash', isPass);
+      }
+    });
+  }
+
+  // Create Admin Form submit
+  if ($('adCreateAdminForm')) {
+    $('adCreateAdminForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      setAdminFeedback('', '');
+
+      const usernameInput = $('newAdminUser');
+      const passInput = $('newAdminPass');
+      const confirmPassInput = $('newAdminConfirmPass');
+
+      const username = (usernameInput && usernameInput.value ? usernameInput.value : '').trim();
+      const password = passInput && passInput.value ? passInput.value : '';
+      const confirmPassword = confirmPassInput && confirmPassInput.value ? confirmPassInput.value : '';
+
+      // Validation
+      if (!username || !password || !confirmPassword) {
+        return setAdminFeedback('All fields are required.', 'error');
+      }
+
+      if (username.length < 3 || username.length > 30 || !/^[a-zA-Z0-9_-]+$/.test(username)) {
+        return setAdminFeedback('Username must be 3–30 characters (letters, numbers, hyphens or underscores).', 'error');
+      }
+
+      if (password.length < 6) {
+        return setAdminFeedback('Password must be at least 6 characters.', 'error');
+      }
+
+      if (password !== confirmPassword) {
+        return setAdminFeedback('Passwords do not match. Please verify confirmation.', 'error');
+      }
+
+      const submitBtn = $('btnCreateAdmin');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating Admin...';
+      }
+
+      try {
+        const res = await api('POST', '/admin/admins', { username, password, confirmPassword });
+        if (res && res.ok) {
+          setAdminFeedback(`Admin "${username}" was created successfully!`, 'success');
+          if ($('adCreateAdminForm')) $('adCreateAdminForm').reset();
+          loadAdmins();
+        } else {
+          const err = (res && res.json && res.json.message) || 'Failed to create admin.';
+          setAdminFeedback(err, 'error');
+        }
+      } catch (err) {
+        setAdminFeedback('Network error while creating admin.', 'error');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Admin Account';
+        }
+      }
+    });
+  }
 
   start();
 })();

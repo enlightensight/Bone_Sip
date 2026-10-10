@@ -73,6 +73,24 @@ const SCHEMA = `
     target_user_id  INTEGER,
     at              TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS admin_accounts (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    username      TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    password_hash TEXT NOT NULL,
+    role          TEXT NOT NULL DEFAULT 'admin',
+    created_at    TEXT NOT NULL,
+    created_by    TEXT NOT NULL DEFAULT 'master'
+  );
+
+  CREATE TABLE IF NOT EXISTS admin_sessions (
+    token_hash    TEXT PRIMARY KEY,
+    username      TEXT NOT NULL,
+    role          TEXT NOT NULL DEFAULT 'admin',
+    created_at    INTEGER NOT NULL,
+    expires_at    INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS admin_sessions_time ON admin_sessions (expires_at);
 `;
 
 function openDb(dataDir) {

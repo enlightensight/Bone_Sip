@@ -140,6 +140,27 @@ const serverJs = fs.readFileSync(path.join(__dirname, '../server/server.js'), 'u
 assert(serverJs.includes("PUBLIC_FILES = new Set(['index.html', 'admin.html', 'admin'"), 'server.js includes admin and admin.html in PUBLIC_FILES');
 assert(serverJs.includes("if (rel === 'admin') rel = 'admin.html'"), 'server.js maps rel === "admin" to admin.html');
 
+console.log('\n--- 6. Testing Admin Management (Master Admin Tab & Phone Banner Removal) ---');
+assert(!adminHtml.includes('id="adTestBanner"'), 'Phone login warning banner #adTestBanner is completely REMOVED from admin.html');
+assert(!adminHtml.includes('Anyone who knows a phone number can open that account'), 'Phone warning message is completely REMOVED from admin.html');
+assert(adminHtml.includes('id="adNavAdmins"') && adminHtml.includes('data-tab="admins"'), 'Add Admin tab button #adNavAdmins is present in sidebar');
+assert(adminHtml.includes('id="adAdminsTab"'), 'Admin management section #adAdminsTab is present in admin.html');
+assert(adminHtml.includes('id="adCreateAdminForm"'), 'Create admin form #adCreateAdminForm is present');
+assert(adminHtml.includes('id="newAdminUser"') && adminHtml.includes('id="newAdminPass"') && adminHtml.includes('id="newAdminConfirmPass"'), 'Username, password and confirm password inputs are present');
+assert(adminHtml.includes('id="btnCreateAdmin"'), 'Create admin submit button is present');
+assert(adminHtml.includes('id="adAdminsTableRows"'), 'Administrators table #adAdminsTableRows is present');
+
+assert(adminCss.includes('.ad-badge-master'), 'Master admin badge styles defined in css/admin.css');
+assert(adminCss.includes('.ad-admins-grid'), 'Admins grid layout defined in css/admin.css');
+assert(adminCss.includes('.ad-feedback-box'), 'Feedback alert box styles defined in css/admin.css');
+assert(adminCss.includes('.ad-role-badge.master') && adminCss.includes('.ad-role-badge.admin'), 'Master and Admin role badges defined in css/admin.css');
+assert(adminCss.includes('.ad-btn-del-admin'), 'Admin revoke button styles defined in css/admin.css');
+
+assert(adminJs.includes('loadAdmins'), 'loadAdmins function defined in js/admin.js');
+assert(adminJs.includes('state.isMaster'), 'state.isMaster role-based access check present in js/admin.js');
+assert(adminJs.includes('adCreateAdminForm'), 'Form submission listener for creating admins present in js/admin.js');
+assert(adminJs.includes('Passwords do not match'), 'Password confirmation validation logic present in js/admin.js');
+
 console.log('\n================================================================');
 console.log(`🏁 ADMIN TEST SUITE COMPLETED: ${pass} Passed, ${fail} Failed`);
 console.log('================================================================\n');

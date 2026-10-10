@@ -126,6 +126,54 @@ async function login(call, phone) {
   const locked = await c('POST', '/api/auth/otp/verify', { phone: '9876500004', code: '123456' });
   assert(locked.status === 401 && locked.json.error === 'too_many_attempts', 'Five wrong codes lock that code');
 
+  console.log('\n--- Multi-Admin Management & Role Access ---');
+  // 1. Master admin logs in via username and password
+  const masterAdm = client(base);
+  const mLogin = await masterAdm('POST', '/api/admin/login', { username: 'boneadmin', password: PIN });
+  assert(mLogin.status === 200 && mLogin.json.admin.isMaster === true, 'Master admin logs in with username and password');
+
+  const masterMe = await masterAdm('GET', '/api/admin/me');
+  assert(masterMe.status === 200 && masterMe.json.isMaster === true, 'Master admin /api/admin/me returns isMaster: true');
+
+  // 2. Validation tests for adding admin
+  assert((await masterAdm('POST', '/api/admin/admins', { username: 'ab', password: 'Password123', confirmPassword: 'Password123' })).status === 400, 'Rejects username < 3 characters');
+  assert((await masterAdm('POST', '/api/admin/admins', { username: 'dr_sharma', password: '123', confirmPassword: '123' })).status === 400, 'Rejects password < 6 characters');
+  assert((await masterAdm('POST', '/api/admin/admins', { username: 'dr_sharma', password: 'Password123', confirmPassword: 'WrongPassword' })).status === 400, 'Rejects mismatched confirm password');
+  assert((await masterAdm('POST', '/api/admin/admins', { username: 'boneadmin', password: 'Password123', confirmPassword: 'Password123' })).status === 400, 'Rejects reserved master username');
+
+  // 3. Create valid sub-admin
+  const createSub = await masterAdm('POST', '/api/admin/admins', { username: 'dr_sharma', password: 'DocPassword@2026', confirmPassword: 'DocPassword@2026' });
+  assert(createSub.status === 201 && createSub.json.admin.username === 'dr_sharma' && createSub.json.admin.role === 'admin', 'Master admin creates sub-admin dr_sharma');
+
+  // 4. Duplicate username rejected
+  assert((await masterAdm('POST', '/api/admin/admins', { username: 'dr_sharma', password: 'DocPassword@2026', confirmPassword: 'DocPassword@2026' })).status === 400, 'Rejects duplicate username');
+
+  // 5. List admins as master
+  const adminList = (await masterAdm('GET', '/api/admin/admins')).json.admins;
+  assert(adminList.length >= 2 && adminList.some(a => a.username === 'dr_sharma') && adminList.some(a => a.role === 'master'), 'Admins list includes master admin and created sub-admin');
+
+  // 6. Sub-admin logs in with credentials
+  const subAdm = client(base);
+  assert((await subAdm('POST', '/api/admin/login', { username: 'dr_sharma', password: 'wrong_password' })).status === 401, 'Sub-admin login rejects wrong password');
+  const subLogin = await subAdm('POST', '/api/admin/login', { username: 'dr_sharma', password: 'DocPassword@2026' });
+  assert(subLogin.status === 200 && subLogin.json.admin.role === 'admin' && subLogin.json.admin.isMaster === false, 'Sub-admin logs in successfully with role admin');
+
+  // 7. Sub-admin can access everything else
+  const subMe = await subAdm('GET', '/api/admin/me');
+  assert(subMe.status === 200 && subMe.json.isMaster === false, 'Sub-admin /api/admin/me returns isMaster: false');
+  assert((await subAdm('GET', '/api/admin/overview')).status === 200, 'Sub-admin has access to Overview');
+  assert((await subAdm('GET', '/api/admin/users')).status === 200, 'Sub-admin has access to Users');
+  assert((await subAdm('GET', '/api/admin/audit')).status === 200, 'Sub-admin has access to Audits');
+
+  // 8. Sub-admin is BLOCKED from Add Admin tab API
+  assert((await subAdm('GET', '/api/admin/admins')).status === 403, 'Sub-admin is FORBIDDEN from viewing admins list');
+  assert((await subAdm('POST', '/api/admin/admins', { username: 'hacker', password: 'Password123', confirmPassword: 'Password123' })).status === 403, 'Sub-admin is FORBIDDEN from creating admins');
+
+  // 9. Master admin revokes/deletes sub-admin
+  const toDel = adminList.find(a => a.username === 'dr_sharma');
+  assert((await masterAdm('DELETE', `/api/admin/admins/${toDel.id}`)).status === 200, 'Master admin can delete/revoke sub-admin');
+  assert((await subAdm('POST', '/api/admin/login', { username: 'dr_sharma', password: 'DocPassword@2026' })).status === 401, 'Revoked sub-admin cannot login anymore');
+
   server.close();
   const noSms = createServer({ dataDir: fs.mkdtempSync(path.join(os.tmpdir(), 'bonesip-test-')), env: {} });
   await new Promise(r => noSms.listen(0, '127.0.0.1', r));

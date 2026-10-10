@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="css/style.css?v=3.9.9">
-  <link rel="stylesheet" href="css/admin.css?v=1.2.1">
+  <link rel="stylesheet" href="css/admin.css?v=1.2.2">
 </head>
 <body class="admin">
   <!-- Login: Admin ID + Password / PIN (or optional OTP) -->
@@ -23,10 +23,10 @@
 
       <!-- Primary ID & Password Login Form -->
       <form id="adLoginForm" autocomplete="on">
-        <label for="adId"><i class="fa-solid fa-user-shield" style="color: var(--strengthen); margin-right: 4px;"></i> Super Admin ID</label>
+        <label for="adId"><i class="fa-solid fa-user-shield" style="color: var(--strengthen); margin-right: 4px;"></i> Admin ID / Username</label>
         <div class="ad-input-group">
           <i class="fa-solid fa-user-gear input-icon"></i>
-          <input id="adId" type="text" autocomplete="username" placeholder="Enter Super Admin ID" required>
+          <input id="adId" type="text" autocomplete="username" placeholder="Enter Admin ID or Username" required>
         </div>
 
         <label for="adPassword"><i class="fa-solid fa-key" style="color: var(--strengthen); margin-right: 4px;"></i> Password</label>
@@ -77,10 +77,14 @@
           <i class="fa-solid fa-shield-halved"></i>
           <span>Audits</span>
         </button>
+        <button class="ad-nav-item" data-tab="admins" id="adNavAdmins" role="tab" aria-selected="false" hidden>
+          <i class="fa-solid fa-user-plus"></i>
+          <span>Add Admin</span>
+        </button>
       </nav>
 
       <div class="ad-sidebar-footer">
-        <div class="ad-sidebar-user">Signed in as Admin · Team Anronix</div>
+        <div class="ad-sidebar-user" id="adSidebarUser">Signed in as Admin · Team Anronix</div>
         <button class="ad-sidebar-logout" id="adLogoutBtn"><i class="fa-solid fa-right-from-bracket"></i> <span>Log out</span></button>
       </div>
     </aside>
@@ -95,11 +99,6 @@
           <span class="ad-tag">Admin</span>
         </div>
       </header>
-
-      <div class="ad-banner" id="adTestBanner" hidden>
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <span><b>Test login is on.</b> Anyone who knows a phone number can open that account with the test code. Turn off <code>OTP_TEST_MODE</code> once SMS is set up.</span>
-      </div>
 
       <main class="ad-main">
         <!-- =============================================================
@@ -378,6 +377,96 @@
             </div>
           </div>
         </section>
+
+        <!-- =============================================================
+             TAB: Add Admin (Master Admin Only)
+             ============================================================= -->
+        <section id="adAdminsTab" hidden>
+          <div class="ad-page-header">
+            <div>
+              <h1 class="ad-page-title">Admin Management</h1>
+              <p class="ad-page-subtitle">Provision and manage authorized administrators with role-based access.</p>
+            </div>
+            <div class="ad-page-actions">
+              <span class="ad-badge-master"><i class="fa-solid fa-crown"></i> Master Admin Access</span>
+            </div>
+          </div>
+
+          <div class="ad-admins-grid">
+            <!-- Create Admin Form Card -->
+            <div class="ad-card ad-create-admin-card">
+              <div class="ad-card-head">
+                <div>
+                  <h2><i class="fa-solid fa-user-plus" style="color: var(--strengthen);"></i> Add New Admin</h2>
+                  <span class="ad-muted">Create authorized credentials with access to all admin panel features.</span>
+                </div>
+              </div>
+
+              <form id="adCreateAdminForm" class="ad-admin-create-form" autocomplete="off" novalidate>
+                <div class="ad-form-field">
+                  <label for="newAdminUser"><i class="fa-solid fa-user"></i> Username</label>
+                  <div class="ad-input-group">
+                    <i class="fa-solid fa-at input-icon"></i>
+                    <input type="text" id="newAdminUser" placeholder="e.g. dr_sharma or clinic_admin" autocomplete="off" required minlength="3" maxlength="30">
+                  </div>
+                  <span class="ad-field-hint">3–30 characters (letters, numbers, hyphens or underscores)</span>
+                </div>
+
+                <div class="ad-form-field">
+                  <label for="newAdminPass"><i class="fa-solid fa-key"></i> Password</label>
+                  <div class="ad-input-group">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input type="password" id="newAdminPass" placeholder="Enter password (min 6 characters)" autocomplete="new-password" required minlength="6">
+                    <button type="button" class="ad-eye-btn" id="toggleNewPassBtn" aria-label="Toggle password visibility">
+                      <i class="fa-solid fa-eye" id="toggleNewPassIcon"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="ad-form-field">
+                  <label for="newAdminConfirmPass"><i class="fa-solid fa-shield-halved"></i> Confirm Password</label>
+                  <div class="ad-input-group">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input type="password" id="newAdminConfirmPass" placeholder="Re-enter password to confirm" autocomplete="new-password" required minlength="6">
+                    <button type="button" class="ad-eye-btn" id="toggleConfirmPassBtn" aria-label="Toggle confirm password visibility">
+                      <i class="fa-solid fa-eye" id="toggleConfirmPassIcon"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="ad-feedback-box" id="adAdminFeedback" hidden role="alert"></div>
+
+                <button type="submit" class="ad-btn primary" id="btnCreateAdmin">
+                  <i class="fa-solid fa-user-plus"></i> Create Admin Account
+                </button>
+              </form>
+            </div>
+
+            <!-- Existing Admins List Card -->
+            <div class="ad-card ad-admins-list-card">
+              <div class="ad-card-head">
+                <div>
+                  <h2><i class="fa-solid fa-users-gear" style="color: var(--strengthen);"></i> Authorized Administrators</h2>
+                  <span class="ad-muted" id="adAdminCount">Loading administrators...</span>
+                </div>
+              </div>
+
+              <div class="ad-table-wrap">
+                <table class="ad-table">
+                  <thead>
+                    <tr>
+                      <th>Administrator</th>
+                      <th>Role</th>
+                      <th>Created</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adAdminsTableRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   </div>
@@ -393,6 +482,6 @@
   <div class="ad-tooltip" id="adTooltip" role="tooltip" hidden></div>
 
   <script src="js/data.js?v=3.9.9"></script>
-  <script src="js/admin.js?v=1.2.1"></script>
+  <script src="js/admin.js?v=1.2.2"></script>
 </body>
 </html>
