@@ -3444,6 +3444,184 @@
   }
 
   // --------------------------------------------------------------------------
+  // DAILY ROUTINE PUSH NOTIFICATIONS & REMINDERS (PWA / Mobile)
+  // --------------------------------------------------------------------------
+  function updateHeaderReminderButton() {
+    const dot = document.getElementById('headerReminderDot');
+    const btn = document.getElementById('headerRemindersBtn');
+    const enabled = window.BoneNotifications && BoneNotifications.isEnabled();
+    if (dot) {
+      dot.classList.toggle('active', !!enabled);
+    }
+    if (btn) {
+      btn.title = enabled ? t('Daily reminders active (7 AM, 8 AM, 1 PM, 4:30 PM, 7:30 PM)') : t('Enable daily routine reminders');
+      btn.setAttribute('aria-label', btn.title);
+    }
+  }
+
+  function renderDietReminderBanner() {
+    const container = document.getElementById('dietReminderBannerContainer');
+    if (!container || !window.BoneNotifications) return;
+
+    const enabled = BoneNotifications.isEnabled();
+    if (enabled) {
+      container.innerHTML = `
+        <div class="diet-reminder-pill-active" onclick="BoneApp.openRemindersModal()" role="button" tabindex="0" aria-label="${t('Manage daily routine reminders')}">
+          <span class="pulse-dot-green"></span>
+          <span class="diet-reminder-pill-text">${t('🔔 Daily reminders active: 7:00 AM · 8:00 AM · 1:00 PM · 4:30 PM · 7:30 PM')}</span>
+          <span class="diet-reminder-pill-link">${t('Manage')} <i class="fa-solid fa-chevron-right"></i></span>
+        </div>`;
+    } else {
+      container.innerHTML = `
+        <div class="diet-reminder-prompt-card">
+          <div class="diet-reminder-prompt-icon">
+            <i class="fa-solid fa-bell"></i>
+          </div>
+          <div class="diet-reminder-prompt-body">
+            <h4>${t('Never miss your bone routine!')}</h4>
+            <p>${t('Get mobile alerts for 7 AM sunbath & exercise, breakfast, lunch, snack, and dinner in your language.')}</p>
+          </div>
+          <button type="button" class="cta-btn cta-sm diet-reminder-enable-btn" onclick="BoneApp.toggleDailyReminders(true)">
+            ${t('Enable alerts')}
+          </button>
+        </div>`;
+    }
+  }
+
+  function openRemindersModal() {
+    playSound('tap');
+    const modal = document.getElementById('remindersModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      renderRemindersModal();
+    }
+  }
+
+  function closeRemindersModal() {
+    playSound('tap');
+    const modal = document.getElementById('remindersModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function renderRemindersModal() {
+    if (!window.BoneNotifications) return;
+    const enabled = BoneNotifications.isEnabled();
+    const perm = BoneNotifications.getPermission();
+    const lang = BoneNotifications.getCurrentLang();
+
+    const masterToggle = document.getElementById('remindersMasterToggle');
+    if (masterToggle) masterToggle.checked = !!enabled;
+
+    const badge = document.getElementById('remindersStatusBadge');
+    const detail = document.getElementById('remindersStatusDetail');
+    if (badge) {
+      badge.className = 'badge ' + (enabled ? 'badge-green' : (perm === 'denied' ? 'badge-red' : 'badge-gold'));
+      badge.textContent = enabled ? t('Active') : (perm === 'denied' ? t('Blocked') : t('Disabled'));
+    }
+    if (detail) {
+      if (enabled) {
+        detail.textContent = BoneNotifications.getUiString('statusActive', lang) || t('5 daily reminders scheduled');
+      } else if (perm === 'denied') {
+        detail.textContent = BoneNotifications.getUiString('statusBlocked', lang) || t('Notifications blocked in browser settings');
+      } else {
+        detail.textContent = BoneNotifications.getUiString('statusDisabled', lang) || t('Reminders turned off · Tap switch to enable');
+      }
+    }
+
+    const langNameEl = document.getElementById('remindersLangName');
+    if (langNameEl) {
+      const langInfo = window.BoneI18n ? BoneI18n.all().find(l => l.code === lang) : null;
+      langNameEl.textContent = langInfo ? `${langInfo.native} (${langInfo.name})` : lang.toUpperCase();
+    }
+
+    const listEl = document.getElementById('remindersScheduleList');
+    if (listEl) {
+      listEl.innerHTML = BoneNotifications.SCHEDULE.map(item => {
+        const copy = BoneNotifications.getCopy(item.id, lang);
+        return `
+          <div class="reminder-schedule-item">
+            <div class="reminder-item-left">
+              <img src="${item.icon3d}" alt="" width="32" height="32" class="i3d">
+              <span class="reminder-item-time-badge">${item.displayTime}</span>
+            </div>
+            <div class="reminder-item-content">
+              <div class="reminder-item-title">${copy.title}</div>
+              <div class="reminder-item-desc">${copy.body}</div>
+            </div>
+            <button type="button" class="reminder-item-test-btn" onclick="BoneApp.testScheduleSlot('${item.id}')" title="${t('Test this reminder')}" aria-label="${t('Test this reminder')}">
+              <i class="fa-solid fa-play"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    const profToggle = document.getElementById('profReminderToggle');
+    const profStatus = document.getElementById('profReminderStatusText');
+    if (profToggle) profToggle.checked = !!enabled;
+    if (profStatus) {
+      profStatus.textContent = enabled
+        ? t('Active: 7 AM sun & exercise, breakfast, lunch, snack, dinner')
+        : t('Turn on daily push alerts');
+    }
+
+    updateHeaderReminderButton();
+    renderDietReminderBanner();
+  }
+
+  async function toggleDailyReminders(checked) {
+    if (!window.BoneNotifications) return;
+    playSound('tap');
+    if (checked) {
+      const perm = BoneNotifications.getPermission();
+      if (perm !== 'granted') {
+        const ok = await BoneNotifications.requestPermission();
+        if (!ok) {
+          showToast(t('Please allow notifications in your browser/device permissions.'), 'fa-triangle-exclamation');
+          renderRemindersModal();
+          return;
+        }
+      } else {
+        BoneNotifications.setEnabled(true);
+        await BoneNotifications.sendTestNotification({ welcome: true });
+      }
+      BoneNotifications.startScheduler();
+      showToast(t('🔔 Daily routine reminders activated!'), 'fa-bell');
+    } else {
+      BoneNotifications.setEnabled(false);
+      showToast(t('🔕 Daily routine reminders turned off.'), 'fa-bell-slash');
+    }
+    renderRemindersModal();
+  }
+
+  async function sendTestNotification() {
+    if (!window.BoneNotifications) return;
+    playSound('tap');
+    const ok = await BoneNotifications.sendTestNotification();
+    if (ok) {
+      showToast(t('📲 Test notification sent! Check your device lock screen/tray.'), 'fa-mobile-screen');
+    } else {
+      showToast(t('Could not send notification. Please check browser permissions.'), 'fa-triangle-exclamation');
+    }
+    renderRemindersModal();
+  }
+
+  async function testScheduleSlot(slotId) {
+    if (!window.BoneNotifications) return;
+    playSound('tap');
+    const perm = BoneNotifications.getPermission();
+    if (perm !== 'granted') {
+      const ok = await BoneNotifications.requestPermission();
+      if (!ok) {
+        showToast(t('Please allow notifications to preview reminders.'), 'fa-triangle-exclamation');
+        return;
+      }
+    }
+    await BoneNotifications.triggerSlot(slotId);
+    showToast(t('Alert triggered! Check your notification tray.'), 'fa-bell');
+  }
+
+  // --------------------------------------------------------------------------
   // MODULE: OJAS — AI ASSISTANT
   // --------------------------------------------------------------------------
   // Ojas answers through our own /api/chat endpoint (server/assistant.js), which
@@ -4159,6 +4337,9 @@
 
     // 5b. Protect Precaution Suggestion Prompt
     renderProtectSuggestionBanner();
+
+    // 5c. Daily Routine Push Notifications Banner
+    renderDietReminderBanner();
 
     // 6. Meal cards & Clinical Guidance Banner
     const guidanceContainer = document.getElementById('clinicalDietGuidanceContainer');
@@ -7120,6 +7301,12 @@
     updateHeaderLangButton();
     renderPillarBottomNav();
     updateHeaderProfileBadge();
+    updateHeaderReminderButton();
+    renderDietReminderBanner();
+    const remindersModal = document.getElementById('remindersModal');
+    if (remindersModal && remindersModal.style.display === 'flex') {
+      renderRemindersModal();
+    }
     const view = document.body.dataset.view;
     if (view === 'assessment') renderAssessmentStage();
     else if (view === 'build') switchBuildSubTab(state.activeBuildSubTab || 'diet', true);
@@ -7176,10 +7363,34 @@
     calculateBMI();
     renderPillarBottomNav();
     updateHeaderProfileBadge();
+    updateHeaderReminderButton();
+    renderDietReminderBanner();
+    if (window.BoneNotifications) {
+      BoneNotifications.startScheduler();
+    }
     syncCoachToggle();
     setupOnboardingSwipe();
     updateHeaderLangButton();
     document.addEventListener('bonesip:language', onLanguageChanged);
+
+    // Deep link support: opening directly to reminders or a specific meal slot
+    try {
+      if (typeof URLSearchParams !== 'undefined' && typeof window !== 'undefined' && window.location && window.location.search) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('reminders') === '1') {
+          setTimeout(openRemindersModal, 300);
+        }
+        const targetSlot = urlParams.get('slot');
+        if (targetSlot) {
+          setTimeout(() => {
+            if (state.completedPillars.build) {
+              navigatePillar('build');
+              filterMealSlotView(targetSlot);
+            }
+          }, 400);
+        }
+      }
+    } catch (_) {}
 
     const splash = document.getElementById('appSplashScreen');
     if (hadSavedData && hasExistingJourney()) {
@@ -7467,7 +7678,17 @@
     addDoctorQuestion,
     deleteDoctorQuestion,
     shareStrengthenBriefWhatsApp,
-    askAiAboutStrengthenTopic
+    askAiAboutStrengthenTopic,
+
+    // Daily routine push notifications & reminders
+    openRemindersModal,
+    closeRemindersModal,
+    toggleDailyReminders,
+    sendTestNotification,
+    testScheduleSlot,
+    renderRemindersModal,
+    renderDietReminderBanner,
+    updateHeaderReminderButton
   };
 
   // Run on DOM Ready

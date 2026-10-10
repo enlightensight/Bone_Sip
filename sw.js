@@ -1,6 +1,6 @@
 // BONE SIP service worker — offline app shell + runtime caching.
 // Bump CACHE_VERSION whenever you deploy changed files (or let your build step do it).
-const CACHE_VERSION = 'bonesip-v3.9.7';
+const CACHE_VERSION = 'bonesip-v3.9.8';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -8,12 +8,13 @@ const APP_SHELL = [
   "./",
   "index.html",
   "manifest.webmanifest",
-  "css/style.css?v=3.9.7",
-  "css/brand.css?v=3.9.7",
-  "js/config.js?v=3.9.7",
-  "js/data.js?v=3.9.7",
-  "js/i18n.js?v=3.9.7",
-  "js/app.js?v=3.9.7",
+  "css/style.css?v=3.9.8",
+  "css/brand.css?v=3.9.8",
+  "js/config.js?v=3.9.8",
+  "js/data.js?v=3.9.8",
+  "js/notifications.js?v=3.9.8",
+  "js/i18n.js?v=3.9.8",
+  "js/app.js?v=3.9.8",
   "js/vendor/confetti.browser.min.js",
   "assets/images/bonesip_logo_720.webp",
   "assets/images/ojas-avatar.svg",
@@ -196,3 +197,66 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// -----------------------------------------------------------------------------
+// PUSH & LOCAL NOTIFICATION EVENTS (Mobile PWA & Desktop)
+// -----------------------------------------------------------------------------
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const data = event.notification.data || {};
+  const targetUrl = data.url || './';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Focus already open window if available
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.postMessage({ type: 'BONESIP_NOTIFICATION_CLICK', data });
+          return client.focus();
+        }
+      }
+      // If no window is open, launch app at target URL
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
+
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (e) {
+    payload = {
+      title: 'BONE SIP',
+      body: event.data ? event.data.text() : 'Time for your bone health booster!'
+    };
+  }
+
+  const title = payload.title || 'BONE SIP';
+  const options = Object.assign({
+    icon: 'assets/icons/icon-192.png',
+    badge: 'assets/icons/favicon-32.png',
+    vibrate: [200, 100, 200],
+    tag: payload.tag || 'bonesip-push',
+    renotify: true,
+    data: payload.data || { url: './', timestamp: Date.now() }
+  }, payload.options || {});
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const title = event.data.title || 'BONE SIP';
+    const options = Object.assign({
+      icon: 'assets/icons/icon-192.png',
+      badge: 'assets/icons/favicon-32.png',
+      vibrate: [200, 100, 200],
+      tag: 'bonesip-reminder'
+    }, event.data.options || {});
+    event.waitUntil(self.registration.showNotification(title, options));
+  }
+});
+

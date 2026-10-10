@@ -27,7 +27,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <!-- Languages: loaded first so a saved language is applied before the page shows -->
-  <script src="js/i18n.js?v=3.9.7"></script>
+  <script src="js/i18n.js?v=3.9.8"></script>
 
   <!-- Unified Global Typography: Outfit (geometric, modern, clean throughout entire app) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,8 +38,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha384-t1nt8BQoYMLFN5p42tRAtuAAFQaCQODekUVeKKZrEnEyp4H2R0RHFz0KWpmj7i8g" crossorigin="anonymous" referrerpolicy="no-referrer">
 
   <link rel="preload" as="image" href="assets/images/bonesip_logo_720.webp">
-  <link rel="stylesheet" href="css/style.css?v=3.9.7">
-  <link rel="stylesheet" href="css/brand.css?v=3.9.7">
+  <link rel="stylesheet" href="css/style.css?v=3.9.8">
+  <link rel="stylesheet" href="css/brand.css?v=3.9.8">
 </head>
 <body class="portal-locked">
   <a class="skip-link" href="#mainContent">Skip to content</a>
@@ -143,6 +143,10 @@
       </button>
 
       <div class="header-actions">
+        <button class="icon-pill reminder-pill" id="headerRemindersBtn" onclick="BoneApp.openRemindersModal()" title="Daily reminders" aria-label="Daily reminders">
+          <i class="fa-solid fa-bell" aria-hidden="true"></i>
+          <span class="reminder-status-dot" id="headerReminderDot"></span>
+        </button>
         <button class="icon-pill lang-pill" id="headerLangBtn" onclick="BoneApp.openLanguagePicker()" title="Language" aria-label="Change language">
           <i class="fa-solid fa-language" aria-hidden="true"></i> <span id="headerLangLabel" translate="no">English</span>
         </button>
@@ -277,6 +281,9 @@
 
         <!-- Protect Precaution Suggestion Prompt -->
         <div id="protectSuggestionBannerContainer"></div>
+
+        <!-- Daily Routine Push Notifications Banner -->
+        <div id="dietReminderBannerContainer"></div>
 
         <!-- Today hero: score ring + streak -->
         <div class="today-hero">
@@ -883,6 +890,25 @@
       </div>
 
       <div class="pref-section">
+        <h4 class="pref-section-title">Daily routine reminders</h4>
+        <div class="pref-reminder-box">
+          <div class="pref-reminder-head">
+            <div class="pref-reminder-info">
+              <b>Push notifications</b>
+              <span id="profReminderStatusText" class="muted-xs">Daily alerts for 7 AM sunbath, meals &amp; exercise</span>
+            </div>
+            <label class="switch-toggle" for="profReminderToggle">
+              <input type="checkbox" id="profReminderToggle" onchange="BoneApp.toggleDailyReminders(this.checked)">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline btn-full" style="margin-top: 10px;" onclick="BoneApp.sendTestNotification()">
+            <i class="fa-solid fa-mobile-screen"></i> Send test notification
+          </button>
+        </div>
+      </div>
+
+      <div class="pref-section">
         <h4 class="pref-section-title">About you</h4>
         <div class="two-col">
           <input type="text" id="profInputName" class="pref-input-box" placeholder="Your name" autocomplete="name" maxlength="60" aria-label="Full name">
@@ -939,6 +965,52 @@
     <p class="chat-disclaimer">AI guidance, not medical advice. Your question and plan summary are sent to our AI provider to answer.</p>
   </div>
 
+  <!-- =========================================================================
+       DAILY ROUTINE REMINDERS MODAL
+       ========================================================================= -->
+  <div class="modal-backdrop" id="remindersModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="remindersModalTitle">
+    <div class="modal-card reminders-modal-card">
+      <div class="sheet-head">
+        <div class="reminders-modal-title-wrap">
+          <span class="reminders-bell-icon" aria-hidden="true"><i class="fa-solid fa-bell"></i></span>
+          <div>
+            <h3 id="remindersModalTitle">Daily routine reminders</h3>
+            <p id="remindersModalSub" class="muted-xs">Push notifications for sunbath, meals &amp; exercise</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="BoneApp.closeRemindersModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Master Switch & Status -->
+      <div class="reminders-status-card" id="remindersStatusCard">
+        <div class="reminders-status-row">
+          <div class="reminders-status-info">
+            <span class="badge badge-green" id="remindersStatusBadge">Active</span>
+            <p id="remindersStatusDetail">5 daily reminders scheduled</p>
+          </div>
+          <label class="switch-toggle" for="remindersMasterToggle">
+            <input type="checkbox" id="remindersMasterToggle" checked onchange="BoneApp.toggleDailyReminders(this.checked)">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <p class="reminders-lang-indicator" id="remindersLangIndicator">
+          <i class="fa-solid fa-language"></i> Alerts in: <b id="remindersLangName" translate="no">English</b>
+        </p>
+      </div>
+
+      <!-- Schedule List -->
+      <div class="reminders-schedule-list" id="remindersScheduleList"></div>
+
+      <!-- Actions -->
+      <div class="reminders-actions">
+        <button type="button" class="btn btn-outline btn-full" id="btnSendTestReminder" onclick="BoneApp.sendTestNotification()">
+          <i class="fa-solid fa-mobile-screen-button"></i> Send test notification
+        </button>
+        <button type="button" class="cta-btn btn-full" onclick="BoneApp.closeRemindersModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div class="toast-notification" id="appToast" role="status" aria-live="polite">
     <span id="toastMessage"></span>
@@ -950,8 +1022,9 @@
   <noscript><div class="noscript">BONE SIP needs JavaScript to run.</div></noscript>
 
   <script src="js/vendor/confetti.browser.min.js" defer></script>
-  <script src="js/config.js?v=3.9.7"></script>
-  <script src="js/data.js?v=3.9.7"></script>
-  <script src="js/app.js?v=3.9.7"></script>
+  <script src="js/config.js?v=3.9.8"></script>
+  <script src="js/data.js?v=3.9.8"></script>
+  <script src="js/notifications.js?v=3.9.8"></script>
+  <script src="js/app.js?v=3.9.8"></script>
 </body>
 </html>
