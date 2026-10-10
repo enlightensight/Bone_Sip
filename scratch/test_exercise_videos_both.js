@@ -63,6 +63,7 @@ const documentObj = {
   getElementById: (id) => domMap[id] || null,
   querySelectorAll: (selector) => [],
   querySelector: (selector) => null,
+  addEventListener: () => {},
   createElement: (tag) => ({
     style: {},
     classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
@@ -70,7 +71,7 @@ const documentObj = {
     setAttribute() {},
     getAttribute() { return null; }
   }),
-  body: { appendChild() {}, style: {} }
+  body: { appendChild() {}, style: {}, dataset: {}, classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } } }
 };
 
 const localStorageMock = {

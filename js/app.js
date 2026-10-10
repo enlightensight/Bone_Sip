@@ -4527,6 +4527,11 @@
       const defaultDur = isFemale ? 95 : 120;
       return (state.exerciseDurations && state.exerciseDurations[ex.id]) || defaultDur;
     }
+    if (ex && isRepBasedExercise(ex)) {
+      // 10% faster counting speed: 45s base -> 41s (~4.1s per rep for 10 reps)
+      const defaultDur = 41;
+      return (state.exerciseDurations && state.exerciseDurations[ex.id]) || (ex.durationSec ? Math.round(ex.durationSec / 1.10) : defaultDur);
+    }
     return (state.exerciseDurations && state.exerciseDurations[ex.id]) || ex.durationSec || 45;
   }
 
@@ -4931,7 +4936,7 @@
       const code = (typeof I18N !== 'undefined' && I18N.current) ? I18N.current() : 'en';
       const spoken = (code !== 'en' && typeof I18N !== 'undefined' && I18N.tr) ? I18N.tr(text) : text;
       const u = new SpeechSynthesisUtterance(spoken);
-      u.rate = 0.9;
+      u.rate = /^\d+$/.test(String(text).trim()) ? 1.05 : 0.95;
       u.volume = vol;
       const langTags = {
         hi: 'hi-IN', bn: 'bn-IN', mr: 'mr-IN', te: 'te-IN', ta: 'ta-IN',
@@ -5060,7 +5065,9 @@
         const reps = getExerciseRepCount(ex);
         player.repTarget = reps;
         player.repsRemaining = reps;
-        const secPerRep = Math.max(2, Math.round(getExDuration(ex) / reps)) || 4;
+        // 10% faster counting speed for both male and female coaches:
+        // Cadence = (getExDuration(ex) / reps) with 0.1s precision (e.g. 4.1s per rep for 10 reps)
+        const secPerRep = Math.max(1.5, Math.round(((getExDuration(ex) / reps) || 4.1) * 10) / 10);
         player.secPerRep = secPerRep;
         player.repSecRemaining = secPerRep;
         player.total = reps;
@@ -5089,14 +5096,17 @@
     }
 
     renderPlayer();
-    if (phase !== 'done') player.timer = setInterval(playerTick, 1000);
+    if (phase !== 'done') {
+      const tickMs = (phase === 'work' && player.isReps) ? 100 : 1000;
+      player.timer = setInterval(playerTick, tickMs);
+    }
   }
 
   function playerTick() {
     if (player.paused) return;
     if (player.phase === 'work' && player.isReps) {
-      player.repSecRemaining--;
-      if (player.repSecRemaining <= 0) {
+      player.repSecRemaining = Math.max(0, Math.round((player.repSecRemaining - 0.1) * 100) / 100);
+      if (player.repSecRemaining <= 0.05) {
         player.repsRemaining--;
         player.remaining = player.repsRemaining;
         if (player.repsRemaining > 0) {
@@ -7333,6 +7343,7 @@
     playerAddRest,
     closePlayer,
     isRepBasedExercise,
+    getExDuration,
     getExerciseRepCount,
     toggleVoice,
     onVolumeChange,

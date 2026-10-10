@@ -106,7 +106,15 @@ assert(oneLeg && oneLeg.reps === '10 s each leg (3 times)' && oneLeg.durationSec
 
 // Check Dumbbell Pull configuration
 const dumbell = WL.find(e => e.id === 'ex_dumbell_pull');
-assert(dumbell && dumbell.reps === '10 per arm', 'Dumbbell Pull is configured with 10 per arm');
+assert(dumbell && dumbell.reps === '10 per arm' && dumbell.durationSec === 41, 'Dumbbell Pull is configured with 10 per arm and 41s duration (10% faster counting speed)');
+
+// Check Chair Sit-to-Stand configuration
+const sitToStand = WL.find(e => e.id === 'ex_sit_to_stand');
+assert(sitToStand && sitToStand.reps === '10 slow reps' && sitToStand.durationSec === 41, 'Chair Sit-to-Stand is configured with 10 slow reps and 41s duration (10% faster counting speed)');
+
+// Check Step-Ups configuration
+const stepUps = WL.find(e => e.id === 'ex_step_ups');
+assert(stepUps && stepUps.reps === '10 per leg' && stepUps.durationSec === 41, 'Step-Ups is configured with 10 per leg and 41s duration (10% faster counting speed)');
 
 // Check Chest Stretch configuration
 const chestStretch = WL.find(e => e.id === 'ex_chest_stretch');
@@ -363,6 +371,17 @@ setTimeout(() => {
   assert(BoneApp.isRepBasedExercise(oneLeg) === false, 'One-Leg Stand is detected as a timed hold exercise');
   assert(BoneApp.getExerciseRepCount(dumbell) === 10, 'Dumbbell Pull rep count is parsed as 10');
   assert(BoneApp.getExerciseRepCount(chestStretch) === 10, 'Chest Stretch rep count is parsed as 10');
+
+  // Test 10% faster counting speed for both male and female coaches
+  BoneApp.switchGlobalCoach('male');
+  assert(BoneApp.getExDuration(dumbell) === 41, 'Male coach: Dumbbell Pull duration is 41s (4.1s per rep, 10% faster)');
+  assert(BoneApp.getExDuration(sitToStand) === 41, 'Male coach: Chair Sit-to-Stand duration is 41s (4.1s per rep, 10% faster)');
+  assert(BoneApp.getExDuration(stepUps) === 41, 'Male coach: Step-Ups duration is 41s (4.1s per rep, 10% faster)');
+
+  BoneApp.switchGlobalCoach('female');
+  assert(BoneApp.getExDuration(dumbell) === 41, 'Female coach: Dumbbell Pull duration is 41s (4.1s per rep, 10% faster)');
+  assert(BoneApp.getExDuration(sitToStand) === 41, 'Female coach: Chair Sit-to-Stand duration is 41s (4.1s per rep, 10% faster)');
+  assert(BoneApp.getExDuration(stepUps) === 41, 'Female coach: Step-Ups duration is 41s (4.1s per rep, 10% faster)');
 
   // Test BoneDB save & load
   const dbKey = 'BONE_SIP_PRODUCTION_DB_V3';

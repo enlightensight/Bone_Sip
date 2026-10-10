@@ -1594,7 +1594,7 @@ const BONE_SIP_DATA = {
   workoutLibrary: [
     {
       id: "ex_sit_to_stand", group: "strength", name: "Chair Sit-to-Stand", level: "Easy",
-      durationSec: 45, reps: "10 slow reps", img: "chair",
+      durationSec: 41, reps: "10 slow reps", img: "chair",
       video: { male: "assets/exercises/male_chair_sit_down_up.mp4", female: "assets/exercises/female_chair_sit_down_up.mp4" },
       focus: ["thighs", "hips"], focus2: ["core", "calves"],
       bones: ["Hip", "Thigh bone", "Lower spine"],
@@ -1604,7 +1604,7 @@ const BONE_SIP_DATA = {
     },
     {
       id: "ex_step_ups", group: "strength", name: "Step-Ups", level: "Moderate",
-      durationSec: 45, reps: "10 per leg", img: "ladder",
+      durationSec: 41, reps: "10 per leg", img: "ladder",
       video: { male: "assets/exercises/male_stair_climbing.mp4", female: "assets/exercises/female_stair_climbing.mp4" },
       focus: ["thighs", "hips"], focus2: ["calves", "core"],
       bones: ["Hip", "Thigh bone", "Knee"],
@@ -1644,7 +1644,7 @@ const BONE_SIP_DATA = {
     },
     {
       id: "ex_dumbell_pull", group: "posture", name: "Dumbbell Pull", level: "Moderate",
-      durationSec: 45, reps: "10 per arm", img: "weights",
+      durationSec: 41, reps: "10 per arm", img: "weights",
       video: { male: "assets/exercises/male_dumbellpull.mp4", female: "assets/exercises/female_dumbellpull.mp4" },
       focus: ["upperBack", "arms"], focus2: ["core", "shoulders"],
       bones: ["Upper spine", "Forearm", "Wrist"],
@@ -1691,7 +1691,7 @@ const BONE_SIP_DATA = {
       targetBones: "Femoral Neck, Hip Joint, Lumbar Spine",
       targetMuscles: "Quadriceps, Glutes, Hamstrings",
       reps: "10–12 Reps · 3 Sets",
-      durationSec: 45,
+      durationSec: 41,
       impactLevel: "Low Impact / High Load",
       why: "Builds functional leg power needed to rise independently without arm support and prevent collapsing during a trip.",
       biomechanics: "90° Knee Flexion · Hip Hinge · Upright Spine",
@@ -1751,7 +1751,7 @@ const BONE_SIP_DATA = {
       targetBones: "Hip, Tibial Plateau, Patella",
       targetMuscles: "Gluteus Maximus, Quads, Hamstrings",
       reps: "10–12 Reps per leg · 2 Sets",
-      durationSec: 45,
+      durationSec: 41,
       impactLevel: "Moderate Step Impact",
       why: "Replicates stair climbing with safe impact that signals bone-forming osteoblasts to deposit hydroxyapatite mineral.",
       biomechanics: "Hip Extension Drive · Knee Tracking Over Second Toe · Handrail Guidance",
@@ -1791,7 +1791,7 @@ const BONE_SIP_DATA = {
       targetBones: "Upper Spine, Ribs, Wrists, Forearm Bones",
       targetMuscles: "Latissimus Dorsi, Rhomboids, Biceps, Core",
       reps: "10–12 Reps per arm · 3 Sets",
-      durationSec: 45,
+      durationSec: 41,
       impactLevel: "Moderate Upper Load",
       why: "Strengthens upper back extensors to anchor upright posture and stimulates bone density across wrists and arms.",
       biomechanics: "Neutral Spine · Scapular Retraction · Controlled Elbow Drive",
