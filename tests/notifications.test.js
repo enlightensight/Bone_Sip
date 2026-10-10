@@ -127,7 +127,7 @@ const swCode = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 assert(swCode.includes('addEventListener(\'notificationclick\''), 'sw.js handles notificationclick event');
 assert(swCode.includes('addEventListener(\'push\''), 'sw.js handles push event');
 assert(swCode.includes('addEventListener(\'message\''), 'sw.js handles message event for client triggers');
-assert(swCode.includes('js/notifications.js?v=3.9.8'), 'sw.js APP_SHELL caches js/notifications.js');
+assert(swCode.includes('js/notifications.js?v=3.9.9'), 'sw.js APP_SHELL caches js/notifications.js');
 assert(swCode.includes('assets/icons/icon-192.png'), 'sw.js specifies mobile icon assets/icons/icon-192.png');
 assert(swCode.includes('assets/icons/favicon-32.png'), 'sw.js specifies badge assets/icons/favicon-32.png');
 
@@ -147,7 +147,7 @@ assert(indexHtml.includes('id="remindersScheduleList"'), 'Reminders schedule lis
 assert(!indexHtml.includes('id="btnSendTestReminder"'), 'Test reminder button #btnSendTestReminder is removed from index.html');
 assert(indexHtml.includes('id="remindersIosTip"'), 'iOS home screen helper tip #remindersIosTip is present');
 assert(indexHtml.includes('id="profReminderToggle"'), 'Profile modal reminder toggle #profReminderToggle is present');
-assert(indexHtml.includes('<script src="js/notifications.js?v=3.9.8"></script>'), 'js/notifications.js script tag loaded in index.html');
+assert(indexHtml.includes('<script src="js/notifications.js?v=3.9.9"></script>'), 'js/notifications.js script tag loaded in index.html');
 
 assert(indexHtml.includes('id="notifInstallModal"'), 'PWA install notification prompt modal #notifInstallModal is present');
 assert(indexHtml.includes('id="btnAllowInstallNotif"'), 'Install prompt enable button #btnAllowInstallNotif is present');
