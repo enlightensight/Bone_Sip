@@ -278,6 +278,7 @@
 
   window.BoneI18n = {
     LANGS,
+    all: () => LANGS,
     VERSION,
     t, tn, tr,
     register,

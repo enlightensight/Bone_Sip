@@ -5572,3 +5572,44 @@ body.portal-locked main.app-container {
   color: #0F172A;
 }
 
+/* ==========================================================================
+   APP INSTALLED: NOTIFICATION PERMISSION PROMPT MODAL
+   ========================================================================== */
+.notif-install-card {
+  text-align: center;
+  max-width: 420px;
+  padding: 24px;
+}
+.notif-install-icon-wrap {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto 14px auto;
+}
+.notif-install-app-logo {
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(107, 42, 92, 0.2);
+  display: block;
+}
+.notif-install-bell-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+.notif-install-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+

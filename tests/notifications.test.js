@@ -149,6 +149,11 @@ assert(indexHtml.includes('id="remindersIosTip"'), 'iOS home screen helper tip #
 assert(indexHtml.includes('id="profReminderToggle"'), 'Profile modal reminder toggle #profReminderToggle is present');
 assert(indexHtml.includes('<script src="js/notifications.js?v=3.9.8"></script>'), 'js/notifications.js script tag loaded in index.html');
 
+assert(indexHtml.includes('id="notifInstallModal"'), 'PWA install notification prompt modal #notifInstallModal is present');
+assert(indexHtml.includes('id="btnAllowInstallNotif"'), 'Install prompt enable button #btnAllowInstallNotif is present');
+assert(!indexHtml.includes('notifPreviewBanner'), 'Temporary preview banner element is removed from index.html');
+assert(!indexHtml.includes('test-notif-btn'), 'Temporary test notification button is removed from index.html');
+
 // -----------------------------------------------------------------------------
 // 5. CSS Styles Verification
 // -----------------------------------------------------------------------------
@@ -163,6 +168,10 @@ assert(cssCode.includes('.diet-reminder-pill-active'), 'CSS class .diet-reminder
 assert(cssCode.includes('.reminders-modal-card'), 'CSS class .reminders-modal-card is defined');
 assert(cssCode.includes('.reminder-schedule-item'), 'CSS class .reminder-schedule-item is defined');
 assert(cssCode.includes('.reminders-ios-tip'), 'CSS class .reminders-ios-tip is defined');
+assert(cssCode.includes('.notif-install-card'), 'CSS class .notif-install-card is defined');
+assert(cssCode.includes('.notif-install-bell-badge'), 'CSS class .notif-install-bell-badge is defined');
+assert(!cssCode.includes('.notif-preview-banner'), 'Temporary preview banner CSS is removed from style.css');
+assert(!cssCode.includes('.test-notif-btn'), 'Temporary test button CSS is removed from style.css');
 
 // -----------------------------------------------------------------------------
 // 6. BoneApp Method Exports
@@ -178,12 +187,16 @@ const methodsToExport = [
   'testScheduleSlot',
   'renderRemindersModal',
   'renderDietReminderBanner',
-  'updateHeaderReminderButton'
+  'updateHeaderReminderButton',
+  'promptNotificationPermissionOnInstall',
+  'enableNotificationsFromInstallPrompt',
+  'dismissInstallNotificationPrompt'
 ];
 
 methodsToExport.forEach(m => {
   assert(appCode.includes(`${m},`) || appCode.includes(`${m}\n`), `BoneApp exports function ${m}`);
 });
+assert(!appCode.includes('triggerLocalNotificationPreview'), 'Temporary preview method is removed from js/app.js');
 
 console.log('\n================================================================');
 console.log(`🏁 NOTIFICATIONS TEST SUITE COMPLETED: ${passCount} Passed, ${failCount} Failed`);

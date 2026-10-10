@@ -3449,7 +3449,8 @@
   function updateHeaderReminderButton() {
     const dot = document.getElementById('headerReminderDot');
     const btn = document.getElementById('headerRemindersBtn');
-    const enabled = window.BoneNotifications && BoneNotifications.isEnabled();
+    const BoneNotifications = window.BoneNotifications;
+    const enabled = BoneNotifications && BoneNotifications.isEnabled();
     if (dot) {
       dot.classList.toggle('active', !!enabled);
     }
@@ -3461,7 +3462,8 @@
 
   function renderDietReminderBanner() {
     const container = document.getElementById('dietReminderBannerContainer');
-    if (!container || !window.BoneNotifications) return;
+    const BoneNotifications = window.BoneNotifications;
+    if (!container || !BoneNotifications) return;
 
     const enabled = BoneNotifications.isEnabled();
     if (enabled) {
@@ -3504,7 +3506,8 @@
   }
 
   function renderRemindersModal() {
-    if (!window.BoneNotifications) return;
+    const BoneNotifications = window.BoneNotifications;
+    if (!BoneNotifications) return;
     const enabled = BoneNotifications.isEnabled();
     const perm = BoneNotifications.getPermission();
     const lang = BoneNotifications.getCurrentLang();
@@ -3530,7 +3533,9 @@
 
     const langNameEl = document.getElementById('remindersLangName');
     if (langNameEl) {
-      const langInfo = window.BoneI18n ? BoneI18n.all().find(l => l.code === lang) : null;
+      const bI18n = (typeof window !== 'undefined' && window.BoneI18n) || null;
+      const langs = (bI18n && (bI18n.LANGS || (typeof bI18n.all === 'function' && bI18n.all()))) || (typeof I18N !== 'undefined' && I18N.LANGS) || [];
+      const langInfo = langs.find(l => l.code === lang);
       langNameEl.textContent = langInfo ? `${langInfo.native} (${langInfo.name})` : lang.toUpperCase();
     }
 
@@ -3579,7 +3584,8 @@
   }
 
   async function toggleDailyReminders(checked) {
-    if (!window.BoneNotifications) return;
+    const BoneNotifications = window.BoneNotifications;
+    if (!BoneNotifications) return;
     playSound('tap');
     if (checked) {
       const perm = BoneNotifications.getPermission();
@@ -3604,7 +3610,8 @@
   }
 
   async function sendTestNotification() {
-    if (!window.BoneNotifications) return;
+    const BoneNotifications = window.BoneNotifications;
+    if (!BoneNotifications) return;
     playSound('tap');
     const ok = await BoneNotifications.sendTestNotification();
     if (ok) {
@@ -3616,7 +3623,8 @@
   }
 
   async function testScheduleSlot(slotId) {
-    if (!window.BoneNotifications) return;
+    const BoneNotifications = window.BoneNotifications;
+    if (!BoneNotifications) return;
     playSound('tap');
     const perm = BoneNotifications.getPermission();
     if (perm !== 'granted') {
@@ -3628,6 +3636,126 @@
     }
     await BoneNotifications.triggerSlot(slotId);
     showToast(t('Alert triggered! Check your notification tray.'), 'fa-bell');
+  }
+
+  // --------------------------------------------------------------------------
+  // PWA APP INSTALLED NOTIFICATION PERMISSION PROMPT
+  // --------------------------------------------------------------------------
+  const LOCALIZED_INSTALL_NOTIF_PROMPT = {
+    en: {
+      title: "Never miss your bone routine!",
+      desc: "BONE SIP is installed on your device. Turn on daily routine alerts to get timely reminders for morning sunbath (7:00 AM), breakfast, lunch, snack, and dinner in your language.",
+      btn: "Enable Daily Reminders"
+    },
+    hi: {
+      title: "अपनी बोन रूटीन कभी न भूलें!",
+      desc: "BONE SIP आपके डिवाइस पर इंस्टॉल हो गया है। सुबह की धूप (7:00 AM), नाश्ता, दोपहर का खाना, स्नैक और रात के खाने के समय पर अलर्ट पाने के लिए रिमाइंडर चालू करें।",
+      btn: "दैनिक रिमाइंडर चालू करें"
+    },
+    bn: {
+      title: "আপনার হাড়ের রুটিন কখনো মিস করবেন না!",
+      desc: "BONE SIP আপনার ডিভাইসে ইনস্টল হয়েছে। সকালের রোদ (সকাল ৭:০০), প্রাতঃরাশ, দুপুরের খাবার, জলখাবার এবং নৈশভোজের সতর্কবার্তা পেতে রিমাইন্ডার চালু করুন।",
+      btn: "দৈনিক রিমাইন্ডার চালু করুন"
+    },
+    mr: {
+      title: "तुमची हाडांची दिनचर्या कधीही चुकवू नका!",
+      desc: "BONE SIP तुमच्या डिव्हाइसवर स्थापित झाले आहे. सकाळचे ऊन (7:00 AM), नाश्ता, दुपारचे जेवण, स्नॅक आणि रात्रीच्या जेवणाचे वेळेवर अलर्ट मिळवण्यासाठी रिमाइंडर्स सुरू करा.",
+      btn: "दैनिक रिमाइंडर्स सुरू करा"
+    },
+    te: {
+      title: "మీ ఎముకల దినచర్యను ఎప్పటికీ మరచిపోకండి!",
+      desc: "BONE SIP మీ పరికరంలో ఇన్‌స్టాల్ చేయబడింది. ఉదయం ఎండ (7:00 AM), అల్పాహారం, భోజనం, స్నాక్ మరియు డిన్నర్ సమయాలలో నోటిఫికేషన్‌లను పొందండి.",
+      btn: "రోజువారీ రిమైండర్‌లను ప్రారంభించండి"
+    },
+    ta: {
+      title: "உங்கள் எலும்பு வழக்கத்தை ஒருபோதும் தவறவிடாதீர்கள்!",
+      desc: "BONE SIP உங்கள் சாதனத்தில் நிறுவப்பட்டுள்ளது. காலை வெயில் (7:00 AM), காலை உணவு, மதிய உணவு, சிற்றுண்டி மற்றும் இரவு உணவிற்கான சரியான நேர நினைவூட்டல்களைப் பெறுங்கள்.",
+      btn: "தினசரி நினைவூட்டல்களை இயக்கு"
+    },
+    gu: {
+      title: "તમારી હાડકાંની દિનચર્યા ક્યારેય ચૂકશો નહીં!",
+      desc: "BONE SIP તમારા ઉપકરણ પર ઇન્સ્ટોલ કરેલ છે. સવારનો તડકો (7:00 AM), નાસ્તો, લંચ, સ્નેક અને રાત્રિભોજન માટે સમયસર ચેતવણીઓ મેળવવા માટે રિમાઇન્ડર ચાલુ કરો.",
+      btn: "દૈનિક રિમાઇન્ડર ચાલુ કરો"
+    },
+    kn: {
+      title: "ನಿಮ್ಮ ಮೂಳೆಯ ದಿನಚರಿಯನ್ನು ಎಂದಿಗೂ ತಪ್ಪಿಸಿಕೊಳ್ಳಬೇಡಿ!",
+      desc: "BONE SIP ನಿಮ್ಮ ಸಾಧನದಲ್ಲಿ ಸ್ಥಾಪಿಸಲಾಗಿದೆ. ಮುಂಜಾನೆಯ ಬಿಸಿಲು (7:00 AM), ಉಪಹಾರ, ಊಟ, ತಿಂಡಿ ಮತ್ತು ರಾತ್ರಿಯ ಊಟದ ಸಮಯೋಚಿತ ಜ್ಞಾಪನೆಗಳನ್ನು ಪಡೆಯಿರಿ.",
+      btn: "ದೈನಂದಿನ ಜ್ಞಾಪನೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ"
+    },
+    ml: {
+      title: "നിങ്ങളുടെ അസ്ഥി സംരക്ഷണ ദിനചര്യ ഒരിക്കലും മറക്കരുത്!",
+      desc: "BONE SIP നിങ്ങളുടെ ഉപകരണത്തിൽ ഇൻസ്റ്റാൾ ചെയ്തു. പ്രഭാത വെയിൽ (7:00 AM), പ്രഭാതഭക്ഷണം, ഉച്ചഭക്ഷണം, ലഘുഭക്ഷണം, അത്താഴം എന്നിവയ്ക്കുള്ള ഓർമ്മപ്പെടുത്തലുകൾ നേടൂ.",
+      btn: "പ്രതിദിന ഓർമ്മപ്പെടുത്തലുകൾ പ്രവർത്തനക്ഷമമാക്കുക"
+    },
+    pa: {
+      title: "ਆਪਣੇ ਹੱਡੀਆਂ ਦੀ ਰੁਟੀਨ ਨੂੰ ਕਦੇ ਨਾ ਭੁੱਲੋ!",
+      desc: "BONE SIP ਤੁਹਾਡੀ ਡਿਵਾਈਸ 'ਤੇ ਇੰਸਟਾਲ ਹੋ ਗਿਆ ਹੈ। ਸਵੇਰ ਦੀ ਧੁੱਪ (7:00 AM), ਨਾਸ਼ਤਾ, ਦੁਪਹਿਰ ਦਾ ਖਾਣਾ, ਸਨੈਕ ਅਤੇ ਰਾਤ ਦੇ ਖਾਣੇ ਦੇ ਸਮੇਂ ਸਿਰ ਅਲਰਟ ਪ੍ਰਾਪਤ ਕਰਨ ਲਈ ਰੀਮਾਈਂਡਰ ਚਾਲੂ ਕਰੋ।",
+      btn: "ਰੋਜ਼ਾਨਾ ਰੀਮਾਈਂਡਰ ਚਾਲੂ ਕਰੋ"
+    },
+    or: {
+      title: "ଆପଣଙ୍କର ହାଡ଼ ଯତ୍ନ ରୁଟିନ୍ କେବେ ହେଲେ ଭୁଲନ୍ତୁ ନାହିଁ!",
+      desc: "BONE SIP ଆପଣଙ୍କ ଡିଭାଇସରେ ଇନଷ୍ଟଲ୍ ହୋଇଛି। ସକାଳର ଖରା (7:00 AM), ଜଳଖିଆ, ମଧ୍ୟାହ୍ନ ଭୋଜନ, ସନ୍ଧ୍ୟା ଜଳଖିଆ ଏବଂ ରାତ୍ରୀ ଭୋଜନର ଠିକ୍ ସମୟରେ ସତର୍କତା ପାଆନ୍ତୁ।",
+      btn: "ଦୈନିକ ରିମାଇଣ୍ଡର ସକ୍ରିୟ କରନ୍ତୁ"
+    },
+    as: {
+      title: "আপোনাৰ হাড়ৰ যতনৰ ৰুটিন কেতিয়াও পাহৰি নাযাব!",
+      desc: "BONE SIP আপোনাৰ ডিভাইচত ইনষ্টল হৈছে। পুৱাৰ ৰ’দ (৭:০০ AM), পুৱাৰ আহাৰ, দুপৰীয়াৰ আহাৰ, জলপান আৰু ৰাতিৰ আহাৰৰ সময়মতে সতৰ্কবাৰ্তা পাবলৈ ৰিমাইণ্ডাৰ অন কৰক।",
+      btn: "দৈনিক ৰিমাইণ্ডাৰ সক্ৰিয় কৰক"
+    }
+  };
+
+  function promptNotificationPermissionOnInstall() {
+    const BoneNotifications = window.BoneNotifications;
+    if (!BoneNotifications || !BoneNotifications.isSupported()) return;
+    if (BoneNotifications.getPermission() !== 'default') return;
+    try {
+      if (localStorage.getItem('bonesip_notif_install_prompt_dismissed') === '1') return;
+    } catch (_) {}
+
+    const modal = document.getElementById('notifInstallModal');
+    if (!modal) return;
+
+    const currentLang = BoneNotifications.getCurrentLang();
+    const copy = LOCALIZED_INSTALL_NOTIF_PROMPT[currentLang] || LOCALIZED_INSTALL_NOTIF_PROMPT.en;
+
+    const titleEl = document.getElementById('notifInstallTitle');
+    const descEl = document.getElementById('notifInstallDesc');
+    const btnEl = document.getElementById('btnAllowInstallNotif');
+
+    if (titleEl) titleEl.textContent = copy.title;
+    if (descEl) descEl.textContent = copy.desc;
+    if (btnEl) btnEl.innerHTML = `<i class="fa-solid fa-bell"></i> ${copy.btn}`;
+
+    modal.style.display = 'flex';
+  }
+
+  async function enableNotificationsFromInstallPrompt() {
+    playSound('tap');
+    closeInstallNotificationPrompt();
+    const BoneNotifications = window.BoneNotifications;
+    if (!BoneNotifications) return;
+
+    const granted = await BoneNotifications.requestPermission();
+    if (granted) {
+      updateHeaderReminderButton();
+      renderDietReminderBanner();
+      showToast(t('Daily routine reminders enabled!'), 'fa-bell');
+    } else {
+      showToast(t('Notification permission not granted.'), 'fa-circle-info');
+    }
+  }
+
+  function dismissInstallNotificationPrompt() {
+    playSound('tap');
+    closeInstallNotificationPrompt();
+    try {
+      localStorage.setItem('bonesip_notif_install_prompt_dismissed', '1');
+    } catch (_) {}
+  }
+
+  function closeInstallNotificationPrompt() {
+    const modal = document.getElementById('notifInstallModal');
+    if (modal) modal.style.display = 'none';
   }
 
   // --------------------------------------------------------------------------
@@ -7316,6 +7444,10 @@
     if (remindersModal && remindersModal.style.display === 'flex') {
       renderRemindersModal();
     }
+    const notifInstallModal = document.getElementById('notifInstallModal');
+    if (notifInstallModal && notifInstallModal.style.display === 'flex') {
+      promptNotificationPermissionOnInstall();
+    }
     const view = document.body.dataset.view;
     if (view === 'assessment') renderAssessmentStage();
     else if (view === 'build') switchBuildSubTab(state.activeBuildSubTab || 'diet', true);
@@ -7375,12 +7507,28 @@
     updateHeaderReminderButton();
     renderDietReminderBanner();
     if (window.BoneNotifications) {
-      BoneNotifications.startScheduler();
+      window.BoneNotifications.startScheduler();
     }
     syncCoachToggle();
     setupOnboardingSwipe();
     updateHeaderLangButton();
     document.addEventListener('bonesip:language', onLanguageChanged);
+
+    // Prompt notification permissions when PWA is installed or launched in standalone mode
+    if (typeof window !== 'undefined') {
+      window.addEventListener('appinstalled', () => {
+        setTimeout(promptNotificationPermissionOnInstall, 1000);
+      });
+
+      const nav = (typeof navigator !== 'undefined' ? navigator : (typeof window !== 'undefined' && window.navigator ? window.navigator : null));
+      const isStandalone = (
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+        (nav && nav.standalone === true)
+      );
+      if (isStandalone) {
+        setTimeout(promptNotificationPermissionOnInstall, 1600);
+      }
+    }
 
     // Deep link support: opening directly to reminders or a specific meal slot
     try {
@@ -7697,7 +7845,12 @@
     testScheduleSlot,
     renderRemindersModal,
     renderDietReminderBanner,
-    updateHeaderReminderButton
+    updateHeaderReminderButton,
+
+    // PWA install notification permission prompt
+    promptNotificationPermissionOnInstall,
+    enableNotificationsFromInstallPrompt,
+    dismissInstallNotificationPrompt
   };
 
   // Run on DOM Ready

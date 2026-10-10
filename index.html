@@ -143,7 +143,7 @@
       </button>
 
       <div class="header-actions">
-        <button class="icon-pill reminder-pill" id="headerRemindersBtn" onclick="BoneApp.openRemindersModal()" title="Daily reminders" aria-label="Daily reminders">
+        <button class="icon-pill reminder-pill" id="headerRemindersBtn" onclick="BoneApp.openRemindersModal()" title="Daily routine reminders" aria-label="Daily routine reminders">
           <i class="fa-solid fa-bell" aria-hidden="true"></i>
           <span class="reminder-status-dot" id="headerReminderDot"></span>
         </button>
@@ -1015,6 +1015,29 @@
           <i class="fa-solid fa-mobile-screen-button"></i> Send test notification
         </button>
         <button type="button" class="cta-btn btn-full" onclick="BoneApp.closeRemindersModal()">Done</button>
+      </div>
+  </div>
+
+  <!-- =========================================================================
+       APP INSTALLED: NOTIFICATION PERMISSION PROMPT MODAL
+       ========================================================================= -->
+  <div class="modal-backdrop" id="notifInstallModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="notifInstallTitle">
+    <div class="modal-card sheet-sm notif-install-card">
+      <div class="notif-install-icon-wrap">
+        <img src="assets/icons/icon-192.png" alt="BONE SIP" class="notif-install-app-logo" width="52" height="52">
+        <span class="notif-install-bell-badge"><i class="fa-solid fa-bell"></i></span>
+      </div>
+      <h3 id="notifInstallTitle">Never miss your bone routine!</h3>
+      <p id="notifInstallDesc" class="muted-sm">
+        BONE SIP is installed on your device. Turn on daily routine alerts to get timely reminders for morning sunbath (7:00 AM), breakfast, lunch, snack, and dinner in your language.
+      </p>
+      <div class="notif-install-actions">
+        <button type="button" class="cta-btn btn-full" id="btnAllowInstallNotif" onclick="BoneApp.enableNotificationsFromInstallPrompt()">
+          <i class="fa-solid fa-bell"></i> Enable Daily Reminders
+        </button>
+        <button type="button" class="btn btn-ghost btn-full" onclick="BoneApp.dismissInstallNotificationPrompt()">
+          Maybe later
+        </button>
       </div>
     </div>
   </div>
