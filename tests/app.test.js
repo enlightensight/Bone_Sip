@@ -99,6 +99,15 @@ WL.filter(e => e.video).forEach(e => [e.video.male, e.video.female].forEach(f =>
 assert(Object.values(clipOwners).every(n => n === 1), 'No coach video is reused for a different exercise');
 assert(WL.every(e => fs.existsSync(path.join(__dirname, '..', 'assets', 'icons3d', `${e.img}.webp`))), 'Every move has an illustration icon');
 
+// Check One-Leg Stand target and duration
+const oneLeg = WL.find(e => e.id === 'ex_one_leg_balance');
+assert(oneLeg && oneLeg.reps === '10 s each leg (5 times)' && oneLeg.durationSec === 100,
+  'One-Leg Stand is configured for 10 s each leg (5 times) with 100s duration');
+
+// Check Dumbbell Pull configuration
+const dumbell = WL.find(e => e.id === 'ex_dumbell_pull');
+assert(dumbell && dumbell.reps === '10 per arm', 'Dumbbell Pull is configured with 10 per arm');
+
 // -----------------------------------------------------------------------------
 // STEP 2: Mock Browser Environment & Load js/app.js Logic
 // -----------------------------------------------------------------------------
@@ -341,6 +350,12 @@ setTimeout(() => {
   BoneApp.toggleExerciseMilestone('ex_heel_toe_walk');
   BoneApp.toggleExerciseMilestone('ex_prone_cobra');
   assert(true, 'Checked all 4 active bone loading exercises (30 pts)');
+
+  // Test rep-based exercise vs time-based exercise detection
+  assert(typeof BoneApp.isRepBasedExercise === 'function', 'BoneApp exports isRepBasedExercise function');
+  assert(BoneApp.isRepBasedExercise(dumbell) === true, 'Dumbbell Pull is detected as a rep-based exercise');
+  assert(BoneApp.isRepBasedExercise(oneLeg) === false, 'One-Leg Stand is detected as a timed hold exercise');
+  assert(BoneApp.getExerciseRepCount(dumbell) === 10, 'Dumbbell Pull rep count is parsed as 10');
 
   // Test BoneDB save & load
   const dbKey = 'BONE_SIP_PRODUCTION_DB_V3';

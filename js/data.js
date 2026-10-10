@@ -1634,12 +1634,12 @@ const BONE_SIP_DATA = {
     },
     {
       id: "ex_one_leg_balance", group: "balance", name: "One-Leg Stand", level: "Easy",
-      durationSec: 60, reps: "30 s each leg", img: "flamingo",
+      durationSec: 100, reps: "10 s each leg (5 times)", img: "flamingo",
       video: { male: "assets/exercises/male_one_leg_balance.mp4", female: "assets/exercises/female_one_leg_balance.mp4" },
       focus: ["ankles", "hips"], focus2: ["core", "thighs"],
       bones: ["Hip", "Ankle"],
       benefits: ["Fewer falls", "Steadier walking", "More confidence on uneven ground"],
-      how: ["Stand behind a chair and hold it lightly.", "Lift one foot just off the floor.", "Hold for up to 30 seconds.", "Lower it and switch legs."],
+      how: ["Stand behind a chair and hold it lightly.", "Lift one foot just off the floor.", "Hold for 10 seconds, then switch legs.", "Repeat 5 times on each leg."],
       safety: "Keep support within reach. Stop if you feel dizzy."
     },
     {
@@ -1704,8 +1704,8 @@ const BONE_SIP_DATA = {
       category: "Fall-Prevention Balance",
       targetBones: "Femoral Head, Acetabulum, Ankles",
       targetMuscles: "Gluteus Medius, Core Stabilizers, Ankle Stabilizers",
-      reps: "Hold 30s per leg · 2 Sets",
-      durationSec: 60,
+      reps: "Hold 10s each leg (5 times)",
+      durationSec: 100,
       impactLevel: "Unilateral Balance",
       why: "Forces the hip abductor (gluteus medius) to clamp the pelvis level, preventing hip drop and sideways sway.",
       biomechanics: "Unilateral Pelvic Leveling · Core Bracing · Fix Gaze Ahead",

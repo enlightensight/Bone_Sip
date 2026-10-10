@@ -4522,6 +4522,20 @@
     return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
   }
 
+  function getExerciseRepCount(ex) {
+    if (!ex || !ex.reps) return 0;
+    const str = String(ex.reps).toLowerCase();
+    if (str.includes(' s ') || str.includes('s each') || str.includes('s per') || str.includes('sec') || str.includes('hold')) {
+      return 0;
+    }
+    const match = str.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  }
+
+  function isRepBasedExercise(ex) {
+    return getExerciseRepCount(ex) > 0;
+  }
+
   function exVideoSrc(ex) {
     if (!ex || !ex.video) return '';
     return (state.selectedCoach === 'female' ? ex.video.female : ex.video.male) || ex.video.male || ex.video.female || '';
@@ -4685,7 +4699,7 @@
                 ${exThumbHtml(ex)}
                 <div class="wk-row-body">
                   <b>${ex.name}</b>
-                  <span>${fmtClock(getExDuration(ex))} · ${ex.reps}</span>
+                  <span>${isRepBasedExercise(ex) ? ex.reps : `${fmtClock(getExDuration(ex))} · ${ex.reps}`}</span>
                   <small class="wk-level ${ex.level === 'Easy' ? 'easy' : 'mod'}">${ex.level}</small>
                 </div>
                 <button type="button" class="wk-row-check ${done ? 'done' : ''}" onclick="event.stopPropagation(); BoneApp.toggleExerciseMilestone('${getTodayISODate()}', '${ex.id}');" aria-label="${done ? 'Mark incomplete' : 'Mark done'}">
@@ -4731,6 +4745,7 @@
     const ex = findWorkout(detailExerciseId);
     const body = document.getElementById('exDetailBody');
     if (!ex || !body) return;
+    const isReps = isRepBasedExercise(ex);
     const group = (BONE_SIP_DATA.exerciseGroups || []).find(g => g.id === ex.group) || { label: '' };
     const video = exVideoSrc(ex);
     const focusAll = [...(ex.focus || []), ...(ex.focus2 || [])];
@@ -4745,12 +4760,13 @@
       <div class="exd-body">
         <span class="step-chip build">${tr(group.label)}${done ? ` · <i class="fa-solid fa-check"></i> ${t('Done today')}` : ''}</span>
         <h2 class="exd-title">${ex.name}</h2>
-        <div class="exd-stats">
+        <div class="exd-stats ${isReps ? 'two-col' : ''}">
           <div><b>${ex.level}</b><span>Level</span></div>
-          <div><b>${fmtClock(getExDuration(ex))}</b><span>Time</span></div>
+          ${!isReps ? `<div><b>${fmtClock(getExDuration(ex))}</b><span>Time</span></div>` : ''}
           <div><b>${ex.reps}</b><span>Target</span></div>
         </div>
 
+        ${!isReps ? `
         <div class="exd-duration">
           <span>Duration</span>
           <div class="exd-stepper">
@@ -4758,7 +4774,7 @@
             <b>${fmtClock(getExDuration(ex))}</b>
             <button onclick="BoneApp.adjustExerciseDuration('${ex.id}', 15)" aria-label="Longer"><i class="fa-solid fa-plus"></i></button>
           </div>
-        </div>
+        </div>` : ''}
 
         <h4 class="exd-h">How to do it</h4>
         <ol class="exd-steps">${(ex.how || []).map(s => `<li>${s}</li>`).join('')}</ol>
@@ -5008,7 +5024,20 @@
         playVoiceCue('ready', 'Get ready.');
       }
     } else if (phase === 'work') {
-      player.total = player.remaining = getExDuration(ex);
+      const isReps = isRepBasedExercise(ex);
+      player.isReps = isReps;
+      if (isReps) {
+        const reps = getExerciseRepCount(ex);
+        player.repTarget = reps;
+        player.repsRemaining = reps;
+        const secPerRep = Math.max(2, Math.round(getExDuration(ex) / reps)) || 4;
+        player.secPerRep = secPerRep;
+        player.repSecRemaining = secPerRep;
+        player.total = reps;
+        player.remaining = reps;
+      } else {
+        player.total = player.remaining = getExDuration(ex);
+      }
       playVoiceCue('begin', 'Begin.');
     } else if (phase === 'rest') {
       player.total = player.remaining = REST_SEC;
@@ -5035,6 +5064,26 @@
 
   function playerTick() {
     if (player.paused) return;
+    if (player.phase === 'work' && player.isReps) {
+      player.repSecRemaining--;
+      if (player.repSecRemaining <= 0) {
+        player.repsRemaining--;
+        player.remaining = player.repsRemaining;
+        if (player.repsRemaining > 0) {
+          player.repSecRemaining = player.secPerRep;
+          playSound('timer_beep');
+          if (voiceOn()) {
+            speak(String(player.repsRemaining));
+          }
+        } else {
+          finishCurrentExercise(true);
+          return;
+        }
+      }
+      updatePlayerClock();
+      return;
+    }
+
     player.remaining--;
     if (player.remaining > 0 && player.remaining <= 3 && player.phase !== 'rest') playSound('timer_beep');
     if (player.remaining <= 0) {
@@ -5044,6 +5093,20 @@
       return;
     }
     updatePlayerClock();
+  }
+
+  function playerTapRep() {
+    if (player.phase !== 'work' || !player.isReps || player.paused) return;
+    playSound('check');
+    player.repsRemaining--;
+    player.remaining = player.repsRemaining;
+    if (player.repsRemaining > 0) {
+      player.repSecRemaining = player.secPerRep;
+      if (voiceOn()) speak(String(player.repsRemaining));
+      updatePlayerClock();
+    } else {
+      finishCurrentExercise(true);
+    }
   }
 
   function markWorkoutDone(exId) {
@@ -5129,6 +5192,29 @@
   }
 
   function updatePlayerClock() {
+    const timerEl = document.getElementById('plTimer');
+    const isWork = player.phase === 'work';
+    if (isWork && player.isReps) {
+      if (timerEl) {
+        timerEl.classList.add('is-reps');
+        timerEl.innerHTML = `<span class="pl-rep-val">${player.repsRemaining}</span><small>${player.repsRemaining === 1 ? 'rep' : 'reps'}</small>`;
+        timerEl.setAttribute('aria-label', `${player.repsRemaining} reps remaining`);
+        timerEl.title = t('Tap to count a rep');
+      }
+      const bar = document.getElementById('plBar');
+      if (bar) {
+        const repsDone = player.repTarget - player.repsRemaining;
+        const subProgress = player.secPerRep ? (1 - player.repSecRemaining / player.secPerRep) : 0;
+        const pct = Math.min(100, Math.max(0, ((repsDone + subProgress) / player.repTarget) * 100));
+        bar.style.width = `${pct}%`;
+      }
+      return;
+    }
+
+    if (timerEl) {
+      timerEl.classList.remove('is-reps');
+      timerEl.removeAttribute('title');
+    }
     const clock = document.getElementById(player.phase === 'rest' ? 'plRestTimer' : (player.phase === 'ready' ? 'plReadyNum' : 'plTimer'));
     if (clock) clock.textContent = player.phase === 'ready' ? player.remaining : fmtClock(player.remaining);
     const bar = document.getElementById(player.phase === 'rest' ? 'plRestBar' : 'plBar');
@@ -5200,6 +5286,7 @@
       set('plReadyName', ex.name);
       set('plSafety', ex.safety || 'Move slowly and keep support nearby.');
       set('plNext', next ? t('Next: {name}', { name: tr(next.name) }) : 'Last move. You’re nearly done!');
+      updatePlayerClock();
     }
 
     if (player.phase === 'rest' && next) {
@@ -5208,7 +5295,7 @@
       const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
       set('plRestNextLabel', `Next ${player.index + 2}/${total}`);
       set('plRestNextName', next.name);
-      set('plRestNextTime', fmtClock(getExDuration(next)));
+      set('plRestNextTime', isRepBasedExercise(next) ? next.reps : fmtClock(getExDuration(next)));
       const prev = document.getElementById('plRestPreview');
       if (prev) {
         const poster = exPosterSrc(next);
@@ -7194,9 +7281,12 @@
     startWorkout,
     playerTogglePause,
     playerCompleteCurrent,
+    playerTapRep,
     playerSkip,
     playerAddRest,
     closePlayer,
+    isRepBasedExercise,
+    getExerciseRepCount,
     toggleVoice,
     onVolumeChange,
     closeWorkoutTimerModal,
