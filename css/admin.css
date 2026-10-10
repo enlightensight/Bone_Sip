@@ -396,7 +396,7 @@ body.admin h1, body.admin h2, body.admin h3, body.admin h4 {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  margin: 20px 40px 0;
+  margin: 20px 32px 0;
   padding: 12px 18px;
   border-radius: 12px;
   background: #FFF4E5;
@@ -412,9 +412,9 @@ body.admin h1, body.admin h2, body.admin h3, body.admin h4 {
 }
 
 .ad-main {
-  padding: 32px 42px 60px;
-  max-width: 1440px;
+  padding: 28px 32px 60px;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
 }
 
