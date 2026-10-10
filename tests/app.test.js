@@ -108,6 +108,11 @@ assert(oneLeg && oneLeg.reps === '10 s each leg (5 times)' && oneLeg.durationSec
 const dumbell = WL.find(e => e.id === 'ex_dumbell_pull');
 assert(dumbell && dumbell.reps === '10 per arm', 'Dumbbell Pull is configured with 10 per arm');
 
+// Check Chest Stretch configuration
+const chestStretch = WL.find(e => e.id === 'ex_chest_stretch');
+assert(chestStretch && chestStretch.reps === '10 reps' && Array.isArray(chestStretch.how) && chestStretch.how.length >= 4,
+  'Chest Stretch is configured for 10 reps with detailed wall/doorway pushup stretch instructions');
+
 // -----------------------------------------------------------------------------
 // STEP 2: Mock Browser Environment & Load js/app.js Logic
 // -----------------------------------------------------------------------------
@@ -354,8 +359,10 @@ setTimeout(() => {
   // Test rep-based exercise vs time-based exercise detection
   assert(typeof BoneApp.isRepBasedExercise === 'function', 'BoneApp exports isRepBasedExercise function');
   assert(BoneApp.isRepBasedExercise(dumbell) === true, 'Dumbbell Pull is detected as a rep-based exercise');
+  assert(BoneApp.isRepBasedExercise(chestStretch) === true, 'Chest Stretch is detected as a rep-based exercise');
   assert(BoneApp.isRepBasedExercise(oneLeg) === false, 'One-Leg Stand is detected as a timed hold exercise');
   assert(BoneApp.getExerciseRepCount(dumbell) === 10, 'Dumbbell Pull rep count is parsed as 10');
+  assert(BoneApp.getExerciseRepCount(chestStretch) === 10, 'Chest Stretch rep count is parsed as 10');
 
   // Test BoneDB save & load
   const dbKey = 'BONE_SIP_PRODUCTION_DB_V3';

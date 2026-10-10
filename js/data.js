@@ -1664,13 +1664,19 @@ const BONE_SIP_DATA = {
     },
     {
       id: "ex_chest_stretch", group: "posture", name: "Chest Stretch", level: "Easy",
-      durationSec: 45, reps: "Hold 20-30s x 2", img: "hug",
+      durationSec: 45, reps: "10 reps", img: "hug",
       video: { male: "assets/exercises/male_cheststretch.mp4", female: "assets/exercises/female_cheststretch.mp4" },
       focus: ["chest", "shoulders"], focus2: ["upperBack", "neck"],
       bones: ["Collarbone", "Upper spine", "Ribs"],
       benefits: ["Opens tight chest muscles that pull shoulders forward", "Restores upright posture and deep breathing", "Relieves neck and upper back strain"],
-      how: ["Stand upright with relaxed shoulders.", "Place your hands behind your lower back or hold a towel.", "Gently roll your shoulders back and open your chest.", "Breathe deeply and hold for 20–30 seconds."],
-      safety: "Stretch gently to a mild tension, never pain."
+      how: [
+        "Stand facing a wall or doorway with your feet hip-width apart.",
+        "Place your hands or forearms flat against the wall at shoulder height.",
+        "Step one foot forward and gently lean your chest forward to feel a mild stretch.",
+        "Press gently back through your hands like a wall pushup to return to the start.",
+        "Repeat for 10 slow, controlled reps with smooth, steady breathing."
+      ],
+      safety: "Press gently against the wall without straining, and avoid arching your lower back."
     }
   ],
 
@@ -1824,11 +1830,11 @@ const BONE_SIP_DATA = {
       category: "Chest Opening & Posture",
       targetBones: "Sternum, Clavicle, Thoracic Spine",
       targetMuscles: "Pectoralis Major/Minor, Anterior Deltoids",
-      reps: "Hold 20–30s · 2 Sets",
+      reps: "10 Reps · 2 Sets",
       durationSec: 45,
-      impactLevel: "Postural Flexibility",
+      impactLevel: "Postural Flexibility & Wall Press",
       why: "Opens tight anterior chest musculature to reverse rounding shoulders and take pressure off vertebral bodies.",
-      biomechanics: "Thoracic Extension · Scapular Retraction · Deep Diaphragmatic Breath",
+      biomechanics: "Thoracic Extension · Scapular Retraction · Doorway Wall Press",
       femaleImg: "assets/exercises/female_cheststretch.mp4",
       maleImg: "assets/exercises/male_cheststretch.mp4",
       femaleVideoWidth: 1080,
