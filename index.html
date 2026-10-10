@@ -982,11 +982,11 @@
       <div class="reminders-status-card" id="remindersStatusCard">
         <div class="reminders-status-row">
           <div class="reminders-status-info">
-            <span class="badge badge-green" id="remindersStatusBadge">Active</span>
-            <p id="remindersStatusDetail">5 daily reminders scheduled</p>
+            <span class="badge badge-gold" id="remindersStatusBadge">Disabled</span>
+            <p id="remindersStatusDetail">Reminders turned off · Tap switch to enable</p>
           </div>
           <label class="switch-toggle" for="remindersMasterToggle">
-            <input type="checkbox" id="remindersMasterToggle" checked onchange="BoneApp.toggleDailyReminders(this.checked)">
+            <input type="checkbox" id="remindersMasterToggle" onchange="BoneApp.toggleDailyReminders(this.checked)">
             <span class="switch-slider"></span>
           </label>
         </div>
