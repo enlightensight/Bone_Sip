@@ -49,81 +49,303 @@
 
   <!-- Dashboard -->
   <div class="ad-app" id="adApp" hidden>
-    <header class="ad-header">
-      <img src="assets/images/bonesip_logo_720.webp" alt="BONE SIP" class="ad-logo-sm" width="720" height="289">
-      <span class="ad-tag">Admin</span>
-      <nav class="ad-tabs" role="tablist">
-        <button class="ad-tab active" data-tab="users" role="tab" aria-selected="true">Users</button>
-        <button class="ad-tab" data-tab="audit" role="tab" aria-selected="false">Access log</button>
+    <!-- Left Sidebar -->
+    <aside class="ad-sidebar" id="adSidebar">
+      <div class="ad-brand-row">
+        <span class="ad-logo-text">BONE SIP</span>
+        <span class="ad-tag">Admin</span>
+      </div>
+
+      <nav class="ad-nav" role="tablist">
+        <button class="ad-nav-item" data-tab="overview" role="tab" aria-selected="false">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Overview</span>
+        </button>
+        <button class="ad-nav-item active" data-tab="activity" role="tab" aria-selected="true">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Activity log</span>
+        </button>
+        <button class="ad-nav-item" data-tab="users" role="tab" aria-selected="false">
+          <i class="fa-solid fa-users"></i>
+          <span>Users</span>
+        </button>
+        <button class="ad-nav-item" data-tab="diets" role="tab" aria-selected="false">
+          <i class="fa-solid fa-utensils"></i>
+          <span>Diet plans</span>
+        </button>
+        <button class="ad-nav-item" data-tab="audits" role="tab" aria-selected="false">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Audits</span>
+        </button>
+        <button class="ad-nav-item" data-tab="reminders" role="tab" aria-selected="false">
+          <i class="fa-solid fa-bell"></i>
+          <span>Reminders</span>
+        </button>
+        <button class="ad-nav-item" data-tab="settings" role="tab" aria-selected="false">
+          <i class="fa-solid fa-gear"></i>
+          <span>Settings</span>
+        </button>
       </nav>
-      <button class="ad-btn ghost" id="adLogoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Log out</button>
-    </header>
 
-    <div class="ad-banner" id="adTestBanner" hidden>
-      <i class="fa-solid fa-triangle-exclamation"></i>
-      <span><b>Test login is on.</b> Anyone who knows a phone number can open that account with the test code. Turn off <code>OTP_TEST_MODE</code> once SMS is set up.</span>
-    </div>
+      <div class="ad-sidebar-footer">
+        <div class="ad-sidebar-user">Signed in as Admin · Team Anronix</div>
+        <button class="ad-sidebar-logout" id="adLogoutBtn"><i class="fa-solid fa-right-from-bracket"></i> <span>Log out</span></button>
+      </div>
+    </aside>
 
-    <main class="ad-main">
-      <section id="adUsersTab">
-        <div class="ad-kpis" id="adKpis"></div>
-
-        <div class="ad-card">
-          <div class="ad-card-head">
-            <h2>Active users, last 14 days</h2>
-            <span class="ad-muted">Users who ticked at least one meal or move</span>
-          </div>
-          <div class="ad-chart" id="adActiveChart"></div>
+    <!-- Main Content Area -->
+    <div class="ad-content-wrap">
+      <!-- Mobile Bar -->
+      <header class="ad-mobile-bar">
+        <button class="ad-mobile-toggle" id="adMobileToggle" aria-label="Toggle navigation menu"><i class="fa-solid fa-bars"></i></button>
+        <div class="ad-brand-row-sm">
+          <span class="ad-logo-text">BONE SIP</span>
+          <span class="ad-tag">Admin</span>
         </div>
+      </header>
 
-        <div class="ad-card">
-          <div class="ad-card-head">
-            <h2>Users</h2>
+      <div class="ad-banner" id="adTestBanner" hidden>
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span><b>Test login is on.</b> Anyone who knows a phone number can open that account with the test code. Turn off <code>OTP_TEST_MODE</code> once SMS is set up.</span>
+      </div>
+
+      <main class="ad-main">
+        <!-- =============================================================
+             TAB: Activity Log (Exact Layout from Image 1)
+             ============================================================= -->
+        <section id="adActivityTab">
+          <div class="ad-page-header">
+            <div>
+              <h1 class="ad-page-title">Activity log</h1>
+              <p class="ad-page-subtitle">Every action across Build, Protect, Strengthen and reminders.</p>
+            </div>
+            <div class="ad-page-actions">
+              <span class="ad-sample-badge">Sample data · layout only</span>
+              <a class="ad-btn-export" href="/api/admin/users.csv" id="adActivityCsvBtn"><i class="fa-solid fa-file-csv"></i> Export CSV</a>
+            </div>
+          </div>
+
+          <!-- 5 Stat KPI Cards -->
+          <div class="ad-kpi-row">
+            <div class="ad-kpi-card">
+              <span class="ad-kpi-label">Verified users</span>
+              <b class="ad-kpi-value" id="adKpiVerified">1,248</b>
+            </div>
+            <div class="ad-kpi-card">
+              <span class="ad-kpi-label">Diet plans generated</span>
+              <b class="ad-kpi-value" id="adKpiDiets">1,102</b>
+            </div>
+            <div class="ad-kpi-card">
+              <span class="ad-kpi-label">Exercises logged</span>
+              <b class="ad-kpi-value" id="adKpiExercises">3,960</b>
+            </div>
+            <div class="ad-kpi-card">
+              <span class="ad-kpi-label">Reminders sent</span>
+              <b class="ad-kpi-value" id="adKpiReminders">2,415</b>
+            </div>
+            <div class="ad-kpi-card">
+              <span class="ad-kpi-label">Journey completion</span>
+              <b class="ad-kpi-value" id="adKpiCompletion">64%</b>
+            </div>
+          </div>
+
+          <!-- Search & Filter Controls Bar -->
+          <div class="ad-filter-bar">
+            <div class="ad-search-box">
+              <i class="fa-solid fa-magnifying-glass ad-search-icon"></i>
+              <input type="search" id="adActivitySearch" placeholder="Mobile number or user ID" aria-label="Search activity">
+            </div>
+            <div class="ad-select-group">
+              <div class="ad-select-wrap">
+                <select id="adActivityDate" aria-label="Filter by date">
+                  <option value="7d">Last 7 days</option>
+                  <option value="today">Today</option>
+                  <option value="30d">Last 30 days</option>
+                  <option value="all">All time</option>
+                </select>
+                <i class="fa-solid fa-chevron-down ad-select-arrow"></i>
+              </div>
+              <div class="ad-select-wrap">
+                <select id="adActivityModule" aria-label="Filter by module">
+                  <option value="all">All modules</option>
+                  <option value="Reminders · WhatsApp">Reminders · WhatsApp</option>
+                  <option value="Reminders · Email">Reminders · Email</option>
+                  <option value="Build · Bone Plate">Build · Bone Plate</option>
+                  <option value="Build · Exercise">Build · Exercise</option>
+                  <option value="Protect">Protect</option>
+                  <option value="Strengthen">Strengthen</option>
+                  <option value="Auth">Auth</option>
+                </select>
+                <i class="fa-solid fa-chevron-down ad-select-arrow"></i>
+              </div>
+              <div class="ad-select-wrap">
+                <select id="adActivityStatus" aria-label="Filter by status">
+                  <option value="all">All statuses</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Success">Success</option>
+                  <option value="Logged">Logged</option>
+                  <option value="High">High</option>
+                  <option value="Queued">Queued</option>
+                  <option value="Retry">Retry</option>
+                </select>
+                <i class="fa-solid fa-chevron-down ad-select-arrow"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Table Card -->
+          <div class="ad-table-card">
+            <div class="ad-table-wrap">
+              <table class="ad-activity-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Event</th>
+                    <th>Module</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="adActivityRows"></tbody>
+              </table>
+              <p class="ad-empty" id="adNoActivity" hidden>No activity matches your filters.</p>
+            </div>
+            <div class="ad-table-footer">
+              <span id="adActivityCount">Showing 1–8 of 12,480 events</span>
+              <div class="ad-pagination">
+                <button class="ad-page-btn" id="adActivityPrev">Previous</button>
+                <button class="ad-page-btn" id="adActivityNext">Next</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================
+             TAB: Overview (Analytics & 14-day Chart)
+             ============================================================= -->
+        <section id="adOverviewTab" hidden>
+          <div class="ad-page-header">
+            <div>
+              <h1 class="ad-page-title">Overview</h1>
+              <p class="ad-page-subtitle">Real-time health engagement & 14-day activity trends.</p>
+            </div>
+          </div>
+          <div class="ad-kpis" id="adKpis"></div>
+          <div class="ad-card">
+            <div class="ad-card-head">
+              <h2>Active users, last 14 days</h2>
+              <span class="ad-muted">Users who ticked at least one meal or move</span>
+            </div>
+            <div class="ad-chart" id="adActiveChart"></div>
+          </div>
+        </section>
+
+        <!-- =============================================================
+             TAB: Users Directory
+             ============================================================= -->
+        <section id="adUsersTab" hidden>
+          <div class="ad-page-header">
+            <div>
+              <h1 class="ad-page-title">Users</h1>
+              <p class="ad-page-subtitle">Manage registered users, clinical profiles, adherence and streaks.</p>
+            </div>
             <a class="ad-btn" href="/api/admin/users.csv" id="adCsvBtn"><i class="fa-solid fa-file-csv"></i> Export CSV</a>
           </div>
-          <div class="ad-filters">
-            <input type="search" id="adSearch" placeholder="Search name or number" aria-label="Search users">
-            <div class="ad-chips" role="group" aria-label="Filter users">
-              <button class="ad-chip active" data-filter="all">All</button>
-              <button class="ad-chip" data-filter="today">Active today</button>
-              <button class="ad-chip" data-filter="inactive">Inactive 7+ days</button>
-              <button class="ad-chip" data-filter="lowdiet">Diet under 50%</button>
+          <div class="ad-card">
+            <div class="ad-filters">
+              <input type="search" id="adSearch" placeholder="Search name or number" aria-label="Search users">
+              <div class="ad-chips" role="group" aria-label="Filter users">
+                <button class="ad-chip active" data-filter="all">All</button>
+                <button class="ad-chip" data-filter="today">Active today</button>
+                <button class="ad-chip" data-filter="inactive">Inactive 7+ days</button>
+                <button class="ad-chip" data-filter="lowdiet">Diet under 50%</button>
+              </div>
+              <select id="adSort" aria-label="Sort users">
+                <option value="recent">Newest first</option>
+                <option value="active">Last active</option>
+                <option value="diet">Diet follow-through</option>
+                <option value="streak">Streak</option>
+                <option value="name">Name</option>
+              </select>
             </div>
-            <select id="adSort" aria-label="Sort users">
-              <option value="recent">Newest first</option>
-              <option value="active">Last active</option>
-              <option value="diet">Diet follow-through</option>
-              <option value="streak">Streak</option>
-              <option value="name">Name</option>
-            </select>
+            <div class="ad-table-wrap">
+              <table class="ad-table">
+                <thead>
+                  <tr><th>User</th><th>Joined</th><th>Last active</th><th>Today</th><th>Streak</th><th>Diet · 7 days</th><th>Moves · 7 days</th><th>Diet · 30 days</th></tr>
+                </thead>
+                <tbody id="adUserRows"></tbody>
+              </table>
+              <p class="ad-empty" id="adNoUsers" hidden>No users match.</p>
+            </div>
           </div>
-          <div class="ad-table-wrap">
-            <table class="ad-table">
-              <thead>
-                <tr><th>User</th><th>Joined</th><th>Last active</th><th>Today</th><th>Streak</th><th>Diet · 7 days</th><th>Moves · 7 days</th><th>Diet · 30 days</th></tr>
-              </thead>
-              <tbody id="adUserRows"></tbody>
-            </table>
-            <p class="ad-empty" id="adNoUsers" hidden>No users match.</p>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="adAuditTab" hidden>
-        <div class="ad-card">
-          <div class="ad-card-head">
-            <h2>Access log</h2>
-            <span class="ad-muted">Every admin login, user view and export (last 100)</span>
+        <!-- =============================================================
+             TAB: Diet Plans
+             ============================================================= -->
+        <section id="adDietsTab" hidden>
+          <div class="ad-page-header">
+            <div>
+              <h1 class="ad-page-title">Diet plans</h1>
+              <p class="ad-page-subtitle">AI & clinical nutrition generation logs across 5 Indian regional cuisines.</p>
+            </div>
           </div>
-          <div class="ad-table-wrap">
-            <table class="ad-table">
-              <thead><tr><th>When</th><th>Action</th><th>User</th></tr></thead>
-              <tbody id="adAuditRows"></tbody>
-            </table>
+          <div class="ad-card">
+            <div class="ad-diet-grid" id="adDietPlansContent"></div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+
+        <!-- =============================================================
+             TAB: Audits
+             ============================================================= -->
+        <section id="adAuditsTab" hidden>
+          <div class="ad-page-header">
+            <div>
+              <h1 class="ad-page-title">Audits & Access log</h1>
+              <p class="ad-page-subtitle">Every admin login, user view, CSV export and clinical audit.</p>
+            </div>
+          </div>
+          <div class="ad-card" id="adAuditTab">
+            <div class="ad-table-wrap">
+              <table class="ad-table">
+                <thead><tr><th>When</th><th>Action</th><th>User</th></tr></thead>
+                <tbody id="adAuditRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- =============================================================
+             TAB: Reminders
+             ============================================================= -->
+        <section id="adRemindersTab" hidden>
+          <div class="ad-page-header">
+            <div>
+              <h1 class="ad-page-title">Reminders</h1>
+              <p class="ad-page-subtitle">Automated WhatsApp & Email notifications queue and delivery telemetry.</p>
+            </div>
+          </div>
+          <div class="ad-card">
+            <div class="ad-reminders-grid" id="adRemindersContent"></div>
+          </div>
+        </section>
+
+        <!-- =============================================================
+             TAB: Settings
+             ============================================================= -->
+        <section id="adSettingsTab" hidden>
+          <div class="ad-page-header">
+            <div>
+              <h1 class="ad-page-title">Settings</h1>
+              <p class="ad-page-subtitle">Authentication rules, OTP test mode, system configuration and security.</p>
+            </div>
+          </div>
+          <div class="ad-card">
+            <div class="ad-settings-box" id="adSettingsContent"></div>
+          </div>
+        </section>
+      </main>
+    </div>
   </div>
 
   <!-- User detail drawer -->
@@ -136,6 +358,6 @@
 
   <div class="ad-tooltip" id="adTooltip" role="tooltip" hidden></div>
 
-  <script src="js/admin.js?v=1.0.1"></script>
+  <script src="js/admin.js?v=1.1.0"></script>
 </body>
 </html>
