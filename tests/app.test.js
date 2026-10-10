@@ -101,8 +101,8 @@ assert(WL.every(e => fs.existsSync(path.join(__dirname, '..', 'assets', 'icons3d
 
 // Check One-Leg Stand target and duration
 const oneLeg = WL.find(e => e.id === 'ex_one_leg_balance');
-assert(oneLeg && oneLeg.reps === '5 s each leg (3 times)' && oneLeg.durationSec === 30,
-  'One-Leg Stand is configured for 5 s each leg (3 times) with 30s duration');
+assert(oneLeg && oneLeg.reps === '10 s each leg (3 times)' && oneLeg.durationSec === 95,
+  'One-Leg Stand is configured for 10 s each leg (3 times) with 95s (1:35) duration');
 
 // Check Dumbbell Pull configuration
 const dumbell = WL.find(e => e.id === 'ex_dumbell_pull');

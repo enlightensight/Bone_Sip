@@ -1740,7 +1740,10 @@
         if (data.strengthenAssessmentStep) state.strengthenAssessmentStep = data.strengthenAssessmentStep;
         if (data.selectedCoach) state.selectedCoach = data.selectedCoach;
         if (data.exerciseGroup) state.exerciseGroup = data.exerciseGroup;
-        if (data.exerciseDurations && typeof data.exerciseDurations === 'object') state.exerciseDurations = data.exerciseDurations;
+        if (data.exerciseDurations && typeof data.exerciseDurations === 'object') {
+          state.exerciseDurations = data.exerciseDurations;
+          if (state.exerciseDurations.ex_one_leg_balance === 100) state.exerciseDurations.ex_one_leg_balance = 95;
+        }
         if (data.selectedAuditRoom) state.selectedAuditRoom = data.selectedAuditRoom;
         if (data.activeBuildSubTab) state.activeBuildSubTab = data.activeBuildSubTab;
         if (data.userProfile) state.userProfile = Object.assign(state.userProfile, data.userProfile);
