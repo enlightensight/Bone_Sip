@@ -5548,3 +5548,27 @@ body.portal-locked main.app-container {
   font-size: 0.92rem;
   color: var(--text-primary, #1E182F);
 }
+
+.reminders-ios-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #F1F5F9;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 0.78rem;
+  color: #334155;
+  line-height: 1.35;
+}
+.reminders-ios-icon {
+  font-size: 1.2rem;
+  color: #0F172A;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+.reminders-ios-text strong {
+  color: #0F172A;
+}
+

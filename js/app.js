@@ -3534,6 +3534,15 @@
       langNameEl.textContent = langInfo ? `${langInfo.native} (${langInfo.name})` : lang.toUpperCase();
     }
 
+    // On iOS Safari, Web Push requires "Add to Home Screen"
+    const iosTip = document.getElementById('remindersIosTip');
+    if (iosTip) {
+      const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+      const isIOS = /iPad|iPhone|iPod/.test(ua) || (typeof navigator !== 'undefined' && navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isStandalone = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || (typeof navigator !== 'undefined' && navigator.standalone === true);
+      iosTip.style.display = (isIOS && !isStandalone) ? 'flex' : 'none';
+    }
+
     const listEl = document.getElementById('remindersScheduleList');
     if (listEl) {
       listEl.innerHTML = BoneNotifications.SCHEDULE.map(item => {

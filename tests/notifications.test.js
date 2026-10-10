@@ -145,6 +145,7 @@ assert(indexHtml.includes('id="remindersMasterToggle"'), 'Reminders master switc
 assert(indexHtml.includes('id="remindersStatusBadge"'), 'Reminders status badge #remindersStatusBadge is present');
 assert(indexHtml.includes('id="remindersScheduleList"'), 'Reminders schedule list #remindersScheduleList is present');
 assert(indexHtml.includes('id="btnSendTestReminder"'), 'Test reminder button #btnSendTestReminder is present');
+assert(indexHtml.includes('id="remindersIosTip"'), 'iOS home screen helper tip #remindersIosTip is present');
 assert(indexHtml.includes('id="profReminderToggle"'), 'Profile modal reminder toggle #profReminderToggle is present');
 assert(indexHtml.includes('<script src="js/notifications.js?v=3.9.8"></script>'), 'js/notifications.js script tag loaded in index.html');
 
@@ -161,6 +162,7 @@ assert(cssCode.includes('.diet-reminder-prompt-card'), 'CSS class .diet-reminder
 assert(cssCode.includes('.diet-reminder-pill-active'), 'CSS class .diet-reminder-pill-active is defined');
 assert(cssCode.includes('.reminders-modal-card'), 'CSS class .reminders-modal-card is defined');
 assert(cssCode.includes('.reminder-schedule-item'), 'CSS class .reminder-schedule-item is defined');
+assert(cssCode.includes('.reminders-ios-tip'), 'CSS class .reminders-ios-tip is defined');
 
 // -----------------------------------------------------------------------------
 // 6. BoneApp Method Exports
