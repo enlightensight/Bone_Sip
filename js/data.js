@@ -1,7 +1,7 @@
 // BONE SIP - Complete 16-Module Domain Knowledge & Data Architecture
 // Extracted and curated from BONE SIP DOMAIN (1).pptx
 
-const BONE_SIP_DATA = {
+var BONE_SIP_DATA = {
   appName: "BONE SIP",
   tagline: "Strong Independence Plan",
   motto: "Invest today. Stay independent tomorrow.",
@@ -2011,7 +2011,13 @@ const BONE_SIP_DATA = {
   }
 };
 
-// Ensure node environment compatibility
+// Ensure browser window, globalThis and node environment compatibility
+if (typeof window !== 'undefined') {
+  window.BONE_SIP_DATA = BONE_SIP_DATA;
+}
+if (typeof globalThis !== 'undefined') {
+  globalThis.BONE_SIP_DATA = BONE_SIP_DATA;
+}
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = BONE_SIP_DATA;
 }

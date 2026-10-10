@@ -2,7 +2,7 @@
 # working files (scratch/, tests/, .agents/, the .pptx) are never published.
 [build]
   publish = "dist"
-  command = "rm -rf dist && mkdir dist && cp -r index.html manifest.webmanifest sw.js robots.txt css js assets dist/"
+  command = "rm -rf dist && mkdir dist && cp -r index.html admin.html manifest.webmanifest sw.js robots.txt css js assets dist/"
 
 # AI assistant: a Netlify Function holds the Groq key (set GROQ_API_KEY in the site's
 # environment variables) and is served at /api/chat.
@@ -10,6 +10,16 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
   included_files = ["js/data.js", "server/assistant.js"]
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin.html"
+  status = 200
 
 [[redirects]]
   from = "/api/chat"
@@ -30,6 +40,14 @@
 # HTML, service worker and config must revalidate so deploys show up immediately.
 [[headers]]
   for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/admin"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/admin.html"
   [headers.values]
     Cache-Control = "no-cache"
 [[headers]]

@@ -119,6 +119,27 @@ assert(adminJs.includes('dishMatchesCondition'), 'dishMatchesCondition function 
 assert(adminJs.includes('getCatalog'), 'getCatalog accesses BONE_SIP_DATA.fullDietCatalog');
 assert(adminJs.includes('switchTab'), 'Sidebar tab switching function switchTab is present');
 
+console.log('\n--- 4. Testing Clinical Dishes Catalog & Global Scope Exposure ---');
+const data = require('../js/data.js');
+assert(Array.isArray(data.fullDietCatalog) && data.fullDietCatalog.length === 144, 'Clinical dishes catalog contains exactly 144 dishes');
+assert(globalThis.BONE_SIP_DATA && globalThis.BONE_SIP_DATA.fullDietCatalog.length === 144, 'globalThis.BONE_SIP_DATA is populated with 144 dishes');
+const dataJs = fs.readFileSync(path.join(__dirname, '../js/data.js'), 'utf8');
+assert(dataJs.includes('window.BONE_SIP_DATA = BONE_SIP_DATA'), 'js/data.js explicitly assigns window.BONE_SIP_DATA');
+assert(dataJs.includes('globalThis.BONE_SIP_DATA = BONE_SIP_DATA'), 'js/data.js explicitly assigns globalThis.BONE_SIP_DATA');
+
+console.log('\n--- 5. Testing Clean URL /admin Routing Configurations ---');
+const vercelJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../vercel.json'), 'utf8'));
+assert(vercelJson.buildCommand.includes('admin.html'), 'vercel.json buildCommand includes admin.html');
+assert(vercelJson.rewrites.some(r => r.source === '/admin' && r.destination === '/admin.html'), 'vercel.json rewrites /admin to /admin.html');
+
+const netlifyToml = fs.readFileSync(path.join(__dirname, '../netlify.toml'), 'utf8');
+assert(netlifyToml.includes('admin.html') && netlifyToml.includes('cp -r'), 'netlify.toml build command copies admin.html');
+assert(netlifyToml.includes('from = "/admin"') && netlifyToml.includes('to = "/admin.html"'), 'netlify.toml redirects /admin to /admin.html');
+
+const serverJs = fs.readFileSync(path.join(__dirname, '../server/server.js'), 'utf8');
+assert(serverJs.includes("PUBLIC_FILES = new Set(['index.html', 'admin.html', 'admin'"), 'server.js includes admin and admin.html in PUBLIC_FILES');
+assert(serverJs.includes("if (rel === 'admin') rel = 'admin.html'"), 'server.js maps rel === "admin" to admin.html');
+
 console.log('\n================================================================');
 console.log(`🏁 ADMIN TEST SUITE COMPLETED: ${pass} Passed, ${fail} Failed`);
 console.log('================================================================\n');

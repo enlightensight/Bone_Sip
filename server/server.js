@@ -28,7 +28,7 @@ const HOST = process.env.HOST || '127.0.0.1';
 const PROD = process.env.NODE_ENV === 'production';
 
 // Only these paths are public. Everything else (.env, server/, tests/ …) is never served.
-const PUBLIC_FILES = new Set(['index.html', 'admin.html', 'manifest.webmanifest', 'sw.js', 'robots.txt']);
+const PUBLIC_FILES = new Set(['index.html', 'admin.html', 'admin', 'manifest.webmanifest', 'sw.js', 'robots.txt']);
 const PUBLIC_DIRS = ['css/', 'js/', 'assets/'].concat(PROD ? [] : ['scratch/']);
 
 const TYPES = {
@@ -55,7 +55,7 @@ if (!PROD) {
 
 function cacheControl(rel) {
   if (!PROD) return 'no-cache';
-  if (rel === 'index.html' || rel === 'sw.js' || rel === 'js/config.js' || rel.endsWith('.webmanifest')) return 'no-cache';
+  if (rel === 'index.html' || rel === 'admin.html' || rel === 'sw.js' || rel === 'js/config.js' || rel.endsWith('.webmanifest')) return 'no-cache';
   if (rel.startsWith('css/') || rel.startsWith('js/')) return 'public, max-age=31536000, immutable';
   if (rel.startsWith('assets/')) return 'public, max-age=2592000';
   return 'no-cache';
@@ -72,8 +72,9 @@ function serveStatic(req, res) {
   const notFound = () => send(res, 404, 'Not found', { 'Content-Type': 'text/plain' });
   // Reject backslashes/NUL (Windows path tricks), "..", and hidden files such as .env.
   if (/[\\\0]/.test(rel)) return notFound();
-  rel = path.posix.normalize(rel || 'index.html');
-  if (rel === '.' ) rel = 'index.html';
+  rel = path.posix.normalize(rel || 'index.html').replace(/\/+$/, '');
+  if (!rel || rel === '.') rel = 'index.html';
+  if (rel === 'admin') rel = 'admin.html';
   if (rel.split('/').some(p => p.startsWith('.'))) return notFound();
   const isPublic = PUBLIC_FILES.has(rel) || PUBLIC_DIRS.some(d => rel.startsWith(d));
   if (!isPublic) {

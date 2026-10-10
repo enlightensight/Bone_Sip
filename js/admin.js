@@ -80,7 +80,10 @@
   }
 
   function getCatalog() {
-    return (window.BONE_SIP_DATA && BONE_SIP_DATA.fullDietCatalog) || [];
+    const data = (typeof window !== 'undefined' && window.BONE_SIP_DATA)
+      || (typeof BONE_SIP_DATA !== 'undefined' ? BONE_SIP_DATA : null)
+      || (typeof globalThis !== 'undefined' && globalThis.BONE_SIP_DATA ? globalThis.BONE_SIP_DATA : null);
+    return (data && data.fullDietCatalog) || [];
   }
 
   // ------------------------------------------------------------- Login

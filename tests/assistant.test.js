@@ -109,6 +109,12 @@ const nextIp = () => `10.0.0.${++ipCounter}`;
   });
   const home = await get('/');
   assert(home.status === 200 && home.body.includes('BONE SIP') && home.headers['content-security-policy'], 'Serves the app with security headers');
+  const adminClean = await get('/admin');
+  assert(adminClean.status === 200 && adminClean.body.includes('Diet plans & Clinical Dishes'), 'Serves admin.html at /admin');
+  const adminSlash = await get('/admin/');
+  assert(adminSlash.status === 200 && adminSlash.body.includes('Diet plans & Clinical Dishes'), 'Serves admin.html at /admin/');
+  const adminDirect = await get('/admin.html');
+  assert(adminDirect.status === 200 && adminDirect.body.includes('Diet plans & Clinical Dishes'), 'Serves admin.html at /admin.html');
   assert((await get('/js/data.js')).status === 200, 'Serves public scripts');
   assert((await get('/healthz')).body.trim() === 'ok', 'Health check responds');
   for (const p of ['/.env', '/server/assistant.js', '/css/../.env', '/css%2F..%2F.env', '/css/x%5C..%5C..%5C.env', '/tests/app.test.js', '/scratch/print-preview.html', '/.git/config']) {
