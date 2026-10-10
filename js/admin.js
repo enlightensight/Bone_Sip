@@ -157,10 +157,17 @@
     });
   }
 
-  // Mobile sidebar drawer toggle
+  // Mobile sidebar drawer toggle & backdrop
   if ($('adMobileToggle')) {
     $('adMobileToggle').addEventListener('click', () => {
-      if ($('adSidebar')) $('adSidebar').classList.toggle('open');
+      const open = $('adSidebar') ? $('adSidebar').classList.toggle('open') : false;
+      if ($('adSidebarBackdrop')) $('adSidebarBackdrop').classList.toggle('open', open);
+    });
+  }
+  if ($('adSidebarBackdrop')) {
+    $('adSidebarBackdrop').addEventListener('click', () => {
+      if ($('adSidebar')) $('adSidebar').classList.remove('open');
+      if ($('adSidebarBackdrop')) $('adSidebarBackdrop').classList.remove('open');
     });
   }
 
@@ -214,6 +221,7 @@
     if (tab === 'admins') loadAdmins();
 
     if ($('adSidebar')) $('adSidebar').classList.remove('open');
+    if ($('adSidebarBackdrop')) $('adSidebarBackdrop').classList.remove('open');
   }
 
   document.querySelectorAll('.ad-nav-item').forEach(btn => {
