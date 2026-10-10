@@ -1614,7 +1614,7 @@ const BONE_SIP_DATA = {
     },
     {
       id: "ex_leg_side_raise", group: "strength", name: "Side Leg Raise", level: "Easy",
-      durationSec: 45, reps: "12 per leg", img: "leg",
+      durationSec: 33, reps: "12 per leg", img: "leg",
       video: { male: "assets/exercises/male_legsideraise.mp4", female: "assets/exercises/female_legsideraise.mp4" },
       focus: ["hips", "thighs"], focus2: ["core", "ankles"],
       bones: ["Hip", "Thigh bone", "Pelvis"],
@@ -1811,7 +1811,7 @@ const BONE_SIP_DATA = {
       targetBones: "Greater Trochanter, Femoral Neck, Pelvis",
       targetMuscles: "Gluteus Medius, Tensor Fasciae Latae, Abductors",
       reps: "12 Reps per leg · 3 Sets",
-      durationSec: 45,
+      durationSec: 33,
       impactLevel: "Hip Abduction Loading",
       why: "Directly loads the hip bone and femoral neck while building side hip stabilizers for trip prevention.",
       biomechanics: "Hip Abduction · Neutral Pelvis · Core Bracing",

@@ -116,6 +116,10 @@ assert(sitToStand && sitToStand.reps === '10 slow reps' && sitToStand.durationSe
 const stepUps = WL.find(e => e.id === 'ex_step_ups');
 assert(stepUps && stepUps.reps === '10 per leg' && stepUps.durationSec === 41, 'Step-Ups is configured with 10 per leg and 41s duration (10% faster counting speed)');
 
+// Check Side Leg Raise configuration
+const sideLeg = WL.find(e => e.id === 'ex_leg_side_raise');
+assert(sideLeg && sideLeg.reps === '12 per leg' && sideLeg.durationSec === 33, 'Side Leg Raise is configured with 12 per leg and 33s duration (matching 12 video loops)');
+
 // Check Chest Stretch configuration
 const chestStretch = WL.find(e => e.id === 'ex_chest_stretch');
 assert(chestStretch && chestStretch.reps === '10 reps' && Array.isArray(chestStretch.how) && chestStretch.how.length >= 4,
@@ -377,11 +381,13 @@ setTimeout(() => {
   assert(BoneApp.getExDuration(dumbell) === 41, 'Male coach: Dumbbell Pull duration is 41s (4.1s per rep, 10% faster)');
   assert(BoneApp.getExDuration(sitToStand) === 41, 'Male coach: Chair Sit-to-Stand duration is 41s (4.1s per rep, 10% faster)');
   assert(BoneApp.getExDuration(stepUps) === 41, 'Male coach: Step-Ups duration is 41s (4.1s per rep, 10% faster)');
+  assert(BoneApp.getExDuration(sideLeg) === 33, 'Male coach: Side Leg Raise duration is 33s (2.73s per rep, finishes together with 12 video loops)');
 
   BoneApp.switchGlobalCoach('female');
   assert(BoneApp.getExDuration(dumbell) === 41, 'Female coach: Dumbbell Pull duration is 41s (4.1s per rep, 10% faster)');
   assert(BoneApp.getExDuration(sitToStand) === 41, 'Female coach: Chair Sit-to-Stand duration is 41s (4.1s per rep, 10% faster)');
   assert(BoneApp.getExDuration(stepUps) === 41, 'Female coach: Step-Ups duration is 41s (4.1s per rep, 10% faster)');
+  assert(BoneApp.getExDuration(sideLeg) === 30, 'Female coach: Side Leg Raise duration is 30s (2.47s per rep, finishes together with 12 video loops)');
 
   // Test BoneDB save & load
   const dbKey = 'BONE_SIP_PRODUCTION_DB_V3';

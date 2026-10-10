@@ -4527,6 +4527,14 @@
       const defaultDur = isFemale ? 95 : 120;
       return (state.exerciseDurations && state.exerciseDurations[ex.id]) || defaultDur;
     }
+    if (ex && ex.id === 'ex_leg_side_raise') {
+      const isFemale = state.selectedCoach === 'female';
+      // 12 reps aligned with coach video loops so counting and video finish together:
+      // Female: 12 * (74f / 30fps) = 29.6s -> 30s
+      // Male:   12 * (82f / 30fps) = 32.8s -> 33s
+      const defaultDur = isFemale ? 30 : 33;
+      return (state.exerciseDurations && state.exerciseDurations[ex.id]) || defaultDur;
+    }
     if (ex && isRepBasedExercise(ex)) {
       // 10% faster counting speed: 45s base -> 41s (~4.1s per rep for 10 reps)
       const defaultDur = 41;
@@ -5065,9 +5073,17 @@
         const reps = getExerciseRepCount(ex);
         player.repTarget = reps;
         player.repsRemaining = reps;
-        // 10% faster counting speed for both male and female coaches:
-        // Cadence = (getExDuration(ex) / reps) with 0.1s precision (e.g. 4.1s per rep for 10 reps)
-        const secPerRep = Math.max(1.5, Math.round(((getExDuration(ex) / reps) || 4.1) * 10) / 10);
+        let secPerRep;
+        if (ex && ex.id === 'ex_leg_side_raise') {
+          // Exact loop matching so all 12 reps finish together with the video for both coaches:
+          // Female: 74f / 30fps = 2.47s; Male: 82f / 30fps = 2.73s
+          const isFemale = state.selectedCoach === 'female';
+          secPerRep = isFemale ? 2.47 : 2.73;
+        } else {
+          // 10% faster counting speed for other rep exercises:
+          // Cadence = (getExDuration(ex) / reps) with 0.1s precision (e.g. 4.1s per rep for 10 reps)
+          secPerRep = Math.max(1.5, Math.round(((getExDuration(ex) / reps) || 4.1) * 10) / 10);
+        }
         player.secPerRep = secPerRep;
         player.repSecRemaining = secPerRep;
         player.total = reps;
