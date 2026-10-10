@@ -144,7 +144,7 @@ assert(indexHtml.includes('id="remindersModal"'), 'Reminders modal #remindersMod
 assert(indexHtml.includes('id="remindersMasterToggle"'), 'Reminders master switch toggle #remindersMasterToggle is present');
 assert(indexHtml.includes('id="remindersStatusBadge"'), 'Reminders status badge #remindersStatusBadge is present');
 assert(indexHtml.includes('id="remindersScheduleList"'), 'Reminders schedule list #remindersScheduleList is present');
-assert(indexHtml.includes('id="btnSendTestReminder"'), 'Test reminder button #btnSendTestReminder is present');
+assert(!indexHtml.includes('id="btnSendTestReminder"'), 'Test reminder button #btnSendTestReminder is removed from index.html');
 assert(indexHtml.includes('id="remindersIosTip"'), 'iOS home screen helper tip #remindersIosTip is present');
 assert(indexHtml.includes('id="profReminderToggle"'), 'Profile modal reminder toggle #profReminderToggle is present');
 assert(indexHtml.includes('<script src="js/notifications.js?v=3.9.8"></script>'), 'js/notifications.js script tag loaded in index.html');
@@ -170,6 +170,7 @@ assert(cssCode.includes('.reminder-schedule-item'), 'CSS class .reminder-schedul
 assert(cssCode.includes('.reminders-ios-tip'), 'CSS class .reminders-ios-tip is defined');
 assert(cssCode.includes('.notif-install-card'), 'CSS class .notif-install-card is defined');
 assert(cssCode.includes('.notif-install-bell-badge'), 'CSS class .notif-install-bell-badge is defined');
+assert(!cssCode.includes('.reminder-item-test-btn'), 'Slot test play button styles are removed from style.css');
 assert(!cssCode.includes('.notif-preview-banner'), 'Temporary preview banner CSS is removed from style.css');
 assert(!cssCode.includes('.test-notif-btn'), 'Temporary test button CSS is removed from style.css');
 
@@ -197,6 +198,7 @@ methodsToExport.forEach(m => {
   assert(appCode.includes(`${m},`) || appCode.includes(`${m}\n`), `BoneApp exports function ${m}`);
 });
 assert(!appCode.includes('triggerLocalNotificationPreview'), 'Temporary preview method is removed from js/app.js');
+assert(!appCode.includes('reminder-item-test-btn'), 'Slot test play buttons are removed from js/app.js');
 
 console.log('\n================================================================');
 console.log(`🏁 NOTIFICATIONS TEST SUITE COMPLETED: ${passCount} Passed, ${failCount} Failed`);

@@ -3562,9 +3562,6 @@
               <div class="reminder-item-title">${copy.title}</div>
               <div class="reminder-item-desc">${copy.body}</div>
             </div>
-            <button type="button" class="reminder-item-test-btn" onclick="BoneApp.testScheduleSlot('${item.id}')" title="${t('Test this reminder')}" aria-label="${t('Test this reminder')}">
-              <i class="fa-solid fa-play"></i>
-            </button>
           </div>
         `;
       }).join('');

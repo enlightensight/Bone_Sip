@@ -5500,26 +5500,6 @@ body.portal-locked main.app-container {
   color: #64748B;
   line-height: 1.35;
 }
-.reminder-item-test-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  border: 1.5px solid #E2E8F0;
-  background: #F8FAFC;
-  color: #64748B;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  font-size: 0.75rem;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-.reminder-item-test-btn:hover {
-  background: #6B2A5C;
-  color: #FFFFFF;
-  border-color: #6B2A5C;
-  transform: scale(1.05);
-}
 .reminders-actions {
   display: flex;
   flex-direction: column;
