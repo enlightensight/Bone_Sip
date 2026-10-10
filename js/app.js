@@ -4538,7 +4538,7 @@
     if (ex && isRepBasedExercise(ex)) {
       // 10% faster counting speed: 45s base -> 41s (~4.1s per rep for 10 reps)
       const defaultDur = 41;
-      return (state.exerciseDurations && state.exerciseDurations[ex.id]) || (ex.durationSec ? Math.round(ex.durationSec / 1.10) : defaultDur);
+      return (state.exerciseDurations && state.exerciseDurations[ex.id]) || ex.durationSec || defaultDur;
     }
     return (state.exerciseDurations && state.exerciseDurations[ex.id]) || ex.durationSec || 45;
   }

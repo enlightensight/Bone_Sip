@@ -122,8 +122,8 @@ assert(sideLeg && sideLeg.reps === '12 per leg' && sideLeg.durationSec === 33, '
 
 // Check Chest Stretch configuration
 const chestStretch = WL.find(e => e.id === 'ex_chest_stretch');
-assert(chestStretch && chestStretch.reps === '10 reps' && Array.isArray(chestStretch.how) && chestStretch.how.length >= 4,
-  'Chest Stretch is configured for 10 reps with detailed wall/doorway pushup stretch instructions');
+assert(chestStretch && chestStretch.reps === '10 reps' && chestStretch.durationSec === 41 && Array.isArray(chestStretch.how) && chestStretch.how.length >= 4,
+  'Chest Stretch is configured for 10 reps, 41s duration (10% faster counting speed) and detailed wall/doorway pushup stretch instructions');
 
 // -----------------------------------------------------------------------------
 // STEP 2: Mock Browser Environment & Load js/app.js Logic
@@ -381,12 +381,14 @@ setTimeout(() => {
   assert(BoneApp.getExDuration(dumbell) === 41, 'Male coach: Dumbbell Pull duration is 41s (4.1s per rep, 10% faster)');
   assert(BoneApp.getExDuration(sitToStand) === 41, 'Male coach: Chair Sit-to-Stand duration is 41s (4.1s per rep, 10% faster)');
   assert(BoneApp.getExDuration(stepUps) === 41, 'Male coach: Step-Ups duration is 41s (4.1s per rep, 10% faster)');
+  assert(BoneApp.getExDuration(chestStretch) === 41, 'Male coach: Chest Stretch duration is 41s (4.1s per rep, 10% faster)');
   assert(BoneApp.getExDuration(sideLeg) === 33, 'Male coach: Side Leg Raise duration is 33s (2.73s per rep, finishes together with 12 video loops)');
 
   BoneApp.switchGlobalCoach('female');
   assert(BoneApp.getExDuration(dumbell) === 41, 'Female coach: Dumbbell Pull duration is 41s (4.1s per rep, 10% faster)');
   assert(BoneApp.getExDuration(sitToStand) === 41, 'Female coach: Chair Sit-to-Stand duration is 41s (4.1s per rep, 10% faster)');
   assert(BoneApp.getExDuration(stepUps) === 41, 'Female coach: Step-Ups duration is 41s (4.1s per rep, 10% faster)');
+  assert(BoneApp.getExDuration(chestStretch) === 41, 'Female coach: Chest Stretch duration is 41s (4.1s per rep, 10% faster)');
   assert(BoneApp.getExDuration(sideLeg) === 30, 'Female coach: Side Leg Raise duration is 30s (2.47s per rep, finishes together with 12 video loops)');
 
   // Test BoneDB save & load

@@ -1664,7 +1664,7 @@ const BONE_SIP_DATA = {
     },
     {
       id: "ex_chest_stretch", group: "posture", name: "Chest Stretch", level: "Easy",
-      durationSec: 45, reps: "10 reps", img: "hug",
+      durationSec: 41, reps: "10 reps", img: "hug",
       video: { male: "assets/exercises/male_cheststretch.mp4", female: "assets/exercises/female_cheststretch.mp4" },
       focus: ["chest", "shoulders"], focus2: ["upperBack", "neck"],
       bones: ["Collarbone", "Upper spine", "Ribs"],
@@ -1831,7 +1831,7 @@ const BONE_SIP_DATA = {
       targetBones: "Sternum, Clavicle, Thoracic Spine",
       targetMuscles: "Pectoralis Major/Minor, Anterior Deltoids",
       reps: "10 Reps · 2 Sets",
-      durationSec: 45,
+      durationSec: 41,
       impactLevel: "Postural Flexibility & Wall Press",
       why: "Opens tight anterior chest musculature to reverse rounding shoulders and take pressure off vertebral bodies.",
       biomechanics: "Thoracic Extension · Scapular Retraction · Doorway Wall Press",
