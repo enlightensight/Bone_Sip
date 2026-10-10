@@ -1742,7 +1742,9 @@
         if (data.exerciseGroup) state.exerciseGroup = data.exerciseGroup;
         if (data.exerciseDurations && typeof data.exerciseDurations === 'object') {
           state.exerciseDurations = data.exerciseDurations;
-          if (state.exerciseDurations.ex_one_leg_balance === 100) state.exerciseDurations.ex_one_leg_balance = 95;
+          if ([30, 100].includes(state.exerciseDurations.ex_one_leg_balance)) {
+            delete state.exerciseDurations.ex_one_leg_balance;
+          }
         }
         if (data.selectedAuditRoom) state.selectedAuditRoom = data.selectedAuditRoom;
         if (data.activeBuildSubTab) state.activeBuildSubTab = data.activeBuildSubTab;
@@ -4517,6 +4519,14 @@
   }
 
   function getExDuration(ex) {
+    if (ex && ex.id === 'ex_one_leg_balance') {
+      const isFemale = state.selectedCoach === 'female';
+      // 3 loops combined:
+      // Female: 3 * 31.37s = 94.1s (1:34) -> rounded to 95s (1:35)
+      // Male:   3 * 40.2s = 120.6s (2:01) -> rounded to 120s (2:00)
+      const defaultDur = isFemale ? 95 : 120;
+      return (state.exerciseDurations && state.exerciseDurations[ex.id]) || defaultDur;
+    }
     return (state.exerciseDurations && state.exerciseDurations[ex.id]) || ex.durationSec || 45;
   }
 
@@ -4741,6 +4751,10 @@
       sheet.style.display = 'flex';
       const card = sheet.querySelector('.exd-card');
       if (card) card.scrollTop = 0;
+      const v = sheet.querySelector('video');
+      if (v) {
+        try { v.currentTime = 0; v.play().catch(() => {}); } catch (e) {}
+      }
     }
   }
 
@@ -4811,7 +4825,9 @@
     const sheet = document.getElementById('exDetailSheet');
     if (sheet) {
       const v = sheet.querySelector('video');
-      if (v) v.pause();
+      if (v) {
+        try { v.pause(); v.currentTime = 0; } catch (e) {}
+      }
       sheet.style.display = 'none';
     }
     // Resume the looping thumbnails that are still on screen.
@@ -4995,6 +5011,10 @@
     playSound('tap');
     closeExerciseDetail(true);
     pauseAllCardVideos();
+    const plV = document.getElementById('plVideo');
+    if (plV) {
+      try { plV.pause(); plV.currentTime = 0; } catch (e) {}
+    }
     Object.assign(player, { queue, index: 0, completed: [], label, paused: false });
 
     const el = document.getElementById('workoutPlayer');
@@ -5014,6 +5034,13 @@
     player.phase = phase;
     player.paused = false;
     const ex = currentWorkout();
+
+    const plV = document.getElementById('plVideo');
+    if (phase === 'ready' || phase === 'work') {
+      if (plV) {
+        try { plV.currentTime = 0; } catch (e) {}
+      }
+    }
 
     if (phase === 'ready') {
       player.total = player.remaining = READY_SEC;
@@ -5179,7 +5206,9 @@
     player.phase = 'idle';
     stopVoice();
     const v = document.getElementById('plVideo');
-    if (v) v.pause();
+    if (v) {
+      try { v.pause(); v.currentTime = 0; } catch (e) {}
+    }
     releaseWakeLock();
     const el = document.getElementById('workoutPlayer');
     if (el) el.hidden = true;
@@ -5241,12 +5270,20 @@
         media.innerHTML = '<video id="plVideo" loop muted playsinline></video>';
         v = document.getElementById('plVideo');
       }
-      if (v.getAttribute('src') !== src) {
+      const changed = v.getAttribute('src') !== src;
+      if (changed) {
         v.setAttribute('poster', exPosterSrc(ex));
         v.src = src;
       }
-      if (autoplay) v.play().catch(() => {});
-      else v.pause();
+      if (changed || autoplay) {
+        try { v.currentTime = 0; } catch (e) {}
+      }
+      if (autoplay) {
+        v.play().catch(() => {});
+      } else {
+        v.pause();
+        try { v.currentTime = 0; } catch (e) {}
+      }
     } else {
       media.innerHTML = `
         <div class="pl-illus">
@@ -5371,7 +5408,14 @@
       btnFemale.classList.toggle('active', gender === 'female');
       btnMale.classList.toggle('active', gender === 'male');
     }
+    const plV = document.getElementById('plVideo');
+    if (plV) {
+      try { plV.pause(); plV.currentTime = 0; } catch (e) {}
+    }
     renderBuildExerciseView();
+    if (player && (player.phase === 'ready' || player.phase === 'work')) {
+      renderPlayer();
+    }
   }
 
   // Workout Timer Controls
