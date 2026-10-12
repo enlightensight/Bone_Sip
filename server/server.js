@@ -173,6 +173,7 @@ if (require.main === module) {
     console.log(`BONE SIP running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT} (${PROD ? 'production' : 'development'})`);
     if (!process.env.GROQ_API_KEY) console.warn('GROQ_API_KEY is not set: the AI assistant will use its offline answers.');
     if (server.accounts.testMode) console.warn('OTP_TEST_MODE is on: every number logs in with the test code. Turn it off once SMS is set up.');
+    else if (server.accounts.smsEnabled) console.log('SmsHorizon SMS service is active: real OTP SMS verification enabled.');
     else console.warn('OTP_TEST_MODE is off and no SMS service is set up: phone login is disabled.');
     if (!server.accounts.adminConfigured) console.warn('ADMIN_PHONE / ADMIN_PIN are not set: the admin portal (/admin.html) is disabled.');
   });

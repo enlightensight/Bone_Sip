@@ -82,6 +82,12 @@ function cleanList(list, keyName) {
 function createAccounts({ db, env = process.env, prod = false }) {
   const testMode = env.OTP_TEST_MODE === '1';
   const testCode = String(env.OTP_TEST_CODE || '123456');
+  const smsApiKey = String(env.SMSHORIZON_API_KEY || env.SMS_API_KEY || '').trim();
+  const smsUser = String(env.SMSHORIZON_USER || 'enlighten').trim();
+  const smsTid = String(env.SMSHORIZON_TID || '1607100000000323238').trim();
+  const smsSender = String(env.SMSHORIZON_SENDER || 'HORIZN').trim();
+  const smsTemplateText = String(env.SMSHORIZON_TEMPLATE_TEXT || 'OTP for your new user account registration is: {code}\n\n- SmsHorizon');
+  const smsEnabled = Boolean(smsApiKey);
   const adminId = String(env.ADMIN_ID || 'boneadmin').trim().toLowerCase();
   const adminPhone = String(env.ADMIN_PHONE || '9876543210').replace(/\D/g, '').slice(-10);
   const adminPassword = String(env.ADMIN_PASSWORD || env.ADMIN_PIN || 'Bone@Admin2026');
@@ -227,7 +233,7 @@ function createAccounts({ db, env = process.env, prod = false }) {
   async function sendOtp(body, ip) {
     const phone = String((body && body.phone) || '').replace(/\D/g, '').slice(-10);
     if (!PHONE_RE.test(phone)) return json(400, { error: 'invalid_phone' });
-    if (!testMode) return json(503, { error: 'sms_not_configured' });
+    if (!testMode && !smsEnabled) return json(503, { error: 'sms_not_configured' });
 
     const hourAgo = Date.now() - 3600 * 1000;
     q.pruneSends.run(Date.now() - 24 * 3600 * 1000);
@@ -235,8 +241,44 @@ function createAccounts({ db, env = process.env, prod = false }) {
       return json(429, { error: 'too_many_requests' });
     }
     q.logSend.run(phone, ip, Date.now());
-    q.putOtp.run(phone, otpHash(phone, testCode), Date.now() + OTP_TTL_MS);
-    return json(200, { sent: true, testMode: true, testCode });
+
+    if (testMode) {
+      q.putOtp.run(phone, otpHash(phone, testCode), Date.now() + OTP_TTL_MS);
+      return json(200, { sent: true, testMode: true, testCode });
+    }
+
+    // Real SMS dispatch via SmsHorizon
+    const code = String(crypto.randomInt(100000, 1000000));
+    try {
+      const postParams = new URLSearchParams({
+        user: smsUser,
+        number: phone,
+        message: smsTemplateText.replace('{code}', code),
+        type: 'txt',
+        tid: smsTid,
+        senderid: smsSender,
+        prettyprint: '1'
+      });
+      const res = await fetch('https://smshorizon.com/api/v2/sendsms', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${smsApiKey}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: postParams.toString()
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || (data && data.error)) {
+        const errMsg = (data && data.error) || `HTTP_${res.status}`;
+        console.error(`[SmsHorizon] Failed to send OTP to ${phone}:`, errMsg);
+        return json(502, { error: 'sms_send_failed', details: errMsg });
+      }
+      q.putOtp.run(phone, otpHash(phone, code), Date.now() + OTP_TTL_MS);
+      return json(200, { sent: true, testMode: false });
+    } catch (err) {
+      console.error(`[SmsHorizon] Network exception sending OTP to ${phone}:`, err);
+      return json(502, { error: 'sms_gateway_error', details: err.message });
+    }
   }
 
   function checkOtp(phone, code) {
@@ -695,7 +737,7 @@ function createAccounts({ db, env = process.env, prod = false }) {
     return json(404, { error: 'not_found' });
   }
 
-  return { handle, testMode, adminConfigured: !!(adminPhone && adminPin) || !!adminId };
+  return { handle, testMode, smsEnabled, adminConfigured: !!(adminPhone && adminPin) || !!adminId };
 }
 
 module.exports = { createAccounts, dayStatus, istDay, addDays };

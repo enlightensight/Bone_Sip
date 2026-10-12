@@ -182,6 +182,22 @@ async function login(call, phone) {
   assert((await d('GET', '/api/admin/me')).status === 401, 'Without ADMIN_PHONE/PIN nobody is admin');
   noSms.close();
 
+  // Test SMS configured mode
+  const withSms = createServer({
+    dataDir: fs.mkdtempSync(path.join(os.tmpdir(), 'bonesip-test-')),
+    env: {
+      OTP_TEST_MODE: '0',
+      SMSHORIZON_API_KEY: 'test_key_dummy',
+      SMSHORIZON_USER: 'enlighten',
+      SMSHORIZON_TID: '1607100000000323238',
+      SMSHORIZON_SENDER: 'BONESIP'
+    }
+  });
+  await new Promise(r => withSms.listen(0, '127.0.0.1', r));
+  const smsClient = client(`http://127.0.0.1:${withSms.address().port}`);
+  assert((await smsClient('POST', '/api/auth/otp/send', { phone: '123' })).status === 400, 'Rejects invalid phone with SMS configured');
+  withSms.close();
+
   console.log(`\n🏁 ACCOUNTS TESTS: ${pass} Passed, ${fail} Failed`);
   process.exit(fail ? 1 : 0);
 })().catch(err => { console.error(err); process.exit(1); });

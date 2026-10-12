@@ -1307,7 +1307,8 @@
         mode = 'cloud';
         cloud.testCode = r.json.testMode ? String(r.json.testCode || '') : '';
       } else if (r.status !== 404 && r.status !== 405) {
-        showToast(t('Could not send the code. Please check your internet and try again.'), 'fa-triangle-exclamation');
+        const errorDetail = (r.json && r.json.details) ? String(r.json.details) : '';
+        showToast(errorDetail || t('Could not send the code. Please check your internet and try again.'), 'fa-triangle-exclamation');
         return;
       }
       // 404/405: this host has no accounts API, so fall back to the on-device login below.
