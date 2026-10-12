@@ -1,0 +1,23 @@
+name: Deploy BONE SIP to Production VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Contabo VPS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Automatic Server Deployment
+        run: |
+          echo "Triggering deployment on Contabo VPS (169.58.209.116)..."
+          RESPONSE=$(curl -s "http://169.58.209.116/api/deploy-webhook?secret=bonesip_deploy_secret_2026")
+          echo "Server Response: $RESPONSE"
+          if echo "$RESPONSE" | grep -q '"ok":true'; then
+            echo "Deployment succeeded!"
+          else
+            echo "Deployment failed or server returned non-OK response."
+            exit 1
+          fi
