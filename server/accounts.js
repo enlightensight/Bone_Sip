@@ -253,7 +253,7 @@ function createAccounts({ db, env = process.env, prod = false }) {
       const postParams = new URLSearchParams({
         user: smsUser,
         number: phone,
-        message: smsTemplateText.replace('{code}', `${code} for BONESIP`),
+        message: smsTemplateText.replace('{code}', code),
         type: 'txt',
         tid: smsTid,
         senderid: smsSender,
