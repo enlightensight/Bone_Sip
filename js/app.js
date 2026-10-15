@@ -67,6 +67,7 @@
     customMealSwaps: {}, // { [isoDate]: { [slotId]: mealObject } }
     activeExerciseRoutine: ['ex_sit_to_stand', 'ex_one_leg_balance', 'ex_calf_raises', 'ex_step_ups', 'ex_band_pull'],
     mealSwapFilter: { slotId: 'm_breakfast', slotName: 'Breakfast Milestone', region: 'all', diet: 'all', search: '' },
+    activeSlotFilter: 'm_sun_d3',
     exerciseSwapFilter: { replacingExId: null, category: 'all' },
 
     // Daily Score out of 100
@@ -2621,43 +2622,20 @@
       });
     }
 
-    // Baseline clinical protocol if no specific conditions are active
-    if (!tips.length) {
-      tips.push(
-        {
-          icon: 'fa-bone',
-          title: '3-2-1 Calcium Scaffolding',
-          desc: 'Target 1,000–1,200 mg calcium daily spaced across meals to maintain continuous serum calcium and prevent skeletal resorption.'
-        },
-        {
-          icon: 'fa-sun',
-          title: 'D3 Matrix Mineralization',
-          desc: '15 mins safe morning sunlight exposure catalyzes Vitamin D synthesis, essential for active intestinal calcium transport.'
-        },
-        {
-          icon: 'fa-dumbbell',
-          title: 'Protein-Collagen Scaffold',
-          desc: 'Adequate daily protein provides structural amino acids to build flexible Type-1 collagen matrix before mineral deposition.'
-        },
-        {
-          icon: 'fa-leaf',
-          title: 'Magnesium & K2 Synergy',
-          desc: 'Dark greens, seeds, and curd supply Vitamin K2 & Magnesium to direct calcium into bones and away from arterial walls.'
-        }
-      );
+    // Only appear when diseases/conditions are mentioned. Remove the general one completely!
+    if (!active.length || !tips.length) {
+      return '';
     }
 
     return `
       <div class="clinical-diet-banner fade-up" role="region" aria-label="${t('Clinical Guidance')}">
-        <div class="cdb-header">
+        <div class="cdb-header" style="margin-bottom: 12px;">
           <div class="cdb-badge"><i class="fa-solid fa-stethoscope"></i> ${t('Clinical Guidance')}</div>
           <div class="cdb-conditions">
-            ${active.length ? condNames.map(cn => `<span class="cdb-cond-chip">${escapeHtml(t(cn))}</span>`).join('') : `<span class="cdb-cond-chip"><i class="fa-solid fa-shield-heart"></i> ${t('Bone Mineralization Protocol')}</span>`}
+            ${condNames.map(cn => `<span class="cdb-cond-chip">${escapeHtml(t(cn))}</span>`).join('')}
             <button type="button" class="cdb-edit-btn" onclick="BoneApp.openUserProfileModal()" aria-label="${t('Edit health conditions')}"><i class="fa-solid fa-pen"></i></button>
           </div>
         </div>
-        <div class="cdb-title">${t('Personalized for {region}', { region: formatRegionName(userReg) })} · ${formatDietName(userDiet)}</div>
-        <div class="cdb-desc">${active.length ? t('Diet tailored to your selected metabolic profile to optimize bone mineralization while supporting overall systemic health.') : t('Clinical nutritional protocol tailored to optimize bone density and skeletal remodeling.')}</div>
         <div class="cdb-tips-grid">
           ${tips.map(tItem => `
             <div class="cdb-tip-item">
@@ -4489,13 +4467,22 @@
     listEl.classList.toggle('no-anim', lastDietDateRendered === currentDateKey);
     lastDietDateRendered = currentDateKey;
 
+    const activeSlot = (state.activeSlotFilter && state.activeSlotFilter !== 'all') ? state.activeSlotFilter : 'm_sun_d3';
+    state.activeSlotFilter = activeSlot;
+    const filterPills = document.querySelectorAll('#dietSlotFilterPills .slot-filter-pill');
+    if (filterPills && filterPills.length) {
+      filterPills.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.slot === activeSlot);
+      });
+    }
+
     listEl.innerHTML = resolvedMilestones.map((item, i) => {
       const meta = SLOT_META[item.id] || { name: 'Meal', time: '' };
       const items = item.meal.items || splitMealComponents(item.meal);
       const totalItems = Math.max(1, items.length);
       const checkedIndices = getCheckedItemIndices(currentDateKey, item.id, totalItems);
       const isSlotDone = checkedIndices.length >= totalItems;
-      const hidden = state.activeSlotFilter && state.activeSlotFilter !== 'all' && state.activeSlotFilter !== item.id;
+      const hidden = activeSlot !== item.id;
       const justDone = isSlotDone && state.lastToggledMilestone === item.id;
 
       return `
@@ -4593,12 +4580,13 @@
 
   function filterMealSlotView(slotKey) {
     playSound('tap');
-    state.activeSlotFilter = slotKey;
+    const targetSlot = (slotKey === 'all' || !slotKey) ? 'm_sun_d3' : slotKey;
+    state.activeSlotFilter = targetSlot;
     document.querySelectorAll('#dietSlotFilterPills .slot-filter-pill').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.slot === slotKey);
+      btn.classList.toggle('active', btn.dataset.slot === targetSlot);
     });
     document.querySelectorAll('#dietMilestonesList .meal-card').forEach(card => {
-      card.style.display = (slotKey === 'all' || card.dataset.slotId === slotKey) ? '' : 'none';
+      card.style.display = (card.dataset.slotId === targetSlot) ? '' : 'none';
     });
   }
 

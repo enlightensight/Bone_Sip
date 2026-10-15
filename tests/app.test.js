@@ -457,6 +457,21 @@ setTimeout(() => {
     'Clinical diet view renders guidance chips for Lactose Intolerance and Nuts Allergy');
   assert(guidanceHTML.includes('Glycemic') && guidanceHTML.includes('DASH'),
     'Clinical guidance contains disease-specific clinical rationales (Glycemic control & DASH low-sodium)');
+  assert(!guidanceHTML.includes('Personalized for') && !guidanceHTML.includes('Diet tailored to your selected metabolic profile'),
+    'Clinical guidance omits generic boilerplate heading/subtitle when disease is present');
+
+  // Verify general guidance card is completely removed when NO conditions are selected
+  BoneApp.toggleHealthCondition('diabetes');
+  BoneApp.toggleHealthCondition('hypertension');
+  BoneApp.toggleHealthCondition('lactose_intolerance');
+  BoneApp.toggleHealthCondition('nuts_allergy');
+  BoneApp.renderBuildDietView();
+  assert(mockElements['clinicalDietGuidanceContainer'].innerHTML === '',
+    'General clinical guidance card is completely hidden when no diseases are mentioned');
+
+  // Re-enable diabetes for subsequent chatbot tests
+  BoneApp.toggleHealthCondition('diabetes');
+  BoneApp.toggleHealthCondition('hypertension');
 
   // 4. Test Offline AI Chatbot Personalized Metabolic Diet Chart
   const dietChartResp = BoneApp.generateBotResponse('personalized_diet_chart');
