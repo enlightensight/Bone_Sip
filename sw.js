@@ -1,6 +1,6 @@
 // BONE SIP service worker — offline app shell + runtime caching.
 // Bump CACHE_VERSION whenever you deploy changed files (or let your build step do it).
-const CACHE_VERSION = 'bonesip-v4.1.1';
+const CACHE_VERSION = 'bonesip-v4.1.2';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -8,13 +8,13 @@ const APP_SHELL = [
   "./",
   "index.html",
   "manifest.webmanifest",
-  "css/style.css?v=4.1.1",
-  "css/brand.css?v=4.1.1",
-  "js/config.js?v=4.1.1",
-  "js/data.js?v=4.1.1",
-  "js/notifications.js?v=4.1.1",
-  "js/i18n.js?v=4.1.1",
-  "js/app.js?v=4.1.1",
+  "css/style.css?v=4.1.2",
+  "css/brand.css?v=4.1.2",
+  "js/config.js?v=4.1.2",
+  "js/data.js?v=4.1.2",
+  "js/notifications.js?v=4.1.2",
+  "js/i18n.js?v=4.1.2",
+  "js/app.js?v=4.1.2",
   "js/vendor/confetti.browser.min.js",
   "assets/images/bonesip_logo_720.webp",
   "assets/images/ojas-avatar.svg",
@@ -184,16 +184,24 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(request).then((cached) => {
+      // Prevent returning opaque responses to CORS requests (which triggers Chrome TypeError/NetworkError)
+      const canUseCached = Boolean(cached && (request.mode === 'no-cors' || cached.type !== 'opaque'));
+
       const network = fetch(request)
         .then((res) => {
-          if (res && (res.ok || res.type === 'opaque')) {
-            const copy = res.clone();
-            caches.open(RUNTIME_CACHE).then((c) => c.put(request, copy));
+          if (res && res.ok) {
+            // Only cache valid CORS or same-origin responses; don't poison cache with opaque for CORS requests
+            if (res.type !== 'opaque' || request.mode === 'no-cors') {
+              const copy = res.clone();
+              caches.open(RUNTIME_CACHE).then((c) => c.put(request, copy));
+            }
           }
           return res;
         })
-        .catch(() => cached);
-      return cached || network;
+        .catch(() => (canUseCached ? cached : undefined));
+
+      if (canUseCached) return cached;
+      return network;
     })
   );
 });

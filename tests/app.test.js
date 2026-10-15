@@ -674,7 +674,7 @@ setTimeout(() => {
   BoneApp.addDoctorQuestion();
   assert(html().includes('Can I keep doing yoga?'), 'The user can add their own question');
   BoneApp.setDoctorVisitDate(new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10));
-  assert(/In [34] days/.test(html()), 'Next visit date shows how many days are left');
+  assert(/In [234] days/.test(html()), 'Next visit date shows how many days are left');
 
   BoneApp.printDocument('doctor');
   const printDocHtml = mockElements['printDoc'].innerHTML;

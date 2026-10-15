@@ -4139,13 +4139,14 @@
 
     if (window.deferredInstallPrompt) {
       const promptEvent = window.deferredInstallPrompt;
+      const modal = document.getElementById('pwaInstallModal');
+      if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
+      hideFloatingInstallBar();
+
       try {
         promptEvent.prompt();
         const choiceResult = await promptEvent.userChoice;
         if (choiceResult && choiceResult.outcome === 'accepted') {
-          const modal = document.getElementById('pwaInstallModal');
-          if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
-          hideFloatingInstallBar();
           showToast(t('Installing BONE SIP shortcut...'), 'fa-check');
         }
       } catch (err) {
