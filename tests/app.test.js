@@ -900,6 +900,23 @@ setTimeout(() => {
   assert(promptCalled, 'triggerDirectInstall calls deferredInstallPrompt.prompt() directly');
 
   // ---------------------------------------------------------------------------
+  // 11. Testing Diet View Checkbox, Switch Options & Refresh Route Persistence
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 11. Testing Diet View Checkbox, Switch Options & Refresh Route Persistence ---');
+  verifiedApp.getState().completedPillars.build = true;
+  verifiedApp.getState().activePillar = 'build';
+  verifiedApp.renderBuildDietView();
+  const dietListHtml = mockElements['dietMilestonesList'].innerHTML;
+  assert(!dietListHtml.includes('fa-lock'), 'Diet view meal cards do NOT render lock icon on checkboxes');
+  assert(dietListHtml.includes('fa-check'), 'Diet view meal cards render check icon on checkboxes');
+  assert(dietListHtml.includes('View options'), 'Diet view renders "View options" switch buttons');
+  assert(dietListHtml.includes('mini-nav'), 'Diet view renders mini-nav meal cycle arrows');
+
+  // Test toggling diet milestone on past and current dates without error
+  verifiedApp.toggleDietMilestone('2026-10-15', 'm_lunch');
+  assert(verifiedApp.getState().checkedDietMilestones['2026-10-15'].has('m_lunch'), 'toggleDietMilestone marks milestone successfully on dateKey');
+
+  // ---------------------------------------------------------------------------
   // FINAL SUMMARY
   // ---------------------------------------------------------------------------
   console.log('\n================================================================');

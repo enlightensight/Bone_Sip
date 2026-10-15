@@ -479,12 +479,12 @@
   }
 
   function hasExistingJourney() {
-    return !!(state.auth.isVerified || state.completedPillars.build || state.selectedAssets.length || state.buildAssessmentStep !== 'goals');
+    return !!(state.auth.isVerified || state.completedPillars.build || (state.userProfile && state.userProfile.healthConditions && state.userProfile.healthConditions.length > 0) || state.selectedAssets.length || state.buildAssessmentStep !== 'goals');
   }
 
   // Sends a returning user to wherever they left off.
   function resumeJourney() {
-    if (state.completedPillars.build && state.auth.isVerified) {
+    if (state.completedPillars.build) {
       state.activePillar = 'build';
       showView('build');
       switchBuildSubTab(state.activeBuildSubTab || 'diet', true);
@@ -2053,6 +2053,9 @@
     renderPillarBottomNav();
     updateHeaderProfileBadge();
     syncCoachToggle();
+    if (state.completedPillars.build && document.body.dataset.view === 'build') {
+      renderBuildDietView();
+    }
   }
 
   // Login for someone who already has an account (new phone, after logging out…).
@@ -4843,12 +4846,17 @@
   // A. DIET SUBVIEW (DATE-WISE CALENDAR + DAILY MILESTONES & STREAK)
   let lastDietDateRendered = '';
   function renderBuildDietView() {
+    const todayISO = getTodayISODate();
+    const todayDayName = getTodayDayName();
     const weekDays = getWeekDays(state.calendarWeekOffset || 0);
-    if (!state.selectedCalendarDate) state.selectedCalendarDate = getTodayISODate();
+    if (!state.selectedCalendarDate) {
+      state.selectedCalendarDate = todayISO;
+      state.selectedCalendarDay = todayDayName;
+    }
 
     let activeDayObj = weekDays.find(d => d.isoDate === state.selectedCalendarDate);
     if (!activeDayObj) {
-      activeDayObj = weekDays.find(d => d.dayName === state.selectedCalendarDay) || weekDays[0];
+      activeDayObj = weekDays.find(d => d.isoDate === todayISO) || weekDays[0];
       state.selectedCalendarDate = activeDayObj.isoDate;
     }
     state.selectedCalendarDay = activeDayObj.dayName;
@@ -4856,8 +4864,6 @@
     const currentDay = activeDayObj.dayName;
     const currentDateKey = activeDayObj.isoDate;
     const dayData = BONE_SIP_DATA.weeklyDietCalendar.find(d => d.day === currentDay) || BONE_SIP_DATA.weeklyDietCalendar[0];
-    const todayISO = getTodayISODate();
-    const isPast = currentDateKey < todayISO;
     const isToday = currentDateKey === todayISO;
 
     // 1. Week heading
@@ -4888,18 +4894,17 @@
     // 3. Hero copy
     const dayTitle = document.getElementById('dietDayTitle');
     if (dayTitle) {
-      const tag = isPast ? '<span class="past-tag"><i class="fa-solid fa-lock"></i> View only</span>' : '';
       const when = I18N.current() === 'en'
         ? `${activeDayObj.dateNum} ${activeDayObj.monthShort}`
         : I18N.date(activeDayObj.date, { day: 'numeric', month: 'short' });
       const title = isToday
         ? t('Today, {date}', { date: when })
         : (I18N.current() === 'en' ? `${activeDayObj.dayName}, ${when}` : I18N.date(activeDayObj.date, { weekday: 'long', day: 'numeric', month: 'short' }));
-      dayTitle.innerHTML = `${escapeHtml(title)} ${tag}`;
+      dayTitle.innerHTML = escapeHtml(title);
     }
     const daySubtitle = document.getElementById('dietDaySubtitle');
     if (daySubtitle) {
-      daySubtitle.textContent = isPast ? 'Past days are view-only.' : isToday ? 'Tick off your 5 bone boosters.' : 'A preview of this day’s plan.';
+      daySubtitle.textContent = isToday ? 'Tick off your 5 bone boosters.' : 'A preview of this day’s plan.';
     }
 
     // 4. Nutrient rings
@@ -5013,7 +5018,7 @@
       const isSlotDone = activeSet.has(item.id);
       const hidden = activeSlot !== item.id;
       const justDone = isSlotDone && state.lastToggledMilestone === item.id;
-      const slotAction = isPast ? 'BoneApp.showPastDayNotice()' : `BoneApp.toggleDietMilestone('${currentDateKey}', '${item.id}')`;
+      const slotAction = `BoneApp.toggleDietMilestone('${currentDateKey}', '${item.id}')`;
 
       return `
         <div class="meal-card fade-up ${isSlotDone ? 'completed' : ''} ${justDone ? 'just-done' : ''}" data-slot-id="${item.id}" id="mealSlotCard_${item.id}" style="--i: ${i}; ${hidden ? 'display: none;' : ''}">
@@ -5025,13 +5030,12 @@
               <b>${meta.name}</b>
               <span>${meta.time} · ${item.meal.calcium || 0} mg calcium · ${item.meal.protein || 0} g protein</span>
             </div>
-            ${!isPast ? `
-              <div class="meal-head-nav">
-                <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', -1)" aria-label="${t('Previous {meal} idea', { meal: tr(meta.name) })}"><i class="fa-solid fa-chevron-left"></i></button>
-                <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', 1)" aria-label="${t('Next {meal} idea', { meal: tr(meta.name) })}"><i class="fa-solid fa-chevron-right"></i></button>
-              </div>` : ''}
-            <button type="button" class="meal-check ${isSlotDone ? 'checked' : ''} ${isPast ? 'locked' : ''}" onclick="${slotAction}" aria-pressed="${isSlotDone}" aria-label="${t(isSlotDone ? 'Undo: {meal}' : 'Mark done: {meal}', { meal: tr(meta.name) })}">
-              <i class="fa-solid ${isPast && !isSlotDone ? 'fa-lock' : 'fa-check'}"></i>
+            <div class="meal-head-nav">
+              <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', -1)" aria-label="${t('Previous {meal} idea', { meal: tr(meta.name) })}"><i class="fa-solid fa-chevron-left"></i></button>
+              <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', 1)" aria-label="${t('Next {meal} idea', { meal: tr(meta.name) })}"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <button type="button" class="meal-check ${isSlotDone ? 'checked' : ''}" onclick="${slotAction}" aria-pressed="${isSlotDone}" aria-label="${t(isSlotDone ? 'Undo: {meal}' : 'Mark done: {meal}', { meal: tr(meta.name) })}">
+              <i class="fa-solid fa-check"></i>
             </button>
           </div>
           <div class="meal-items">
@@ -5043,7 +5047,7 @@
                     <b>${escapeHtml(c.name)}</b>
                     <span>${c.portion ? `${escapeHtml(c.portion)} · ` : ''}${b.text} <em class="mi-tag"><i class="fa-solid ${b.icon}"></i> ${b.tag}</em></span>
                   </div>
-                  ${!isPast ? `<button class="mi-opt" onclick="BoneApp.openItemOptions('${item.id}', ${idx})">View options <i class="fa-solid fa-chevron-right"></i></button>` : ''}
+                  <button class="mi-opt" onclick="BoneApp.openItemOptions('${item.id}', ${idx})">View options <i class="fa-solid fa-chevron-right"></i></button>
                 </div>`;
             }).join('')}
           </div>
@@ -5297,10 +5301,6 @@
       dateKey = state.selectedCalendarDate || getTodayISODate();
     }
     const todayISO = getTodayISODate();
-    if (dateKey < todayISO) {
-      showPastDayNotice();
-      return;
-    }
     if (dateKey > todayISO) {
       playSound('tap');
       showToast('You can tick this off on the day', 'fa-calendar-day');
@@ -5344,10 +5344,6 @@
       totalItems = 1;
     }
     const todayISO = getTodayISODate();
-    if (dateKey < todayISO) {
-      showPastDayNotice();
-      return;
-    }
     if (dateKey > todayISO) {
       playSound('tap');
       showToast('You can tick this off on the day', 'fa-calendar-day');
@@ -8112,6 +8108,9 @@
 
   function init() {
     const hadSavedData = BoneDB.load();
+    state.calendarWeekOffset = 0;
+    state.selectedCalendarDate = getTodayISODate();
+    state.selectedCalendarDay = getTodayDayName();
     updateActiveStreak();
     calculateBMI();
     renderPillarBottomNav();
@@ -8163,7 +8162,7 @@
     } catch (_) {}
 
     const splash = document.getElementById('appSplashScreen');
-    if (hadSavedData && hasExistingJourney()) {
+    if ((hadSavedData && hasExistingJourney()) || state.completedPillars.build) {
       // Returning users: show branded splash briefly on phone launch, then smoothly slide up into saved journey
       let transitioned = false;
       const advance = () => {
@@ -8258,9 +8257,29 @@
         state.auth.cloud = true;
         state.userProfile.phone = res.json.user.phone;
         if (res.json.user.createdAt) state.auth.createdAt = res.json.user.createdAt;
-        BoneDB.save();
+
+        // Restore cloud state (completed pillars, diet ticks, preferences) if present
+        if (res.json.state) {
+          adoptCloudState(res.json.state);
+        } else {
+          BoneDB.save();
+        }
+
         updateHeaderProfileBadge();
         renderProfileAccountBox();
+
+        // If the user already has a completed build plan, ensure they are in build view and not left in assessment
+        if (state.completedPillars.build) {
+          const currentView = document.body.dataset.view;
+          if (!currentView || currentView === 'assessment' || currentView === 'auth') {
+            const splash = document.getElementById('appSplashScreen');
+            if (splash) splash.classList.add('dismissed');
+            state.activePillar = 'build';
+            showView('build');
+            switchBuildSubTab(state.activeBuildSubTab || 'diet', true);
+            renderPillarBottomNav();
+          }
+        }
       }
     } catch (err) {
       // offline or unreachable: do not reset verified state
