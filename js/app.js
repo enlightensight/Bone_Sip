@@ -4479,11 +4479,10 @@
     listEl.innerHTML = resolvedMilestones.map((item, i) => {
       const meta = SLOT_META[item.id] || { name: 'Meal', time: '' };
       const items = item.meal.items || splitMealComponents(item.meal);
-      const totalItems = Math.max(1, items.length);
-      const checkedIndices = getCheckedItemIndices(currentDateKey, item.id, totalItems);
-      const isSlotDone = checkedIndices.length >= totalItems;
+      const isSlotDone = activeSet.has(item.id);
       const hidden = activeSlot !== item.id;
       const justDone = isSlotDone && state.lastToggledMilestone === item.id;
+      const slotAction = isPast ? 'BoneApp.showPastDayNotice()' : `BoneApp.toggleDietMilestone('${currentDateKey}', '${item.id}')`;
 
       return `
         <div class="meal-card fade-up ${isSlotDone ? 'completed' : ''} ${justDone ? 'just-done' : ''}" data-slot-id="${item.id}" id="mealSlotCard_${item.id}" style="--i: ${i}; ${hidden ? 'display: none;' : ''}">
@@ -4500,24 +4499,20 @@
                 <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', -1)" aria-label="${t('Previous {meal} idea', { meal: tr(meta.name) })}"><i class="fa-solid fa-chevron-left"></i></button>
                 <button class="mini-nav" onclick="BoneApp.cycleSlotMeal('${item.id}', 1)" aria-label="${t('Next {meal} idea', { meal: tr(meta.name) })}"><i class="fa-solid fa-chevron-right"></i></button>
               </div>` : ''}
+            <button type="button" class="meal-check ${isSlotDone ? 'checked' : ''} ${isPast ? 'locked' : ''}" onclick="${slotAction}" aria-pressed="${isSlotDone}" aria-label="${t(isSlotDone ? 'Undo: {meal}' : 'Mark done: {meal}', { meal: tr(meta.name) })}">
+              <i class="fa-solid ${isPast && !isSlotDone ? 'fa-lock' : 'fa-check'}"></i>
+            </button>
           </div>
           <div class="meal-items">
             ${items.map((c, idx) => {
               const b = itemBenefit(c.name);
-              const isItemDone = checkedIndices.includes(idx);
-              const itemAction = isPast ? 'BoneApp.showPastDayNotice()' : `BoneApp.toggleDietItem('${currentDateKey}', '${item.id}', ${idx}, ${totalItems})`;
               return `
-                <div class="meal-item ${isItemDone ? 'item-completed' : ''} ${c.swapped ? 'swapped' : ''}">
+                <div class="meal-item ${isSlotDone ? 'item-completed' : ''} ${c.swapped ? 'swapped' : ''}">
                   <div class="mi-text">
                     <b>${escapeHtml(c.name)}</b>
                     <span>${c.portion ? `${escapeHtml(c.portion)} · ` : ''}${b.text} <em class="mi-tag"><i class="fa-solid ${b.icon}"></i> ${b.tag}</em></span>
                   </div>
-                  <div class="mi-actions">
-                    ${!isPast ? `<button class="mi-opt" onclick="BoneApp.openItemOptions('${item.id}', ${idx})">View options <i class="fa-solid fa-chevron-right"></i></button>` : ''}
-                    <button type="button" class="meal-item-check ${isItemDone ? 'checked' : ''} ${isPast ? 'locked' : ''}" onclick="${itemAction}" aria-pressed="${isItemDone}" aria-label="${escapeHtml(t(isItemDone ? 'Undo item: {name}' : 'Mark item done: {name}', { name: c.name }))}">
-                      <i class="fa-solid ${isItemDone ? 'fa-check' : (isPast ? 'fa-lock' : '')}"></i>
-                    </button>
-                  </div>
+                  ${!isPast ? `<button class="mi-opt" onclick="BoneApp.openItemOptions('${item.id}', ${idx})">View options <i class="fa-solid fa-chevron-right"></i></button>` : ''}
                 </div>`;
             }).join('')}
           </div>
