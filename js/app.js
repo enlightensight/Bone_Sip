@@ -457,6 +457,12 @@
     playSound('tap');
     const splash = document.getElementById('appSplashScreen');
     if (splash) splash.classList.add('dismissed');
+    // Prompt mobile users directly to install PWA & add shortcut
+    if (!isAppInstalled() && isMobileDevice()) {
+      setTimeout(() => {
+        showDirectInstallPrompt(false);
+      }, 1400);
+    }
     // First visit: choose a language before anything else.
     if (window.BoneI18n && !I18N.saved()) {
       openLanguagePicker({ firstRun: true, then: startOnboardingTour });
@@ -3764,6 +3770,430 @@
   function closeInstallNotificationPrompt() {
     const modal = document.getElementById('notifInstallModal');
     if (modal) modal.style.display = 'none';
+  }
+
+  // --------------------------------------------------------------------------
+  // DIRECT PWA INSTALL & MOBILE SHORTCUT POPUP
+  // --------------------------------------------------------------------------
+  const LOCALIZED_PWA_INSTALL_PROMPT = {
+    en: {
+      title: "Install BONE SIP & Add Shortcut",
+      desc: "Add BONE SIP directly to your mobile home screen for 1-tap access, daily routine reminders & fast offline loading.",
+      btnInstall: "Install & Add Shortcut",
+      btnLater: "Maybe later",
+      perk1: "Direct 1-tap launch from home screen",
+      perk2: "Daily sunbath, meal & exercise reminders",
+      perk3: "Fast loading & works without lag",
+      iosTitle: "Add BONE SIP to your iPhone Home Screen",
+      iosStep1: "Tap the Share button below",
+      iosStep2: "Scroll down & tap 'Add to Home Screen'",
+      iosStep3: "Tap 'Add' at top right to confirm",
+      barText: "Install BONE SIP for 1-tap access",
+      barBtn: "Install"
+    },
+    hi: {
+      title: "BONE SIP इंस्टॉल करें और शॉर्टकट जोड़ें",
+      desc: "1-टैप एक्सेस, दैनिक रूटीन रिमाइंडर और तेज़ लोडिंग के लिए BONE SIP को सीधे अपनी मोबाइल होम स्क्रीन पर जोड़ें।",
+      btnInstall: "इंस्टॉल करें और शॉर्टकट जोड़ें",
+      btnLater: "बाद में",
+      perk1: "होम स्क्रीन से 1-टैप में तुरंत खोलें",
+      perk2: "दैनिक धूप, भोजन और व्यायाम रिमाइंडर",
+      perk3: "सुपरफास्ट लोडिंग और स्मूथ",
+      iosTitle: "BONE SIP को iPhone होम स्क्रीन पर जोड़ें",
+      iosStep1: "नीचे शेयर (Share) बटन दबाएं",
+      iosStep2: "नीचे जाकर 'Add to Home Screen' चुनें",
+      iosStep3: "ऊपर दाईं ओर 'Add' पर टैप करें",
+      barText: "1-टैप एक्सेस के लिए BONE SIP इंस्टॉल करें",
+      barBtn: "इंस्टॉल करें"
+    },
+    bn: {
+      title: "BONE SIP ইনস্টল করুন ও শর্টকাট যোগ করুন",
+      desc: "১-ট্যাপ অ্যাক্সেস, দৈনিক রুটিন রিমাইন্ডার এবং দ্রুত লোডিংয়ের জন্য BONE SIP সরাসরি আপনার হোম স্ক্রিনে যুক্ত করুন।",
+      btnInstall: "ইনস্টল করুন ও শর্টকাট যোগ করুন",
+      btnLater: "পরে",
+      perk1: "হোম স্ক্রিন থেকে ১-ট্যাপে সরাসরি খুলুন",
+      perk2: "রোজ সকালের রোদ, খাবার ও ব্যায়াম রিমাইন্ডার",
+      perk3: "খুব দ্রুত ও স্মুথ কাজ করে",
+      iosTitle: "BONE SIP আপনার iPhone হোম স্ক্রিনে যোগ করুন",
+      iosStep1: "নিচে শেয়ার (Share) বোতামে ট্যাপ করুন",
+      iosStep2: "নিচে স্ক্রোল করে 'Add to Home Screen' বেছে নিন",
+      iosStep3: "উপরে ডানে 'Add' ট্যাপ করে নিশ্চিত করুন",
+      barText: "১-ট্যাপে পেতে BONE SIP ইনস্টল করুন",
+      barBtn: "ইনস্টল করুন"
+    },
+    mr: {
+      title: "BONE SIP इन्स्टॉल करा आणि शॉर्टकट जोडा",
+      desc: "१-टॅप ॲक्सेस, दैनिक रूटीन रिमाइंडर्स आणि जलद लोडिंगसाठी BONE SIP थेट तुमच्या मोबाइल होम स्क्रीनवर जोडा.",
+      btnInstall: "इन्स्टॉल करा आणि शॉर्टकट जोडा",
+      btnLater: "नंतर",
+      perk1: "होम स्क्रीनवरून १-टॅपमध्ये त्वरित सुरू करा",
+      perk2: "दैनिक ऊन, आहार व व्यायामाचे रिमाइंडर्स",
+      perk3: "अतिशय जलद आणि ऑफलाइन चालते",
+      iosTitle: "BONE SIP तुमच्या iPhone होम स्क्रीनवर जोडा",
+      iosStep1: "खालील शेअर (Share) बटणावर टॅप करा",
+      iosStep2: "खाली स्क्रोल करून 'Add to Home Screen' निवडा",
+      iosStep3: "पुष्टी करण्यासाठी वर उजवीकडे 'Add' वर टॅप करा",
+      barText: "१-टॅप ॲक्सेससाठी BONE SIP इन्स्टॉल करा",
+      barBtn: "इन्स्टॉल करा"
+    },
+    te: {
+      title: "BONE SIP ఇన్‌స్టాల్ చేసి షార్ట్‌కట్ జోడించండి",
+      desc: "1-ట్యాప్ యాక్సెస్, రోజువారీ రొటీన్ రిమైండర్‌లు మరియు వేగవంతమైన లోడింగ్ కోసం BONE SIPని మీ హోమ్ స్క్రీన్‌కు జోడించండి.",
+      btnInstall: "ఇన్‌స్టాల్ చేసి షార్ట్‌కట్ జోడించండి",
+      btnLater: "తర్వాత",
+      perk1: "హోమ్ స్క్రీన్ నుండి 1-ట్యాప్‌తో తెరవండి",
+      perk2: "రోజువారీ ఎండ, ఆహారం & వ్యాయామ రిమైండర్‌లు",
+      perk3: "వేగంగా మరియు తేలికగా పనిచేస్తుంది",
+      iosTitle: "BONE SIPని iPhone హోమ్ స్క్రీన్‌కు జోడించండి",
+      iosStep1: "క్రింద ఉన్న షేర్ (Share) బటన్‌ను నొక్కండి",
+      iosStep2: "క్రిందికి స్క్రోల్ చేసి 'Add to Home Screen' ఎంచుకోండి",
+      iosStep3: "నిర్ధారించడానికి పైన కుడివైపు 'Add' నొక్కండి",
+      barText: "1-ట్యాప్ యాక్సెస్ కోసం BONE SIPని ఇన్‌స్టాల్ చేయండి",
+      barBtn: "ఇన్‌స్టాల్ చేయండి"
+    },
+    ta: {
+      title: "BONE SIP நிறுவி குறுக்குவழியைச் சேர்க்கவும்",
+      desc: "1-தட்டல் அணுகல், தினசரி நினைவூட்டல்கள் மற்றும் விரைவான ஏற்றுதலுக்கு BONE SIP பயன்பாட்டை உங்கள் முகப்புத் திரையில் சேர்க்கவும்.",
+      btnInstall: "நிறுவி குறுக்குவழியைச் சேர்க்கவும்",
+      btnLater: "பின்னர்",
+      perk1: "முகப்புத் திரையிலிருந்து 1-தட்டலில் திறக்கவும்",
+      perk2: "தினசரி வெயில், உணவு மற்றும் உடற்பயிற்சி நினைவூட்டல்கள்",
+      perk3: "மிக விரைவாக இயங்கும்",
+      iosTitle: "BONE SIP-ஐ iPhone முகப்புத் திரையில் சேர்க்கவும்",
+      iosStep1: "கீழே உள்ள பகிர் (Share) பொத்தானைத் தட்டவும்",
+      iosStep2: "கீழே சென்று 'Add to Home Screen' என்பதைத் தேர்ந்தெடுக்கவும்",
+      iosStep3: "உறுதிப்படுத்த மேலே வலதுபுறத்தில் 'Add' என்பதைத் தட்டவும்",
+      barText: "1-தட்டல் அணுகலுக்கு BONE SIP நிறுவவும்",
+      barBtn: "நிறுவவும்"
+    },
+    gu: {
+      title: "BONE SIP ઇન્સ્ટોલ કરો અને શોર્ટકટ ઉમેરો",
+      desc: "1-ટેપ એક્સેસ, દૈનિક રૂટિન રિમાઇન્ડર્સ અને ઝડપી લોડિંગ માટે BONE SIP સીધું તમારી મોબાઇલ હોમ સ્ક્રીન પર ઉમેરો.",
+      btnInstall: "ઇન્સ્ટોલ કરો અને શોર્ટકટ ઉમેરો",
+      btnLater: "પછી",
+      perk1: "હોમ સ્ક્રીન પરથી 1-ટેપમાં ખોલો",
+      perk2: "રોજ સવારનો તડકો, ખોરાક અને કસરત રિમાઇન્ડર્સ",
+      perk3: "ઝડપી અને સરળતાથી ચાલે છે",
+      iosTitle: "BONE SIP ને iPhone હોમ સ્ક્રીન પર ઉમેરો",
+      iosStep1: "નીચે આપેલ શેર (Share) બટન પર ટેપ કરો",
+      iosStep2: "નીચે સ્ક્રોલ કરીને 'Add to Home Screen' પસંદ કરો",
+      iosStep3: "પુષ્ટિ કરવા માટે ઉપર જમણી બાજુએ 'Add' પર ટેપ કરો",
+      barText: "1-ટેપ એક્સેસ માટે BONE SIP ઇન્સ્ટોલ કરો",
+      barBtn: "ઇન્સ્ટોલ કરો"
+    },
+    kn: {
+      title: "BONE SIP ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ ಮತ್ತು ಶಾರ್ಟ್‌ಕಟ್ ಸೇರಿಸಿ",
+      desc: "1-ಟ್ಯಾಪ್ ಪ್ರವೇಶ, ದೈನಂದಿನ ದಿನಚರಿ ಜ್ಞಾಪನೆಗಳು ಮತ್ತು ವೇಗದ ಲೋಡಿಂಗ್‌ಗಾಗಿ BONE SIP ಅನ್ನು ನಿಮ್ಮ ಮೊಬೈಲ್ ಮುಖಪುಟ ಪರದೆಗೆ ಸೇರಿಸಿ.",
+      btnInstall: "ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ ಮತ್ತು ಶಾರ್ಟ್‌ಕಟ್ ಸೇರಿಸಿ",
+      btnLater: "ನಂತರ",
+      perk1: "ಮುಖಪುಟದಿಂದ 1-ಟ್ಯಾಪ್‌ನಲ್ಲಿ ಸುಲಭ ಪ್ರವೇಶ",
+      perk2: "ದೈನಂದಿನ ಬಿಸಿಲು, ಆಹಾರ ಮತ್ತು ವ್ಯಾಯಾಮ ಜ್ಞಾಪನೆಗಳು",
+      perk3: "ವೇಗವಾಗಿ ಮತ್ತು ಸರಾಗವಾಗಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ",
+      iosTitle: "BONE SIP ಅನ್ನು iPhone ಮುಖಪುಟ ಪರದೆಗೆ ಸೇರಿಸಿ",
+      iosStep1: "ಕೆಳಗಿನ ಹಂಚಿಕೆ (Share) ಬಟನ್ ಒತ್ತಿ",
+      iosStep2: "ಕೆಳಗೆ ಸ್ಕ್ರೋಲ್ ಮಾಡಿ 'Add to Home Screen' ಆಯ್ಕೆಮಾಡಿ",
+      iosStep3: "ದೃಢೀಕರಿಸಲು ಮೇಲಿನ ಬಲಭಾಗದಲ್ಲಿ 'Add' ಟ್ಯಾಪ್ ಮಾಡಿ",
+      barText: "1-ಟ್ಯಾಪ್ ಪ್ರವೇಶಕ್ಕಾಗಿ BONE SIP ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ",
+      barBtn: "ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ"
+    },
+    ml: {
+      title: "BONE SIP ഇൻസ്റ്റാൾ ചെയ്ത് കുറുക്കുവഴി ചേർക്കുക",
+      desc: "1-ടാപ്പ് ആക്‌സസ്, പ്രതിദിന ഓർമ്മപ്പെടുത്തലുകൾ, വേഗത്തിലുള്ള ലോഡിംഗ് എന്നിവയ്ക്കായി BONE SIP നിങ്ങളുടെ ഹോം സ്ക്രീനിൽ ചേർക്കുക.",
+      btnInstall: "ഇൻസ്റ്റാൾ ചെയ്ത് കുറുക്കുവഴി ചേർക്കുക",
+      btnLater: "പിന്നെ",
+      perk1: "ഹോം സ്ക്രീനിൽ നിന്ന് 1-ടാപ്പിൽ വേഗത്തിൽ തുറക്കാം",
+      perk2: "ദിവസേനയുള്ള വെയിൽ, ഭക്ഷണം, വ്യായാമ ഓർമ്മപ്പെടുത്തലുകൾ",
+      perk3: "വളരെ വേഗത്തിൽ പ്രവർത്തിക്കുന്നു",
+      iosTitle: "BONE SIP നിങ്ങളുടെ iPhone ഹോം സ്ക്രീനിൽ ചേർക്കുക",
+      iosStep1: "താഴെയുള്ള ഷെയർ (Share) ബട്ടൺ ടാപ്പ് ചെയ്യുക",
+      iosStep2: "താഴേക്ക് സ്ക്രോൾ ചെയ്ത് 'Add to Home Screen' തിരഞ്ഞെടുക്കുക",
+      iosStep3: "സ്ഥിരീകരിക്കാൻ മുകളിൽ വലതുവശത്ത് 'Add' ടാപ്പ് ചെയ്യുക",
+      barText: "1-ടാപ്പ് ആക്‌സസിന് BONE SIP ഇൻസ്റ്റാൾ ചെയ്യുക",
+      barBtn: "ഇൻസ്റ്റാൾ ചെയ്യുക"
+    },
+    pa: {
+      title: "BONE SIP ਇੰਸਟਾਲ ਕਰੋ ਅਤੇ ਸ਼ਾਰਟਕੱਟ ਜੋੜੋ",
+      desc: "1-ਟੈਪ ਐਕਸੈਸ, ਰੋਜ਼ਾਨਾ ਰੁਟੀਨ ਰੀਮਾਈਂਡਰ ਅਤੇ ਤੇਜ਼ ਲੋਡਿੰਗ ਲਈ BONE SIP ਨੂੰ ਸਿੱਧਾ ਆਪਣੀ ਮੋਬਾਈਲ ਹੋਮ ਸਕ੍ਰੀਨ 'ਤੇ ਜੋੜੋ।",
+      btnInstall: "ਇੰਸਟਾਲ ਕਰੋ ਅਤੇ ਸ਼ਾਰਟਕੱਟ ਜੋੜੋ",
+      btnLater: "ਬਾਅਦ ਵਿੱਚ",
+      perk1: "ਹੋਮ ਸਕ੍ਰੀਨ ਤੋਂ 1-ਟੈਪ ਵਿੱਚ ਤੁਰੰਤ ਖੋਲ੍ਹੋ",
+      perk2: "ਰੋਜ਼ਾਨਾ ਧੁੱਪ, ਖੁਰਾਕ ਅਤੇ ਕਸਰਤ ਰੀਮਾਈਂਡਰ",
+      perk3: "ਬਹੁਤ ਤੇਜ਼ ਅਤੇ ਸੁਚਾਰੂ ਚੱਲਦਾ ਹੈ",
+      iosTitle: "BONE SIP ਨੂੰ iPhone ਹੋਮ ਸਕ੍ਰੀਨ 'ਤੇ ਜੋੜੋ",
+      iosStep1: "ਹੇਠਾਂ ਦਿੱਤੇ ਸ਼ੇਅਰ (Share) ਬਟਨ 'ਤੇ ਟੈਪ ਕਰੋ",
+      iosStep2: "ਹੇਠਾਂ ਸਕ੍ਰੋਲ ਕਰੋ ਅਤੇ 'Add to Home Screen' ਚੁਣੋ",
+      iosStep3: "ਪੁਸ਼ਟੀ ਕਰਨ ਲਈ ਉੱਪਰ ਸੱਜੇ ਪਾਸੇ 'Add' 'ਤੇ ਟੈਪ ਕਰੋ",
+      barText: "1-ਟੈਪ ਐਕਸੈਸ ਲਈ BONE SIP ਇੰਸਟਾਲ ਕਰੋ",
+      barBtn: "ਇੰਸਟਾਲ ਕਰੋ"
+    },
+    or: {
+      title: "BONE SIP ଇନଷ୍ଟଲ୍ କରନ୍ତୁ ଏବଂ ସର୍ଟକଟ୍ ଯୋଡ଼ନ୍ତୁ",
+      desc: "୧-ଟ୍ୟାପ୍ ପ୍ରବେଶ, ଦୈନିକ ରୁଟିନ୍ ରିମାଇଣ୍ଡର ଏବଂ ଦ୍ରୁତ ଲୋଡିଂ ପାଇଁ BONE SIP କୁ ସିଧାସଳଖ ଆପଣଙ୍କ ମୋବାଇଲ୍ ହୋମ୍ ସ୍କ୍ରିନରେ ଯୋଡ଼ନ୍ତୁ।",
+      btnInstall: "ଇନଷ୍ଟଲ୍ କରନ୍ତୁ ଏବଂ ସର୍ଟକଟ୍ ଯୋଡ଼ନ୍ତୁ",
+      btnLater: "ପରେ",
+      perk1: "ହୋମ୍ ସ୍କ୍ରିନରୁ ୧-ଟ୍ୟାପରେ ସହଜରେ ଖୋଲନ୍ତୁ",
+      perk2: "ଦୈନିକ ଖରା, ଖାଦ୍ୟ ଓ ବ୍ୟାୟାମ ରିମାଇଣ୍ଡର",
+      perk3: "ଖୁବ୍ ଦ୍ରୁତ ଓ ସହଜରେ କାମ କରେ",
+      iosTitle: "BONE SIP କୁ iPhone ହୋମ୍ ସ୍କ୍ରିନରେ ଯୋଡ଼ନ୍ତୁ",
+      iosStep1: "ତଳେ ଥିବା ସେୟାର (Share) ବଟନ୍ ଟ୍ୟାପ୍ କରନ୍ତୁ",
+      iosStep2: "ତଳକୁ ସ୍କ୍ରୋଲ୍ କରି 'Add to Home Screen' ଚୟନ କରନ୍ତୁ",
+      iosStep3: "ନିଶ୍ଚିତ କରିବାକୁ ଉପରେ ଡାହାଣରେ 'Add' ଟ୍ୟାପ୍ କରନ୍ତୁ",
+      barText: "୧-ଟ୍ୟାପ୍ ପ୍ରବେଶ ପାଇଁ BONE SIP ଇନଷ୍ଟଲ୍ କରନ୍ତୁ",
+      barBtn: "ଇନଷ୍ଟଲ୍ କରନ୍ତୁ"
+    },
+    as: {
+      title: "BONE SIP ইনষ্টল কৰক আৰু শ্বৰ্টকাট যোগ কৰক",
+      desc: "১-টেপ এক্সেছ, দৈনিক ৰুটিন ৰিমাইণ্ডাৰ আৰু দ্ৰুত ল’ডিংৰ বাবে BONE SIP পোনপটীয়াকৈ আপোনাৰ মোবাইলৰ হোম স্ক্ৰীণত যোগ কৰক।",
+      btnInstall: "ইনষ্টল কৰক আৰু শ্বৰ্টকাট যোগ কৰক",
+      btnLater: "পিছত",
+      perk1: "হোম স্ক্ৰীণৰ পৰা ১-টেপত সহজে খোলক",
+      perk2: "দৈনিক ৰ’দ, আহাৰ আৰু ব্যায়ামৰ ৰিমাইণ্ডাৰ",
+      perk3: "অতি দ্ৰুত আৰু সহজে চলে",
+      iosTitle: "BONE SIP আপোনাৰ iPhone হোম স্ক্ৰীণত যোগ কৰক",
+      iosStep1: "তলৰ শ্বেয়াৰ (Share) বুটামটো টিপক",
+      iosStep2: "তললৈ স্ক্ৰল কৰি 'Add to Home Screen' বাছনি কৰক",
+      iosStep3: "নিশ্চিত কৰিবলৈ ওপৰত সোঁফালে 'Add' টিপক",
+      barText: "১-টেপ এক্সেছৰ বাবে BONE SIP ইনষ্টল কৰক",
+      barBtn: "ইনষ্টল কৰক"
+    }
+  };
+
+  function isAppInstalled() {
+    if (typeof window === 'undefined') return false;
+    try {
+      if (localStorage.getItem('bonesip_pwa_installed') === 'true') return true;
+    } catch (_) {}
+    const nav = (typeof navigator !== 'undefined' ? navigator : (typeof window !== 'undefined' && window.navigator ? window.navigator : null));
+    const isStandalone = (
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      (nav && nav.standalone === true) ||
+      (typeof document !== 'undefined' && document.referrer && document.referrer.includes('android-app://'))
+    );
+    return !!isStandalone;
+  }
+
+  function isMobileDevice() {
+    if (typeof window === 'undefined') return false;
+    const nav = typeof navigator !== 'undefined' ? navigator : window.navigator;
+    const ua = (nav && nav.userAgent) ? nav.userAgent : '';
+    const isMobileUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const isSmallScreen = typeof window.innerWidth === 'number' && window.innerWidth <= 768;
+    return isMobileUa || isSmallScreen;
+  }
+
+  function isIosDevice() {
+    if (typeof window === 'undefined') return false;
+    const nav = typeof navigator !== 'undefined' ? navigator : window.navigator;
+    const ua = (nav && nav.userAgent) ? nav.userAgent : '';
+    const isIos = /iPad|iPhone|iPod/.test(ua) || (nav && nav.platform === 'MacIntel' && nav.maxTouchPoints > 1);
+    return !!isIos;
+  }
+
+  function getCurrentAppLang() {
+    if (window.BoneNotifications && typeof window.BoneNotifications.getCurrentLang === 'function') {
+      return window.BoneNotifications.getCurrentLang();
+    }
+    try {
+      return localStorage.getItem('bonesip_lang') || 'en';
+    } catch (_) {
+      return 'en';
+    }
+  }
+
+  function updatePwaInstallUi() {
+    const lang = getCurrentAppLang();
+    const copy = LOCALIZED_PWA_INSTALL_PROMPT[lang] || LOCALIZED_PWA_INSTALL_PROMPT.en;
+
+    const titleEl = document.getElementById('pwaInstallTitle');
+    const descEl = document.getElementById('pwaInstallDesc');
+    const perk1El = document.getElementById('pwaPerk1');
+    const perk2El = document.getElementById('pwaPerk2');
+    const perk3El = document.getElementById('pwaPerk3');
+    const btnLabelEl = document.getElementById('pwaInstallBtnLabel');
+    const btnLaterEl = document.getElementById('pwaInstallLaterLabel');
+    const floatTitleEl = document.getElementById('pwaFloatTitle');
+    const floatSubEl = document.getElementById('pwaFloatSub');
+    const floatBtnEl = document.getElementById('pwaFloatBtnLabel');
+
+    if (titleEl) titleEl.textContent = copy.title;
+    if (descEl) descEl.textContent = copy.desc;
+    if (perk1El) perk1El.textContent = copy.perk1;
+    if (perk2El) perk2El.textContent = copy.perk2;
+    if (perk3El) perk3El.textContent = copy.perk3;
+    if (btnLabelEl) btnLabelEl.textContent = copy.btnInstall;
+    if (btnLaterEl) btnLaterEl.textContent = copy.btnLater;
+    if (floatTitleEl) floatTitleEl.textContent = 'BONE SIP';
+    if (floatSubEl) floatSubEl.textContent = copy.barText;
+    if (floatBtnEl) floatBtnEl.textContent = copy.barBtn;
+
+    const isIos = isIosDevice();
+    const androidActions = document.getElementById('pwaAndroidActions');
+    const iosInstructions = document.getElementById('pwaIosInstructions');
+
+    if (isIos) {
+      if (androidActions) androidActions.style.display = 'none';
+      if (iosInstructions) {
+        iosInstructions.style.display = 'block';
+        const iosTitle = document.getElementById('pwaIosTitle');
+        const iosStep1 = document.getElementById('pwaIosStep1');
+        const iosStep2 = document.getElementById('pwaIosStep2');
+        const iosStep3 = document.getElementById('pwaIosStep3');
+        if (iosTitle) iosTitle.textContent = copy.iosTitle;
+        if (iosStep1) iosStep1.innerHTML = `${copy.iosStep1} <i class="fa-solid fa-arrow-up-from-bracket"></i>`;
+        if (iosStep2) iosStep2.innerHTML = `${copy.iosStep2} <i class="fa-regular fa-square-plus"></i>`;
+        if (iosStep3) iosStep3.innerHTML = copy.iosStep3;
+      }
+    } else {
+      if (androidActions) androidActions.style.display = 'flex';
+      if (iosInstructions) iosInstructions.style.display = 'none';
+    }
+  }
+
+  function showDirectInstallPrompt(force = false) {
+    if (isAppInstalled()) return;
+
+    if (!force) {
+      try {
+        const dismissedAt = localStorage.getItem('bonesip_pwa_install_dismissed');
+        if (dismissedAt) {
+          const hoursAgo = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60);
+          if (hoursAgo < 24) {
+            // Dismissed recently: show subtle floating bar instead
+            showFloatingInstallBar();
+            return;
+          }
+        }
+      } catch (_) {}
+    }
+
+    const modal = document.getElementById('pwaInstallModal');
+    if (!modal) return;
+
+    updatePwaInstallUi();
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
+
+  function dismissDirectInstallPrompt(fromCloseBtn = false) {
+    playSound('tap');
+    const modal = document.getElementById('pwaInstallModal');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.remove('active');
+    }
+
+    try {
+      localStorage.setItem('bonesip_pwa_install_dismissed', Date.now().toString());
+    } catch (_) {}
+
+    // Show floating bar on mobile so user still has an easy shortcut trigger
+    if (isMobileDevice() && !isAppInstalled()) {
+      setTimeout(showFloatingInstallBar, 800);
+    }
+  }
+
+  async function triggerDirectInstall() {
+    playSound('tap');
+    if (isAppInstalled()) {
+      showToast(t('BONE SIP is already installed!'), 'fa-check');
+      return;
+    }
+
+    if (isIosDevice()) {
+      showDirectInstallPrompt(true);
+      return;
+    }
+
+    if (window.deferredInstallPrompt) {
+      const promptEvent = window.deferredInstallPrompt;
+      try {
+        promptEvent.prompt();
+        const choiceResult = await promptEvent.userChoice;
+        if (choiceResult && choiceResult.outcome === 'accepted') {
+          try { localStorage.setItem('bonesip_pwa_installed', 'true'); } catch (_) {}
+          const modal = document.getElementById('pwaInstallModal');
+          if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
+          hideFloatingInstallBar();
+          showToast(t('Installing BONE SIP shortcut...'), 'fa-check');
+        }
+      } catch (err) {
+        console.warn('Install prompt error:', err);
+      } finally {
+        window.deferredInstallPrompt = null;
+      }
+    } else {
+      // Fallback if browser prompt event hasn't fired or is unavailable
+      showToast(t("Tap browser menu (⋮) and select 'Install and create shortcut'"), 'fa-arrow-down-to-bracket');
+    }
+  }
+
+  function showFloatingInstallBar() {
+    if (isAppInstalled()) return;
+    try {
+      if (sessionStorage.getItem('bonesip_hide_float_bar') === '1') return;
+    } catch (_) {}
+
+    const bar = document.getElementById('pwaFloatingBar');
+    if (!bar) return;
+
+    updatePwaInstallUi();
+    bar.style.display = 'flex';
+  }
+
+  function hideFloatingInstallBar(event) {
+    if (event && typeof event.stopPropagation === 'function') {
+      event.stopPropagation();
+    }
+    const bar = document.getElementById('pwaFloatingBar');
+    if (bar) bar.style.display = 'none';
+    try {
+      sessionStorage.setItem('bonesip_hide_float_bar', '1');
+    } catch (_) {}
+  }
+
+  function initPwaInstallPrompt() {
+    if (typeof window === 'undefined') return;
+
+    window.addEventListener('pwa-prompt-available', (e) => {
+      window.deferredInstallPrompt = e.detail;
+      updatePwaInstallUi();
+    });
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredInstallPrompt = e;
+      updatePwaInstallUi();
+    });
+
+    window.addEventListener('appinstalled', () => {
+      try { localStorage.setItem('bonesip_pwa_installed', 'true'); } catch (_) {}
+      const modal = document.getElementById('pwaInstallModal');
+      if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
+      hideFloatingInstallBar();
+    });
+
+    window.addEventListener('pwa-installed', () => {
+      const modal = document.getElementById('pwaInstallModal');
+      if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
+      hideFloatingInstallBar();
+    });
+
+    // Auto-display for mobile users when opening the link
+    if (!isAppInstalled() && isMobileDevice()) {
+      const splash = document.getElementById('appSplashScreen');
+      const isSplashVisible = splash && !splash.classList.contains('dismissed') && !splash.classList.contains('hidden');
+
+      if (isSplashVisible) {
+        // Will show after user starts, or fallback timer
+        setTimeout(() => {
+          if (!isAppInstalled()) showDirectInstallPrompt(false);
+        }, 3500);
+      } else {
+        setTimeout(() => {
+          if (!isAppInstalled()) showDirectInstallPrompt(false);
+        }, 1200);
+      }
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -7583,6 +8013,11 @@
     if (notifInstallModal && notifInstallModal.style.display === 'flex') {
       promptNotificationPermissionOnInstall();
     }
+    const pwaModal = document.getElementById('pwaInstallModal');
+    const pwaBar = document.getElementById('pwaFloatingBar');
+    if ((pwaModal && pwaModal.style.display === 'flex') || (pwaBar && pwaBar.style.display === 'flex')) {
+      updatePwaInstallUi();
+    }
     const view = document.body.dataset.view;
     if (view === 'assessment') renderAssessmentStage();
     else if (view === 'build') switchBuildSubTab(state.activeBuildSubTab || 'diet', true);
@@ -7648,6 +8083,7 @@
     setupOnboardingSwipe();
     updateHeaderLangButton();
     document.addEventListener('bonesip:language', onLanguageChanged);
+    initPwaInstallPrompt();
 
     // Prompt notification permissions when PWA is installed or launched in standalone mode
     if (typeof window !== 'undefined') {
@@ -7989,7 +8425,15 @@
     // PWA install notification permission prompt
     promptNotificationPermissionOnInstall,
     enableNotificationsFromInstallPrompt,
-    dismissInstallNotificationPrompt
+    dismissInstallNotificationPrompt,
+
+    // Direct PWA install & mobile shortcut popup
+    showDirectInstallPrompt,
+    dismissDirectInstallPrompt,
+    triggerDirectInstall,
+    showFloatingInstallBar,
+    hideFloatingInstallBar,
+    isAppInstalled
   };
 
   // Run on DOM Ready

@@ -24,8 +24,21 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
+  <script>
+    // Early capture of PWA beforeinstallprompt on mobile
+    window.deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window.deferredInstallPrompt = e;
+      window.dispatchEvent(new CustomEvent('pwa-prompt-available', { detail: e }));
+    });
+    window.addEventListener('appinstalled', function() {
+      window.deferredInstallPrompt = null;
+      try { localStorage.setItem('bonesip_pwa_installed', 'true'); } catch(_) {}
+      window.dispatchEvent(new Event('pwa-installed'));
+    });
+  </script>
   <!-- Languages: loaded first so a saved language is applied before the page shows -->
   <script src="js/i18n.js?v=4.0.0"></script>
 
@@ -998,6 +1011,100 @@
       <div class="reminders-actions">
         <button type="button" class="cta-btn btn-full" onclick="BoneApp.closeRemindersModal()">Done</button>
       </div>
+  </div>
+
+  <!-- =========================================================================
+       DIRECT PWA INSTALL & SHORTCUT MODAL (MOBILE POPUP)
+       ========================================================================= -->
+  <div class="modal-backdrop" id="pwaInstallModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="pwaInstallTitle">
+    <div class="modal-card sheet-sm pwa-install-card">
+      <button class="pwa-modal-close" onclick="BoneApp.dismissDirectInstallPrompt(true)" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+
+      <div class="pwa-install-badge-wrap">
+        <div class="pwa-app-icon-ring">
+          <img src="assets/icons/icon-192.png" alt="BONE SIP" class="pwa-install-app-logo" width="64" height="64">
+          <span class="pwa-install-sparkle-badge" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span>
+        </div>
+      </div>
+
+      <div class="pwa-brand-kicker">BONE SIP · PWA</div>
+      <h3 id="pwaInstallTitle">Install BONE SIP &amp; Add Shortcut</h3>
+      <p id="pwaInstallDesc" class="pwa-install-sub">
+        Add BONE SIP directly to your mobile home screen for 1-tap access, daily routine reminders &amp; fast offline loading.
+      </p>
+
+      <div class="pwa-perks-list">
+        <div class="pwa-perk-item">
+          <span class="pwa-perk-icon"><i class="fa-solid fa-mobile-screen-button"></i></span>
+          <span id="pwaPerk1">Direct 1-tap launch from home screen</span>
+        </div>
+        <div class="pwa-perk-item">
+          <span class="pwa-perk-icon"><i class="fa-solid fa-bell"></i></span>
+          <span id="pwaPerk2">Daily sunbath, meal &amp; exercise reminders</span>
+        </div>
+        <div class="pwa-perk-item">
+          <span class="pwa-perk-icon"><i class="fa-solid fa-bolt-lightning"></i></span>
+          <span id="pwaPerk3">Fast loading &amp; works without lag</span>
+        </div>
+      </div>
+
+      <!-- Android / Standard Install Trigger Actions -->
+      <div class="pwa-install-actions" id="pwaAndroidActions">
+        <button type="button" class="cta-btn cta-lg btn-full pwa-primary-install-btn" id="btnPwaDirectInstall" onclick="BoneApp.triggerDirectInstall()">
+          <i class="fa-solid fa-arrow-down-to-bracket"></i> <span id="pwaInstallBtnLabel">Install &amp; Add Shortcut</span>
+        </button>
+        <button type="button" class="btn btn-ghost btn-full pwa-secondary-btn" id="btnPwaLater" onclick="BoneApp.dismissDirectInstallPrompt(false)">
+          <span id="pwaInstallLaterLabel">Maybe later</span>
+        </button>
+      </div>
+
+      <!-- iOS Safari Step-by-Step Instructions -->
+      <div class="pwa-ios-instructions" id="pwaIosInstructions" style="display: none;">
+        <div class="pwa-ios-guide-box">
+          <h4 id="pwaIosTitle">Add BONE SIP to your iPhone Home Screen</h4>
+          <ol class="pwa-ios-steps">
+            <li>
+              <span class="step-num">1</span>
+              <span id="pwaIosStep1">Tap the <strong>Share</strong> button <i class="fa-solid fa-arrow-up-from-bracket"></i> below</span>
+            </li>
+            <li>
+              <span class="step-num">2</span>
+              <span id="pwaIosStep2">Scroll down &amp; tap <strong>Add to Home Screen</strong> <i class="fa-regular fa-square-plus"></i></span>
+            </li>
+            <li>
+              <span class="step-num">3</span>
+              <span id="pwaIosStep3">Tap <strong>Add</strong> at top right to confirm</span>
+            </li>
+          </ol>
+        </div>
+        <button type="button" class="cta-btn btn-full" onclick="BoneApp.dismissDirectInstallPrompt(false)">
+          Got it
+        </button>
+      </div>
+
+      <div class="pwa-browser-hint" id="pwaBrowserHint">
+        <i class="fa-solid fa-circle-check"></i> Direct 1-tap install · No browser menu needed
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Floating Shortcut Bar (visible if user dismissed initial modal) -->
+  <div class="pwa-mobile-floating-bar" id="pwaFloatingBar" style="display: none;" role="region" aria-label="Install BONE SIP shortcut">
+    <div class="pwa-float-content" onclick="BoneApp.triggerDirectInstall()">
+      <img src="assets/icons/icon-192.png" alt="" class="pwa-float-logo" width="36" height="36">
+      <div class="pwa-float-text">
+        <strong id="pwaFloatTitle">BONE SIP</strong>
+        <span id="pwaFloatSub">Install app &amp; add shortcut</span>
+      </div>
+    </div>
+    <div class="pwa-float-actions">
+      <button type="button" class="btn-pwa-float-install" onclick="BoneApp.triggerDirectInstall()" id="btnPwaFloatAction">
+        <i class="fa-solid fa-arrow-down-to-bracket"></i> <span id="pwaFloatBtnLabel">Install</span>
+      </button>
+      <button type="button" class="pwa-float-close" onclick="BoneApp.hideFloatingInstallBar(event)" aria-label="Close install prompt">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
   </div>
 
   <!-- =========================================================================

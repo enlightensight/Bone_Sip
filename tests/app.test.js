@@ -185,7 +185,11 @@ const elementIds = [
   'clinicalDietGuidanceContainer', 'dietMilestonesList', 'protectSuggestionBannerContainer',
   'protectSafetyAnalysisCard', 'protectRoomCheckCard', 'hubRoomCheckDropdownHeader', 'hubRoomCheckCollapseBody', 'roomCheckDropdownChevron', 'protectRiskStatusBadge', 'hubHomeScoreBadge', 'hubRoomTabs', 'hubRoomQuestionsList',
   'strengthenContentContainer', 'printDoc', 'stTab_dxa_risk', 'stTab_labs_biomarkers', 'stTab_meds_timing', 'stTab_spine_safety', 'stTab_doctor_brief',
-  'view-assessment', 'view-auth', 'view-build', 'view-protect', 'view-strengthen'
+  'view-assessment', 'view-auth', 'view-build', 'view-protect', 'view-strengthen',
+  'pwaInstallModal', 'pwaFloatingBar', 'btnPwaDirectInstall', 'pwaAndroidActions', 'pwaIosInstructions',
+  'pwaInstallTitle', 'pwaInstallDesc', 'pwaPerk1', 'pwaPerk2', 'pwaPerk3', 'pwaInstallBtnLabel',
+  'pwaInstallLaterLabel', 'pwaFloatTitle', 'pwaFloatSub', 'pwaFloatBtnLabel', 'pwaIosTitle',
+  'pwaIosStep1', 'pwaIosStep2', 'pwaIosStep3'
 ];
 
 elementIds.forEach(id => {
@@ -836,6 +840,64 @@ setTimeout(() => {
   assert(testState.chatHistory[0].text.includes('Bone Buddy'), 'Chatbot greeting explicitly displays Bone Buddy');
   assert(mockElements['chatMessagesContainer'].innerHTML.includes('Bone Buddy'), 'Chat messages DOM container renders Bone Buddy');
   assert(!mockElements['chatMessagesContainer'].innerHTML.includes('Ojas'), 'Chat messages DOM container does NOT render Ojas');
+
+  // ---------------------------------------------------------------------------
+  // 10. Testing Mobile Direct PWA Install Popup & Shortcut Floating Bar
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 10. Testing Mobile Direct PWA Install Popup & Shortcut Floating Bar ---');
+
+  const fs = require('fs');
+  const path = require('path');
+  const indexHtmlContent = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const styleCssContent = fs.readFileSync(path.join(__dirname, '..', 'css', 'style.css'), 'utf8');
+
+  // Verify Markup
+  assert(indexHtmlContent.includes('window.deferredInstallPrompt = null'), 'index.html head captures early beforeinstallprompt');
+  assert(indexHtmlContent.includes('id="pwaInstallModal"'), 'PWA direct install modal #pwaInstallModal is present');
+  assert(indexHtmlContent.includes('id="btnPwaDirectInstall"'), 'Direct 1-tap install button #btnPwaDirectInstall is present');
+  assert(indexHtmlContent.includes('id="pwaIosInstructions"'), 'iOS Safari instructions container #pwaIosInstructions is present');
+  assert(indexHtmlContent.includes('id="pwaFloatingBar"'), 'Mobile floating shortcut bar #pwaFloatingBar is present');
+
+  // Verify CSS
+  assert(styleCssContent.includes('.pwa-install-card'), 'CSS class .pwa-install-card is defined');
+  assert(styleCssContent.includes('.pwa-primary-install-btn'), 'CSS class .pwa-primary-install-btn is defined');
+  assert(styleCssContent.includes('.pwa-perks-list'), 'CSS class .pwa-perks-list is defined');
+  assert(styleCssContent.includes('.pwa-mobile-floating-bar'), 'CSS class .pwa-mobile-floating-bar is defined');
+
+  // Verify API Exports
+  assert(typeof verifiedApp.isAppInstalled === 'function', 'BoneApp exports isAppInstalled');
+  assert(typeof verifiedApp.showDirectInstallPrompt === 'function', 'BoneApp exports showDirectInstallPrompt');
+  assert(typeof verifiedApp.dismissDirectInstallPrompt === 'function', 'BoneApp exports dismissDirectInstallPrompt');
+  assert(typeof verifiedApp.triggerDirectInstall === 'function', 'BoneApp exports triggerDirectInstall');
+  assert(typeof verifiedApp.showFloatingInstallBar === 'function', 'BoneApp exports showFloatingInstallBar');
+  assert(typeof verifiedApp.hideFloatingInstallBar === 'function', 'BoneApp exports hideFloatingInstallBar');
+
+  // Test Modal Display & Dismissal
+  localStorageStore['bonesip_pwa_installed'] = 'false';
+  mockElements['pwaInstallModal'].style.display = 'none';
+  verifiedApp.showDirectInstallPrompt(true);
+  assert(mockElements['pwaInstallModal'].style.display === 'flex', 'showDirectInstallPrompt(true) displays #pwaInstallModal');
+
+  verifiedApp.dismissDirectInstallPrompt(true);
+  assert(mockElements['pwaInstallModal'].style.display === 'none', 'dismissDirectInstallPrompt(true) closes #pwaInstallModal');
+  assert(!!localStorageStore['bonesip_pwa_install_dismissed'], 'dismissDirectInstallPrompt saves dismissal timestamp');
+
+  // Test Floating Bar Display & Dismissal
+  mockElements['pwaFloatingBar'].style.display = 'none';
+  verifiedApp.showFloatingInstallBar();
+  assert(mockElements['pwaFloatingBar'].style.display === 'flex', 'showFloatingInstallBar() displays #pwaFloatingBar');
+
+  verifiedApp.hideFloatingInstallBar();
+  assert(mockElements['pwaFloatingBar'].style.display === 'none', 'hideFloatingInstallBar() hides #pwaFloatingBar');
+
+  // Test Direct Install Trigger with Prompt
+  let promptCalled = false;
+  verifiedSandbox.window.deferredInstallPrompt = {
+    prompt: () => { promptCalled = true; },
+    userChoice: Promise.resolve({ outcome: 'accepted' })
+  };
+  verifiedApp.triggerDirectInstall();
+  assert(promptCalled, 'triggerDirectInstall calls deferredInstallPrompt.prompt() directly');
 
   // ---------------------------------------------------------------------------
   // FINAL SUMMARY
