@@ -6227,4 +6227,27 @@ body.portal-locked main.app-container {
   color: #334155;
 }
 
+/* ==========================================================================
+   PRINT MEDIA STYLES & OVERFLOW RESILIENCE
+   ========================================================================== */
+@media print {
+  html,
+  body {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    position: static !important;
+    background: #FFFFFF !important;
+  }
+
+  .modal-backdrop,
+  .splash-green-fullscreen,
+  .pwa-mobile-floating-bar {
+    display: none !important;
+  }
+}
+
+
 

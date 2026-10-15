@@ -680,6 +680,22 @@ setTimeout(() => {
   const printDocHtml = mockElements['printDoc'].innerHTML;
   assert(printDocHtml.includes('Doctor Visit Summary') && printDocHtml.includes('-2.8') && printDocHtml.includes('Thyronorm') && printDocHtml.includes('Can I keep doing yoga?'), 'Printed doctor summary includes the saved scans, medicines and own questions');
 
+  BoneApp.printDocument('report');
+  const reportDocHtml = mockElements['printDoc'].innerHTML;
+  assert(reportDocHtml.includes('Bone Health Report') && reportDocHtml.includes('Patient details'), 'Printed health report includes Bone Health Report title and patient details');
+
+  BoneApp.printDocument('protect');
+  const protectDocHtml = mockElements['printDoc'].innerHTML;
+  assert(protectDocHtml.includes('Fall Prevention & Home Safety Plan') && protectDocHtml.includes('Daily Fall Prevention Habits'), 'Printed protect document includes Fall Prevention & Home Safety Plan');
+
+  // Verify button onclick bindings across views
+  const rawIndexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  assert(rawIndexHtml.includes("BoneApp.printDocument('doctor')"), 'Strengthen simple view PDF button calls BoneApp.printDocument("doctor")');
+  assert(!rawIndexHtml.includes('onclick="window.print()"'), 'index.html has no raw window.print() buttons');
+
+  const rawAppJs = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
+  assert(rawAppJs.includes("BoneApp.printDocument('protect')"), 'Protect view PDF button calls BoneApp.printDocument("protect")');
+
   console.log('\n--- 7. Testing Backward Compatibility & Stale Cache Sanitization ---');
 
   // Simulate a visitor having old V2 cache with hardcoded Sunita Sharma
@@ -846,8 +862,6 @@ setTimeout(() => {
   // ---------------------------------------------------------------------------
   console.log('\n--- 10. Testing Mobile Direct PWA Install Popup & Shortcut Floating Bar ---');
 
-  const fs = require('fs');
-  const path = require('path');
   const indexHtmlContent = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   const styleCssContent = fs.readFileSync(path.join(__dirname, '..', 'css', 'style.css'), 'utf8');
 

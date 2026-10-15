@@ -1690,10 +1690,76 @@ body[data-view="assessment"] .bone-ai-fab, body[data-view="auth"] .bone-ai-fab {
 }
 
 @media print {
-  .app-header, .pillar-bottom-nav, .bone-ai-fab, .bone-chat-drawer, .toast-notification, .splash, .onboarding-tour-overlay, .seg-tabs, .card-head-actions, .sheet-actions, .modal-close-btn { display: none !important; }
-  body { background: #fff !important; }
-  .pillar-hero { color: #000; background: none !important; box-shadow: none; border: 1px solid #ccc; }
-  .pillar-hero h2, .pillar-hero p { color: #000; }
+  @page {
+    size: A4 portrait;
+    margin: 8mm 12mm;
+  }
+
+  html,
+  body {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    color: #231F33 !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide app shell and all interactive UI during print */
+  .app-header,
+  .pillar-bottom-nav,
+  .mobile-bottom-nav,
+  .bone-ai-fab,
+  .bone-chat-drawer,
+  .toast-notification,
+  .splash,
+  .splash-green-fullscreen,
+  .onboarding-tour-overlay,
+  .modal-backdrop,
+  .modal-card,
+  .sheet,
+  .pwa-mobile-floating-bar,
+  .pwa-install-backdrop,
+  .skip-link,
+  svg.svg-defs,
+  .seg-tabs,
+  .card-head-actions,
+  .sheet-actions,
+  .modal-close-btn,
+  .pillar-hero,
+  #mainContent {
+    display: none !important;
+  }
+
+  /* When printing-doc is active OR when #printDoc has content */
+  body.printing-doc > *:not(#printDoc),
+  body:has(#printDoc:not(:empty)) > *:not(#printDoc) {
+    display: none !important;
+  }
+
+  #printDoc,
+  .print-doc,
+  body.printing-doc #printDoc,
+  body:has(#printDoc:not(:empty)) #printDoc {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    background: #FFFFFF !important;
+    color: #231F33 !important;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -1702,13 +1768,6 @@ body[data-view="assessment"] .bone-ai-fab, body[data-view="auth"] .bone-ai-fab {
    header/footer so the browser's own URL/date header is left out.
    -------------------------------------------------------------------------- */
 .print-doc { display: none; }
-@media print {
-  @page { size: A4; margin: 0; }
-  html:has(> body.printing-doc) { background: #fff !important; }
-  body.printing-doc { background: #fff !important; padding: 0 !important; margin: 0 !important; min-height: 0 !important; }
-  body.printing-doc > *:not(#printDoc) { display: none !important; }
-  body.printing-doc #printDoc { display: block; }
-}
 .print-doc { --pd-ink: #231F33; --pd-muted: #6B6580; --pd-rule: #E4E0EA; --pd-accent: #8E2C6A; --pd-soft: #F8F5F9;
   color: var(--pd-ink); font-family: var(--font-body); font-size: 10.5pt; line-height: 1.45;
   -webkit-print-color-adjust: exact; print-color-adjust: exact; }

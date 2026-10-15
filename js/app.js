@@ -6647,7 +6647,7 @@
         <button type="button" class="psx-act" onclick="BoneApp.shareProtectSafetyWhatsApp()">
           <i class="fa-brands fa-whatsapp" style="color:#25D366"></i> ${t('Share')}
         </button>
-        <button type="button" class="psx-act" onclick="BoneApp.printDocument('report')">
+        <button type="button" class="psx-act" onclick="BoneApp.printDocument('protect')">
           <i class="fa-solid fa-file-pdf" style="color:#B1315D"></i> PDF
         </button>
       </div>
@@ -7798,9 +7798,14 @@
       const d = new Date();
       d.setDate(d.getDate() - i);
       const iso = toISODate(d);
-      const diet = Math.min(5, (state.checkedDietMilestones[iso] || new Set()).size);
-      const ex = Math.min(exTarget, (state.checkedExerciseMilestones[iso] || new Set()).size);
-      const pct = Math.round(Math.min(1, (diet / 5) * 0.6 + (ex / exTarget) * 0.4) * 100);
+      const dietVal = state.checkedDietMilestones && state.checkedDietMilestones[iso];
+      const dietSet = dietVal instanceof Set ? dietVal : new Set(Array.isArray(dietVal) ? dietVal : []);
+      const exVal = state.checkedExerciseMilestones && state.checkedExerciseMilestones[iso];
+      const exSet = exVal instanceof Set ? exVal : new Set(Array.isArray(exVal) ? exVal : []);
+
+      const diet = Math.min(5, dietSet.size);
+      const ex = Math.min(exTarget, exSet.size);
+      const pct = Math.round(Math.min(1, (diet / 5) * 0.6 + (ex / (exTarget || 1)) * 0.4) * 100) || 0;
       days.push([
         `${I18N.date(d, { weekday: 'short', day: 'numeric', month: 'short' })}${i === 0 ? ` <em>(${t('today')})</em>` : ''}`,
         `${diet} / 5`, `${ex} / ${exTarget}`, `${pdBar(pct, '#8E2C6A')} ${pct}%`
@@ -7808,13 +7813,16 @@
     }
 
     const parts = [
-      ['Diet milestones', 'Meals & calcium-rich foods ticked off', score.dietPts, 40, '#D6265A'],
-      ['Exercise', 'Bone-loading moves completed', score.exPts, 30, '#8E2C6A'],
-      ['Safety & sunlight', 'Home safety check + daily sunlight', score.safePts, 20, '#4A3F7A'],
-      ['Streak bonus', `${streak} day streak`, score.streakPts, 10, '#D97706']
+      ['Diet milestones', 'Meals & calcium-rich foods ticked off', score.dietPts || 0, 40, '#D6265A'],
+      ['Exercise', 'Bone-loading moves completed', score.exPts || 0, 30, '#8E2C6A'],
+      ['Safety & sunlight', 'Home safety check + daily sunlight', score.safePts || 0, 20, '#4A3F7A'],
+      ['Streak bonus', `${streak} day streak`, score.streakPts || 0, 10, '#D97706']
     ];
 
-    const risks = (BONE_SIP_DATA.boneRiskAuditFactors || []).filter(f => state.protectRiskChecked.has(f.id));
+    const riskSet = state.protectRiskChecked instanceof Set
+      ? state.protectRiskChecked
+      : new Set(Array.isArray(state.protectRiskChecked) ? state.protectRiskChecked : []);
+    const risks = (BONE_SIP_DATA.boneRiskAuditFactors || []).filter(f => riskSet.has(f.id));
     const risk = getRiskLevel(risks.length);
     const home = homeSafetySummary();
 
@@ -7822,14 +7830,14 @@
       ${pdSection(1, 'Patient details', pdPatientHtml())}
       ${pdSection(2, 'Summary', `
         <div class="pd-kpis">
-          <div><span>Today's bone score</span><b>${score.total}<small> / 100</small></b><em>${score.tier}</em></div>
+          <div><span>Today's bone score</span><b>${score.total || 0}<small> / 100</small></b><em>${score.tier || 'Good Start'}</em></div>
           <div><span>Habit streak</span><b>${streak}<small> ${streak === 1 ? 'day' : 'days'}</small></b><em>Consecutive active days</em></div>
           <div><span>Body mass index</span><b>${isNaN(bmi) ? '–' : bmi}</b><em style="color: ${bmiCategory(bmi)[1]};">${bmiCategory(bmi)[0]}</em></div>
         </div>`)}
       ${pdSection(3, 'Score breakdown (today)', pdTable(
         ['Area', 'What it measures', 'Points', ''],
         [...parts.map(([a, m, v, max, c]) => [`<b>${a}</b>`, m, `${v} / ${max}`, pdBar((v / max) * 100, c)]),
-         ['<b>Total</b>', '', `<b>${score.total} / 100</b>`, pdBar(score.total, '#2A2540')]],
+         ['<b>Total</b>', '', `<b>${score.total || 0} / 100</b>`, pdBar(score.total || 0, '#2A2540')]],
         'pd-score'))}
       ${pdSection(4, 'Last 7 days', pdTable(['Day', 'Meals & sunlight', 'Exercises', 'Daily progress'], days, 'pd-week'), true)}
       ${pdSection(5, 'Fall-risk check', `
@@ -7857,16 +7865,94 @@
     });
   }
 
+  function protectSafetyDocHtml() {
+    const riskSet = state.protectRiskChecked instanceof Set
+      ? state.protectRiskChecked
+      : new Set(Array.isArray(state.protectRiskChecked) ? state.protectRiskChecked : []);
+    const risks = (BONE_SIP_DATA.boneRiskAuditFactors || []).filter(f => riskSet.has(f.id));
+    const risk = getRiskLevel(risks.length);
+    const home = homeSafetySummary();
+    const habits = [
+      { name: 'Wear grip shoes', desc: 'Non-skid, well-fitted footwear inside home to prevent slipping on smooth tiles or marble.' },
+      { name: 'Night lights on', desc: 'Illuminated hallways, bedrooms, and bathrooms for zero-darkness night transitions.' },
+      { name: 'Yearly eye check', desc: 'Up-to-date corrective lenses and screening for cataracts or glaucoma to maintain depth perception.' },
+      { name: 'Review medicines', desc: 'Consult your doctor for drugs causing dizziness, drowsiness, or sudden postural blood pressure drops.' },
+      { name: 'Balance practice', desc: 'Daily single-leg stance (Flamingo stand) and heel-to-toe walking to build neuromuscular agility.' },
+      { name: 'Phone within reach', desc: 'Carry or keep mobile phone at waist level so help is instantly accessible in any emergency.' }
+    ];
+
+    const body = `
+      ${pdSection(1, 'Patient & Mobility Profile', pdPatientHtml())}
+      ${pdSection(2, 'Personal Fall-Risk Warning Signs', `
+        <p class="pd-line"><b>${risks.length} of ${(BONE_SIP_DATA.boneRiskAuditFactors || []).length} warning signs noted</b> · <span class="pd-tag" style="--c: ${risk.color};">${risk.label} risk</span></p>
+        ${risks.length ? `<ul class="pd-list">${risks.map(r => `<li><b>${escapeHtml(r.text)}</b>${r.desc ? ` — ${escapeHtml(r.desc)}` : ''}</li>`).join('')}</ul>` : '<p class="pd-muted">No personal warning signs noted. Continue proactive daily habits.</p>'}`)}
+      ${pdSection(3, 'Room-by-Room Home Safety Audit', `
+        <p class="pd-line"><b>${home.safe} of ${home.total} checkpoints safe</b>${home.answered < home.total ? ` · ${home.total - home.answered} checks pending` : ''}</p>
+        ${pdTable(['Room', 'Safe Status', 'Items Requiring Action & Fixes'], home.rows.map(r => [
+          `<b>${escapeHtml(r.name)}</b>`,
+          `${r.yes} / ${r.count}`,
+          r.fixes.length ? r.fixes.map(f => `<span style="color:#B1315D;">⚠ ${escapeHtml(f)}</span>`).join('<br>') : (r.done ? '<span class="pd-muted" style="color:#1E9E62;">✔ All checks safe</span>' : '<span class="pd-muted">Not audited yet</span>')
+        ]))}`, true)}
+      ${pdSection(4, 'Daily Fall Prevention Habits', pdTable(
+        ['Habit', 'Clinical Rationale & Daily Recommendation'],
+        habits.map(h => [`<b>${escapeHtml(h.name)}</b>`, escapeHtml(h.desc)]),
+        'pd-fill'
+      ), true)}
+      ${pdSection(5, 'Action Plan for Caregivers & Doctor Discussion', `
+        <ul class="pd-list">
+          <li>Review home hazards noted above with family members to eliminate slippery rugs and dark zones.</li>
+          <li>Discuss medication-induced dizziness or unsteady balance with your treating physician.</li>
+          <li>Consider a physical therapy balance assessment or supervised strength training plan.</li>
+          <li>Ensure adequate Vitamin D3 (blood 25-OH Vitamin D > 30 ng/mL) to support muscle tone and prevent falls.</li>
+        </ul>
+        <div class="pd-write tall" style="margin-top:4mm;"><span>Physician / Physiotherapist Notes</span><i></i><i></i></div>`)}
+      <p class="pd-note">Up to 80% of fall-related bone fractures can be prevented through systematic home fall-proofing and daily balance training. Recorded via BONE SIP app.</p>`;
+
+    return pdShell({
+      title: 'Fall Prevention & Home Safety Plan',
+      intro: 'A room-by-room home hazard audit and clinical fall-prevention checklist recorded in the BONE SIP app.',
+      body
+    });
+  }
+
   function doctorSummaryDocHtml() {
-    const questions = autoDoctorQuestions().map(([, text]) => ({ text }))
-      .concat((state.doctorVisit.questions || []).map(text => ({ text: escapeHtml(text) })));
+    const checkedSet = state.strengthenDoctorChecked instanceof Set
+      ? state.strengthenDoctorChecked
+      : new Set(Array.isArray(state.strengthenDoctorChecked) ? state.strengthenDoctorChecked : []);
+
+    const checklistQuestions = (BONE_SIP_DATA.doctorReviewChecklist || [])
+      .filter(q => (checkedSet.size ? checkedSet.has(q.id) : q.checked))
+      .map(q => ({ text: tr(q.text) }));
+
+    const autoQuestions = autoDoctorQuestions().map(([, text]) => ({ text }));
+    const ownQuestions = (state.doctorVisit.questions || []).map(text => ({ text: escapeHtml(text) }));
+
+    const seen = new Set();
+    const questions = [];
+    [...checklistQuestions, ...autoQuestions, ...ownQuestions].forEach(q => {
+      const trimmed = (q.text || '').trim();
+      if (trimmed && !seen.has(trimmed.toLowerCase())) {
+        seen.add(trimmed.toLowerCase());
+        questions.push(q);
+      }
+    });
+
+    if (!questions.length) {
+      (BONE_SIP_DATA.doctorReviewChecklist || []).forEach(q => {
+        questions.push({ text: tr(q.text) });
+      });
+    }
+
     const scans = byNewest(state.scans);
     const labRow = (id, label, unit, ref) => {
       const h = labHistory(id)[0];
       return [`<b>${label}</b>`, h ? `${h.value} ${unit}` : '—', h && h.date ? fmtRecordDate(h.date) : '—', ref];
     };
     const u = state.userProfile;
-    const risks = (BONE_SIP_DATA.boneRiskAuditFactors || []).filter(f => state.protectRiskChecked.has(f.id));
+    const riskSet = state.protectRiskChecked instanceof Set
+      ? state.protectRiskChecked
+      : new Set(Array.isArray(state.protectRiskChecked) ? state.protectRiskChecked : []);
+    const risks = (BONE_SIP_DATA.boneRiskAuditFactors || []).filter(f => riskSet.has(f.id));
     const risk = getRiskLevel(risks.length);
     const home = homeSafetySummary();
     const conditions = (u.healthConditions || []).filter(c => c !== 'none')
@@ -7930,21 +8016,74 @@
     playSound('tap');
     const host = document.getElementById('printDoc');
     if (!host) return;
-    host.innerHTML = kind === 'doctor' ? doctorSummaryDocHtml() : healthReportDocHtml();
-    // Make sure the logo is ready, or it prints blank.
-    await Promise.all(Array.from(host.querySelectorAll('img')).map(img => (img.decode ? img.decode().catch(() => {}) : null)));
+
+    if (kind === 'doctor') {
+      host.innerHTML = doctorSummaryDocHtml();
+    } else if (kind === 'protect') {
+      host.innerHTML = protectSafetyDocHtml();
+    } else {
+      host.innerHTML = healthReportDocHtml();
+    }
+
+    host.setAttribute('aria-hidden', 'false');
+
+    // Ensure all embedded images (including logo) are fully resolved before print snapshot
+    const imgs = Array.from(host.querySelectorAll('img'));
+    await Promise.all(imgs.map(img => {
+      if (img.complete) return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+      return new Promise(resolve => {
+        img.onload = img.onerror = resolve;
+      });
+    }));
 
     const prevTitle = document.title;
-    // Browsers use the title as the suggested PDF file name.
-    document.title = `BONE SIP ${kind === 'doctor' ? 'Doctor Visit Summary' : 'Bone Health Report'} ${getTodayISODate()}`;
+    const docTitle = kind === 'doctor'
+      ? 'Doctor Visit Summary'
+      : (kind === 'protect' ? 'Fall Prevention & Home Safety Plan' : 'Bone Health Report');
+    document.title = `BONE SIP ${docTitle} ${getTodayISODate()}`;
+
     document.body.classList.add('printing-doc');
+
+    // Force layout recalculations so the browser rendering tree has computed geometry
+    void host.offsetHeight;
+    void document.body.offsetHeight;
+
+    // Small delay to allow the rendering thread to composite before opening the print preview modal
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 60)));
+
+    let cleanedUp = false;
     const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
       window.removeEventListener('afterprint', cleanup);
       document.title = prevTitle;
-      setTimeout(() => document.body.classList.remove('printing-doc'), 500);
+      // Keep printing-doc active long enough for Chromium background preview rasterization
+      setTimeout(() => {
+        document.body.classList.remove('printing-doc');
+        if (host) host.setAttribute('aria-hidden', 'true');
+      }, 4000);
     };
+
     window.addEventListener('afterprint', cleanup);
-    window.print();
+
+    try {
+      window.print();
+    } catch (err) {
+      console.error('Print execution error:', err);
+      cleanup();
+    }
+  }
+
+  // Ensure browser Ctrl+P or menu print never generates a blank document
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeprint', () => {
+      const host = document.getElementById('printDoc');
+      if (host && !host.innerHTML.trim()) {
+        host.innerHTML = healthReportDocHtml();
+        host.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('printing-doc');
+      }
+    });
   }
 
   // --------------------------------------------------------------------------
