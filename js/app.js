@@ -3165,7 +3165,7 @@
           </svg>
           <div class="score-ring-label"><b>${score.total}</b><span>/ 100</span></div>
         </div>
-        <div>
+        <div class="report-hero-body">
           <span class="muted-xs">${escapeHtml(who)}</span>
           <h3>${score.tier}</h3>
           <div class="hero-stats">
@@ -3757,9 +3757,9 @@
   }
 
   // --------------------------------------------------------------------------
-  // MODULE: OJAS — AI ASSISTANT
+  // MODULE: BONE BUDDY — AI ASSISTANT
   // --------------------------------------------------------------------------
-  // Ojas answers through our own /api/chat endpoint (server/assistant.js), which
+  // Bone Buddy answers through our own /api/chat endpoint (server/assistant.js), which
   // holds the Groq key, knows the whole platform and receives a short snapshot of
   // this user's plan. With no network or endpoint it falls back to the built-in
   // offline answers (generateBotResponse below).
@@ -3770,17 +3770,17 @@
 
   // {name} becomes ", Asha" (or nothing for guests).
   const CHAT_GREETINGS = {
-    en: "Namaste{name}! I'm **Ojas**, your bone-health AI assistant. Ask me about today's meals, your workout, your score or how to use BONE SIP, in English or any Indian language.",
-    hi: 'नमस्ते{name}! मैं **ओजस** हूँ, आपकी हड्डियों की सेहत का AI सहायक। आज के खाने, व्यायाम, स्कोर या BONE SIP ऐप के बारे में कुछ भी पूछिए।',
-    bn: 'নমস্কার{name}! আমি **ওজস**, আপনার হাড়ের স্বাস্থ্যের AI সহকারী। আজকের খাবার, ব্যায়াম, স্কোর বা BONE SIP অ্যাপ নিয়ে যা খুশি জিজ্ঞেস করুন।',
-    mr: 'नमस्कार{name}! मी **ओजस**, तुमच्या हाडांच्या आरोग्याचा AI सहाय्यक. आजचे जेवण, व्यायाम, स्कोअर किंवा BONE SIP ॲपबद्दल काहीही विचारा.',
-    te: 'నమస్కారం{name}! నేను **ఓజస్**, మీ ఎముకల ఆరోగ్య AI సహాయకుడు. ఈరోజు భోజనం, వ్యాయామం, స్కోర్ లేదా BONE SIP యాప్ గురించి ఏదైనా అడగండి.',
-    ta: 'வணக்கம்{name}! நான் **ஓஜஸ்**, உங்கள் எலும்பு ஆரோக்கிய AI உதவியாளர். இன்றைய உணவு, உடற்பயிற்சி, மதிப்பெண் அல்லது BONE SIP செயலி பற்றி எதையும் கேளுங்கள்.',
-    gu: 'નમસ્તે{name}! હું **ઓજસ** છું, તમારા હાડકાંના સ્વાસ્થ્યનો AI સહાયક. આજનું ભોજન, કસરત, સ્કોર કે BONE SIP એપ વિશે કંઈ પણ પૂછો.',
-    kn: 'ನಮಸ್ಕಾರ{name}! ನಾನು **ಓಜಸ್**, ನಿಮ್ಮ ಮೂಳೆ ಆರೋಗ್ಯದ AI ಸಹಾಯಕ. ಇಂದಿನ ಊಟ, ವ್ಯಾಯಾಮ, ಸ್ಕೋರ್ ಅಥವಾ BONE SIP ಆ್ಯಪ್ ಬಗ್ಗೆ ಏನು ಬೇಕಾದರೂ ಕೇಳಿ.',
-    ml: 'നമസ്കാരം{name}! ഞാൻ **ഓജസ്**, നിങ്ങളുടെ അസ്ഥി ആരോഗ്യ AI സഹായി. ഇന്നത്തെ ഭക്ഷണം, വ്യായാമം, സ്കോർ അല്ലെങ്കിൽ BONE SIP ആപ്പ് എന്നിവയെക്കുറിച്ച് എന്തും ചോദിക്കൂ.',
-    pa: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ{name}! ਮੈਂ **ਓਜਸ** ਹਾਂ, ਤੁਹਾਡੀਆਂ ਹੱਡੀਆਂ ਦੀ ਸਿਹਤ ਦਾ AI ਸਹਾਇਕ। ਅੱਜ ਦੇ ਖਾਣੇ, ਕਸਰਤ, ਸਕੋਰ ਜਾਂ BONE SIP ਐਪ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ।',
-    or: 'ନମସ୍କାର{name}! ମୁଁ **ଓଜସ**, ଆପଣଙ୍କ ହାଡ଼ ସ୍ୱାସ୍ଥ୍ୟର AI ସହାୟକ। ଆଜିର ଖାଦ୍ୟ, ବ୍ୟାୟାମ, ସ୍କୋର କିମ୍ବା BONE SIP ଆପ୍ ବିଷୟରେ ଯାହା ବି ପଚାରନ୍ତୁ।'
+    en: "Namaste{name}! I'm **Bone Buddy**, your bone-health AI assistant. Ask me about today's meals, your workout, your score or how to use BONE SIP, in English or any Indian language.",
+    hi: 'नमस्ते{name}! मैं **बोन बडी** हूँ, आपकी हड्डियों की सेहत का AI सहायक। आज के खाने, व्यायाम, स्कोर या BONE SIP ऐप के बारे में कुछ भी पूछिए।',
+    bn: 'নমস্কার{name}! আমি **বোন বাডি**, আপনার হাড়ের স্বাস্থ্যের AI সহকারী। আজকের খাবার, ব্যায়াম, স্কোর বা BONE SIP অ্যাপ নিয়ে যা খুশি জিজ্ঞেস করুন।',
+    mr: 'नमस्कार{name}! मी **बोन बडी**, तुमच्या हाडांच्या आरोग्याचा AI सहाय्यक. आजचे जेवण, व्यायाम, स्कोअर किंवा BONE SIP ॲपबद्दल काहीही विचारा.',
+    te: 'నమస్కారం{name}! నేను **బోన్ బడ్డీ**, మీ ఎముకల ఆరోగ్య AI సహాయకుడు. ఈరోజు భోజనం, వ్యాయామం, స్కోర్ లేదా BONE SIP యాప్ గురించి ఏదైనా అడగండి.',
+    ta: 'வணக்கம்{name}! நான் **போன் படி**, உங்கள் எலும்பு ஆரோக்கிய AI உதவியாளர். இன்றைய உணவு, உடற்பயிற்சி, மதிப்பெண் அல்லது BONE SIP செயலி பற்றி எதையும் கேளுங்கள்.',
+    gu: 'નમસ્તે{name}! હું **બોન બડી** છું, તમારા હાડકાંના સ્વાસ્થ્યનો AI સહાયક. આજનું ભોજન, કસરત, સ્કોર કે BONE SIP એપ વિશે કંઈ પણ પૂછો.',
+    kn: 'ನಮಸ್ಕಾರ{name}! ನಾನು **ಬೋನ್ ಬಡ್ಡೀ**, ನಿಮ್ಮ ಮೂಳೆ ಆರೋಗ್ಯದ AI ಸಹಾಯಕ. ಇಂದಿನ ಊಟ, ವ್ಯಾಯಾಮ, ಸ್ಕೋರ್ ಅಥವಾ BONE SIP ಆ್ಯಪ್ ಬಗ್ಗೆ ಏನು ಬೇಕಾದರೂ ಕೇಳಿ.',
+    ml: 'നമസ്കാരം{name}! ഞാൻ **ബോൺ ബഡ്ഡി**, നിങ്ങളുടെ അസ്ഥി ആരോഗ്യ AI സഹായി. ഇന്നത്തെ ഭക്ഷണം, വ്യായാമം, സ്കോർ അല്ലെങ്കിൽ BONE SIP ആപ്പ് എന്നിവയെക്കുറിച്ച് എന്തും ചോദിക്കൂ.',
+    pa: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ{name}! ਮੈਂ **ਬੋਨ ਬੱਡੀ** ਹਾਂ, ਤੁਹਾਡੀਆਂ ਹੱਡੀਆਂ ਦੀ ਸਿਹਤ ਦਾ AI ਸਹਾਇਕ। ਅੱਜ ਦੇ ਖਾਣੇ, ਕਸਰਤ, ਸਕੋਰ ਜਾਂ BONE SIP ਐਪ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ।',
+    or: 'ନମସ୍କାର{name}! ମୁଁ **ବୋନ୍ ବଡି**, ଆପଣଙ୍କ ହାଡ଼ ସ୍ୱାସ୍ଥ୍ୟର AI ସହାୟକ। ଆଜିର ଖାଦ୍ୟ, ବ୍ୟାୟାମ, ସ୍କୋର କିମ୍ବା BONE SIP ଆପ୍ ବିଷୟରେ ଯାହା ବି ପଚାରନ୍ତୁ।'
   };
 
   // Buttons Ojas can offer under a reply (ids come from server/assistant.js).
@@ -3855,7 +3855,7 @@
     // A fresh chat greets again in the new language; an ongoing one just continues in it.
     const onlyGreeting = (state.chatHistory || []).every(m => m.greeting);
     if (onlyGreeting) initChatbotGreeting();
-    else showToast(t('Ojas will reply in {lang}', { lang: (CHAT_LANGUAGES.find(([c]) => c === code) || [, code])[1] }), 'fa-language');
+    else showToast(t('Bone Buddy will reply in {lang}', { lang: (CHAT_LANGUAGES.find(([c]) => c === code) || [, code])[1] }), 'fa-language');
   }
 
   function renderChatContextStrip() {
@@ -3961,7 +3961,7 @@
     typingEl.id = 'chatTypingRow';
     typingEl.className = 'chat-msg-row bot';
     typingEl.innerHTML = `
-      <div class="chat-typing-indicator" aria-label="Ojas is typing">
+      <div class="chat-typing-indicator" aria-label="Bone Buddy is typing">
         <div class="chat-typing-dot"></div>
         <div class="chat-typing-dot"></div>
         <div class="chat-typing-dot"></div>
@@ -4081,11 +4081,11 @@
   // Say why the AI answer failed, so it can be fixed (wrong server, missing key, limits, offline).
   function assistantErrorNote(err) {
     const code = String(err && err.message);
-    if (location.protocol === 'file:') return 'Ojas AI needs the BONE SIP server: open http://localhost:5510 (start it with "node server/server.js 5510") instead of opening index.html as a file. Here is a quick answer for now.';
+    if (location.protocol === 'file:') return 'Bone Buddy AI needs the BONE SIP server: open http://localhost:5510 (start it with "node server/server.js 5510") instead of opening index.html as a file. Here is a quick answer for now.';
     if (/busy|too_many/.test(code)) return t("I'm answering a lot of questions right now. Here is a quick answer; please ask again in a minute for a personal one.");
-    if (/not_configured/.test(code)) return 'Ojas AI is not set up on this server yet (GROQ_API_KEY is missing). Here is a quick answer.';
+    if (/not_configured/.test(code)) return 'Bone Buddy AI is not set up on this server yet (GROQ_API_KEY is missing). Here is a quick answer.';
     if (/http_(404|405|501)/.test(code)) return 'This server has no AI endpoint (/api/chat). Run the app with "node server/server.js" or deploy it to Netlify/Vercel. Here is a quick answer.';
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) return t("You're offline, so here is a quick answer. Ojas will give personal answers again when you're back online.");
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return t("You're offline, so here is a quick answer. Bone Buddy will give personal answers again when you're back online.");
     return t("I couldn't reach my AI service just now. Here is a quick answer; please try again in a moment.");
   }
 
@@ -4326,7 +4326,7 @@
 
     // 9. PLATFORM FLOW & WHERE EVERYTHING IS
     if (text.includes('platform') || text.includes('how to use') || text.includes('where is') || text.includes('unlock') || text.includes('pillar') || text.includes('how does this platform work')) {
-      return `🌟 **How BONE SIP Works & Where Everything Is:**\n\n• **Top Header:**\n  - **BONE SIP Logo:** Tap anytime to return to the Build home.\n  - **Language Picker:** Tap the language pill to switch between English and 11 Indian languages.\n  - **Health Report Icon:** Tap the clipboard/chart icon to view your live Bone Score (0–100), 7-day trend, WhatsApp summary, and PDF report.\n  - **Profile Avatar:** Tap the person icon at top-right to edit Height, Weight, Diet, Activity, Regional cuisine, and Health/Metabolic conditions.\n\n• **Three Core Pillars (Bottom Nav):**\n  1. **Build:** Daily 3-2-1 Diet checklist (Breakfast, Lunch, Snack, Dinner, Sun D3) + 4 guided video bone-loading workouts.\n  2. **Protect:** Fall-risk assessment and 5-room home safety hazard audit.\n  3. **Strengthen:** "Ask your doctor" printable checklist and DXA T-Score interpretation guide.\n\n• **AI Guide (Ojas):** Floating button at bottom-right for 24/7 personal answers!`;
+      return `🌟 **How BONE SIP Works & Where Everything Is:**\n\n• **Top Header:**\n  - **BONE SIP Logo:** Tap anytime to return to the Build home.\n  - **Language Picker:** Tap the language pill to switch between English and 11 Indian languages.\n  - **Health Report Icon:** Tap the clipboard/chart icon to view your live Bone Score (0–100), 7-day trend, WhatsApp summary, and PDF report.\n  - **Profile Avatar:** Tap the person icon at top-right to edit Height, Weight, Diet, Activity, Regional cuisine, and Health/Metabolic conditions.\n\n• **Three Core Pillars (Bottom Nav):**\n  1. **Build:** Daily 3-2-1 Diet checklist (Breakfast, Lunch, Snack, Dinner, Sun D3) + 4 guided video bone-loading workouts.\n  2. **Protect:** Fall-risk assessment and 5-room home safety hazard audit.\n  3. **Strengthen:** "Ask your doctor" printable checklist and DXA T-Score interpretation guide.\n\n• **AI Guide (Bone Buddy):** Floating button at bottom-right for 24/7 personal answers!`;
     }
 
     // DEFAULT INTELLIGENT CLINICAL RESPONSE
@@ -6033,7 +6033,7 @@
 
       <div class="psx-actions">
         <button type="button" class="psx-act" onclick="BoneApp.askAiAboutFallSafety()">
-          <img src="assets/images/ojas-avatar.svg" alt="" width="26" height="26"> ${t('Ask Ojas')}
+          <img src="assets/images/ojas-avatar.svg" alt="" width="26" height="26"> ${t('Ask Bone Buddy')}
         </button>
         <button type="button" class="psx-act" onclick="BoneApp.shareProtectSafetyWhatsApp()">
           <i class="fa-brands fa-whatsapp" style="color:#25D366"></i> ${t('Share')}
@@ -6856,7 +6856,7 @@
             <i class="fa-brands fa-whatsapp" style="color:#25D366"></i> ${t('Share')}
           </button>
           <button type="button" class="psx-act" onclick="BoneApp.askAiAboutStrengthenTopic('doctor')">
-            <img src="assets/images/ojas-avatar.svg" alt="" width="22" height="22"> ${t('Ask Ojas')}
+            <img src="assets/images/ojas-avatar.svg" alt="" width="22" height="22"> ${t('Ask Bone Buddy')}
           </button>
         </div>
       </div>

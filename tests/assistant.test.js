@@ -30,7 +30,7 @@ const nextIp = () => `10.0.0.${++ipCounter}`;
 (async () => {
   console.log('--- Knowledge prompt ---');
   const P = _internal.KNOWLEDGE_PROMPT;
-  assert(P.includes('Ojas') && P.includes('BONE SIP'), 'Prompt introduces Ojas inside BONE SIP');
+  assert(P.includes('Bone Buddy') && P.includes('BONE SIP'), 'Prompt introduces Bone Buddy inside BONE SIP');
   assert(['BUILD', 'PROTECT', 'STRENGTHEN', '3-2-1', 'OTP', 'Add to Home Screen'].every(k => P.includes(k)), 'Prompt covers the app flow (pillars, 3-2-1, OTP, install)');
   const data = require('../js/data.js');
   assert(data.workoutLibrary.every(e => P.includes(e.name)), 'Prompt includes every filmed exercise');

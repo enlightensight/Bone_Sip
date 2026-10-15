@@ -246,7 +246,7 @@ assert(!initialChatHtml.includes('Sunita'), 'Initial chat greeting contains ZERO
 assert(!initialChatHtml.includes('Sharma'), 'Initial chat greeting contains ZERO references to "Sharma"');
 assert(!initialChatHtml.includes('9876543210'), 'Initial chat greeting contains ZERO references to dummy phone "9876543210"');
 assert(initialChatHtml.includes('Namaste! I'), 'Initial chat greeting uses no name for a new guest');
-assert(initialChatHtml.includes('Ojas'), 'Chat assistant introduces itself as Ojas');
+assert(initialChatHtml.includes('Bone Buddy'), 'Chat assistant introduces itself as Bone Buddy');
 assert(mockElements['chatContextStrip'].innerHTML.includes('Guest'), 'Chat context strip clearly shows the user as "Guest"');
 
 // Inspect Chat Context Strip
@@ -545,7 +545,7 @@ setTimeout(() => {
   assert(['Wear grip shoes', 'Night lights on', 'Yearly eye check', 'Review medicines', 'Balance practice', 'Phone within reach'].every(h => protectSafetyHtml.includes(h)),
     'Protect results show the 6 daily safety habits');
   assert(protectSafetyHtml.includes('askAiAboutFallSafety') && protectSafetyHtml.includes('shareProtectSafetyWhatsApp'),
-    'Protect results offer Ask Ojas and WhatsApp sharing');
+    'Protect results offer Ask Bone Buddy and WhatsApp sharing');
 
   BoneApp.markHazardFixed('room_bedroom', 'bed_path');
   const afterFix = mockElements['protectSafetyAnalysisCard'].innerHTML;
