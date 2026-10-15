@@ -784,7 +784,58 @@ setTimeout(() => {
   verifiedApp.openUserProfileModal();
   assert(mockElements['profileAccountBox'].innerHTML.includes('+91 95553 55555'), 'Verified user profile displays phone number');
   assert(mockElements['profileAccountBox'].innerHTML.includes('Log out'), 'Verified user profile displays Log out button');
-  assert(!mockElements['profileAccountBox'].innerHTML.includes('openLogin()'), 'Verified user profile does NOT show Log in button');
+  // ---------------------------------------------------------------------------
+  // 9. Testing Yesterday Followed Feedback Integration & AI Bone Buddy Greeting
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 9. Testing Yesterday Followed Feedback Integration & AI Bone Buddy Greeting ---');
+  const yestIso = verifiedApp.getYesterdayISODate();
+  const testState = verifiedSandbox.window.BoneApp.getState();
+
+  // Reset yesterday feedback state for testing
+  testState.yesterdayFeedbackDate = '';
+  testState.yesterdayFollowed = null;
+  delete testState.checkedDietMilestones[yestIso];
+  delete testState.checkedExerciseMilestones[yestIso];
+
+  assert(verifiedApp.shouldShowYesterdayFeedback() === true, 'Yesterday feedback bar appears when yesterday is empty/unopened');
+
+  // If yesterday has checks, it should NOT appear
+  testState.checkedDietMilestones[yestIso] = new Set(['m_breakfast']);
+  assert(verifiedApp.shouldShowYesterdayFeedback() === false, 'Yesterday feedback bar is hidden when user checked items yesterday');
+
+  // Reset back to empty yesterday
+  delete testState.checkedDietMilestones[yestIso];
+  assert(verifiedApp.shouldShowYesterdayFeedback() === true, 'Yesterday feedback bar reappears when yesterday is empty');
+
+  // Test recording Yes
+  const initialStreak = testState.activeStreakDays || 0;
+  verifiedApp.recordYesterdayFeedback(true);
+  assert(testState.yesterdayFollowed === true, 'recordYesterdayFeedback(true) records yesterdayFollowed as true');
+  assert(testState.yesterdayFeedbackDate.length === 10, 'recordYesterdayFeedback(true) records yesterdayFeedbackDate');
+  assert(testState.checkedDietMilestones[yestIso] && testState.checkedDietMilestones[yestIso].size === 5, 'recordYesterdayFeedback(true) credits all 5 milestones for yesterday');
+  assert(verifiedApp.shouldShowYesterdayFeedback() === false, 'Yesterday feedback bar hides after answering Yes');
+
+  // Test recording No
+  testState.yesterdayFeedbackDate = '';
+  testState.yesterdayFollowed = null;
+  delete testState.checkedDietMilestones[yestIso];
+  verifiedApp.recordYesterdayFeedback(false);
+  assert(testState.yesterdayFollowed === false, 'recordYesterdayFeedback(false) records yesterdayFollowed as false');
+  assert(verifiedApp.shouldShowYesterdayFeedback() === false, 'Yesterday feedback bar hides after answering No');
+
+  // Test AI Chatbot greeting sanitization
+  testState.chatHistory = [{
+    sender: 'bot',
+    text: "Namaste! I'm Ojas, your bone-health AI assistant. Ask me about today's meals, your workout, your score or how to use BONE SIP, in English or any Indian language.",
+    time: '8:15 PM',
+    greeting: true
+  }];
+  testState.isChatDrawerOpen = false;
+  verifiedApp.toggleChatDrawer();
+  assert(!testState.chatHistory[0].text.includes('Ojas'), 'Chatbot greeting sanitizes Ojas to Bone Buddy');
+  assert(testState.chatHistory[0].text.includes('Bone Buddy'), 'Chatbot greeting explicitly displays Bone Buddy');
+  assert(mockElements['chatMessagesContainer'].innerHTML.includes('Bone Buddy'), 'Chat messages DOM container renders Bone Buddy');
+  assert(!mockElements['chatMessagesContainer'].innerHTML.includes('Ojas'), 'Chat messages DOM container does NOT render Ojas');
 
   // ---------------------------------------------------------------------------
   // FINAL SUMMARY

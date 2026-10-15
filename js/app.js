@@ -131,6 +131,8 @@
     },
     checkedDietItems: {},
     activeStreakDays: 0,
+    yesterdayFollowed: null,
+    yesterdayFeedbackDate: '',
 
     // Exercise Workout Timer
     timer: {
@@ -1575,6 +1577,15 @@
     return `${yyyy}-${mm}-${dd}`;
   }
 
+  function getYesterdayISODate() {
+    const now = new Date();
+    now.setDate(now.getDate() - 1);
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   function getTodayDayName() {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return dayNames[new Date().getDay()];
@@ -1690,7 +1701,9 @@
         labs: state.labs || [],
         meds: state.meds || [],
         medTaken: state.medTaken || {},
-        doctorVisit: state.doctorVisit || { date: '', questions: [] }
+        doctorVisit: state.doctorVisit || { date: '', questions: [] },
+        yesterdayFollowed: state.yesterdayFollowed,
+        yesterdayFeedbackDate: state.yesterdayFeedbackDate || ''
       };
     },
 
@@ -1759,7 +1772,26 @@
           state.activeExerciseRoutine = data.activeExerciseRoutine;
         }
         if (typeof data.activeStreakDays === 'number') state.activeStreakDays = data.activeStreakDays;
-        if (Array.isArray(data.chatHistory)) state.chatHistory = data.chatHistory;
+        if (typeof data.yesterdayFollowed === 'boolean') state.yesterdayFollowed = data.yesterdayFollowed;
+        if (typeof data.yesterdayFeedbackDate === 'string') state.yesterdayFeedbackDate = data.yesterdayFeedbackDate;
+        if (Array.isArray(data.chatHistory)) {
+          data.chatHistory.forEach(m => {
+            if (m && typeof m.text === 'string' && /ojas|ओजस|ওজস|ఓజస్|ஓஜஸ்|ઓજસ|ಓಜಸ್|ഓജസ്|ਓਜਸ|ଓଜସ/i.test(m.text)) {
+              m.text = m.text
+                .replace(/\bOjas\b/gi, 'Bone Buddy')
+                .replace(/\bओजस\b/g, 'बोन बडी')
+                .replace(/\bওজস\b/g, 'বোন বাডি')
+                .replace(/\bఓజస్\b/g, 'బోన్ బడ్డీ')
+                .replace(/\bஓஜஸ்\b/g, 'போன் படி')
+                .replace(/\bઓજસ\b/g, 'બોન બડી')
+                .replace(/\bಓಜಸ್\b/g, 'ಬೋನ್ ಬಡ್ಡೀ')
+                .replace(/\bഓജസ്\b/g, 'ബോൺ బഡ്ഡി')
+                .replace(/\bਓਜਸ\b/g, 'ਬੋਨ ਬੱਡੀ')
+                .replace(/\bଓଜସ\b/g, 'ବୋନ୍ ବଡି');
+            }
+          });
+          state.chatHistory = data.chatHistory;
+        }
         if (typeof data.chatLanguage === 'string' && /^[a-z]{2,4}$/.test(data.chatLanguage)) state.chatLanguage = data.chatLanguage;
         if (typeof data.protectBannerDismissed === 'boolean') state.protectBannerDismissed = data.protectBannerDismissed;
         if (data.strengthenMode) state.strengthenMode = data.strengthenMode;
@@ -3796,7 +3828,30 @@
       if (!state.chatHistory || state.chatHistory.length === 0) {
         initChatbotGreeting();
       } else {
-        renderChatHistory();
+        // Sanitize any existing greeting or message in chatHistory
+        let needsSave = false;
+        state.chatHistory.forEach(m => {
+          if (m && typeof m.text === 'string' && /ojas|ओजस|ওজস|ఓజస్|ஓஜஸ்|ઓજસ|ಓಜಸ್|ഓജസ്|ਓਜਸ|ଓଜସ/i.test(m.text)) {
+            m.text = m.text
+              .replace(/\bOjas\b/gi, 'Bone Buddy')
+              .replace(/\bओजस\b/g, 'बोन बडी')
+              .replace(/\bওজস\b/g, 'বোন বাডি')
+              .replace(/\bఓజస్\b/g, 'బోన్ బడ్డీ')
+              .replace(/\bஓஜஸ்\b/g, 'போன் படி')
+              .replace(/\bઓજસ\b/g, 'બોન બડી')
+              .replace(/\bಓಜಸ್\b/g, 'ಬೋನ್ ಬಡ್ಡೀ')
+              .replace(/\bഓജസ്\b/g, 'ബോൺ ബഡ്ഡി')
+              .replace(/\bਓਜਸ\b/g, 'ਬੋਨ ਬੱਡੀ')
+              .replace(/\bଓଜସ\b/g, 'ବୋନ୍ ବଡି');
+            needsSave = true;
+          }
+        });
+        if (state.chatHistory.length === 1 && state.chatHistory[0].greeting) {
+          initChatbotGreeting();
+        } else {
+          if (needsSave) BoneDB.save();
+          renderChatHistory();
+        }
       }
     } else {
       drawer.style.display = 'none';
@@ -3918,9 +3973,10 @@
         ? msg.actions.filter(id => ASSISTANT_ACTIONS[id]).map(id => `
             <button type="button" class="chat-action-btn" onclick="BoneApp.runAssistantAction('${id}')"><i class="fa-solid ${ASSISTANT_ACTIONS[id].icon}"></i> ${ASSISTANT_ACTIONS[id].label}</button>`).join('')
         : '';
+      const cleanText = (msg.text || '').replace(/\bOjas\b/gi, 'Bone Buddy');
       return `
         <div class="chat-msg-row ${sender}">
-          <div class="chat-bubble ${sender}">${formatChatText(msg.text)}</div>
+          <div class="chat-bubble ${sender}">${formatChatText(cleanText)}</div>
           ${actions ? `<div class="chat-actions">${actions}</div>` : ''}
           <span class="chat-msg-time">${escapeHtml(msg.time)}</span>
         </div>`;
@@ -4454,6 +4510,9 @@
     // 5c. Daily Routine Push Notifications Banner
     renderDietReminderBanner();
 
+    // 5d. Yesterday Plan Followed Feedback Prompt
+    renderYesterdayFeedbackBar();
+
     // 6. Meal cards & Clinical Guidance Banner
     const guidanceContainer = document.getElementById('clinicalDietGuidanceContainer');
     if (guidanceContainer) {
@@ -4585,14 +4644,109 @@
     });
   }
 
+  function shouldShowYesterdayFeedback() {
+    const todayISO = getTodayISODate();
+    // 1. Never show if already answered today
+    if (state.yesterdayFeedbackDate === todayISO) {
+      return false;
+    }
+
+    const yesterdayISO = getYesterdayISODate();
+
+    // 2. Did the user check anything yesterday?
+    const yestDiet = state.checkedDietMilestones[yesterdayISO];
+    const dietCount = yestDiet ? (typeof yestDiet.size === 'number' ? yestDiet.size : (Array.isArray(yestDiet) ? yestDiet.length : 0)) : 0;
+    const yestEx = state.checkedExerciseMilestones[yesterdayISO];
+    const exCount = yestEx ? (typeof yestEx.size === 'number' ? yestEx.size : (Array.isArray(yestEx) ? yestEx.length : 0)) : 0;
+
+    // If yesterday was NOT empty (user was active and checked something), do not show
+    if (dietCount > 0 || exCount > 0) {
+      return false;
+    }
+
+    // 3. If yesterday was already marked complete, do not show
+    if (isDayComplete(yesterdayISO)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function renderYesterdayFeedbackBar() {
+    const bar = document.getElementById('yesterdayFeedbackBar');
+    if (!bar) return;
+    if (shouldShowYesterdayFeedback()) {
+      bar.style.display = 'flex';
+      bar.classList.remove('hiding');
+      const yesBtn = bar.querySelector('.feedback-btn.yes');
+      const noBtn = bar.querySelector('.feedback-btn.no');
+      if (yesBtn) {
+        yesBtn.disabled = false;
+        yesBtn.classList.remove('active');
+      }
+      if (noBtn) {
+        noBtn.disabled = false;
+        noBtn.classList.remove('active');
+      }
+    } else {
+      bar.style.display = 'none';
+    }
+  }
+
   function recordYesterdayFeedback(isYes) {
     playSound(isYes ? 'success' : 'tap');
+    const todayISO = getTodayISODate();
+    const yesterdayISO = getYesterdayISODate();
+
     state.yesterdayFollowed = isYes;
-    BoneDB.save();
+    state.yesterdayFeedbackDate = todayISO;
+
+    const bar = document.getElementById('yesterdayFeedbackBar');
+    if (bar) {
+      const yesBtn = bar.querySelector('.feedback-btn.yes');
+      const noBtn = bar.querySelector('.feedback-btn.no');
+      if (yesBtn) yesBtn.classList.toggle('active', isYes);
+      if (noBtn) noBtn.classList.toggle('active', !isYes);
+      bar.querySelectorAll('.feedback-btn').forEach(b => b.disabled = true);
+    }
+
     if (isYes) {
-      showToast("🎉 Wonderful! Consistency is the #1 driver of bone density wealth.", "fa-thumbs-up");
+      // 1. Credit yesterday's 5 diet boosters
+      if (!(state.checkedDietMilestones[yesterdayISO] instanceof Set)) {
+        state.checkedDietMilestones[yesterdayISO] = new Set();
+      }
+      const slots = ['m_breakfast', 'm_lunch', 'm_snack', 'm_dinner', 'm_sun_d3'];
+      slots.forEach(s => state.checkedDietMilestones[yesterdayISO].add(s));
+
+      // 2. Mark meal item checkboxes as checked for yesterday
+      if (!state.checkedDietItems) state.checkedDietItems = {};
+      if (!state.checkedDietItems[yesterdayISO]) state.checkedDietItems[yesterdayISO] = {};
+      slots.forEach(s => {
+        state.checkedDietItems[yesterdayISO][s] = [0, 1, 2, 3];
+      });
+
+      // 3. Mark day for cloud sync
+      markDayForSync(yesterdayISO);
+
+      // 4. Update active streak
+      updateActiveStreak();
+
+      showToast("🎉 Wonderful! Yesterday's plan logged & streak preserved 🔥", "fa-thumbs-up");
     } else {
       showToast("💡 No worries! Today is a fresh opportunity to invest in your bone bank.", "fa-heart");
+    }
+
+    BoneDB.save();
+
+    if (bar) {
+      bar.classList.add('hiding');
+      setTimeout(() => {
+        bar.style.display = 'none';
+        bar.classList.remove('hiding');
+        renderBuildDietView();
+      }, 400);
+    } else {
+      renderBuildDietView();
     }
   }
 
@@ -7637,6 +7791,7 @@
 
   // Public API exposure for DOM Event Handlers
   window.BoneApp = {
+    getState: () => state,
     startOnboardingTour,
     skipOnboarding,
     openLanguagePicker,
@@ -7755,6 +7910,9 @@
     cycleSlotMeal,
     filterMealSlotView,
     recordYesterdayFeedback,
+    getYesterdayISODate,
+    shouldShowYesterdayFeedback,
+    renderYesterdayFeedbackBar,
     selectPrefDiet,
     selectPrefActivity,
     selectPrefRegion,

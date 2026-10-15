@@ -4981,6 +4981,13 @@ body.portal-locked main.app-container {
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 24px;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.yesterday-feedback-bar.hiding {
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
 }
 
 .feedback-question {
@@ -5009,8 +5016,10 @@ body.portal-locked main.app-container {
   color: #FFFFFF;
 }
 
-.feedback-btn.yes:hover {
+.feedback-btn.yes:hover,
+.feedback-btn.yes.active {
   background: #B1315D;
+  box-shadow: 0 2px 8px rgba(214, 38, 90, 0.3);
 }
 
 .feedback-btn.no {
@@ -5019,9 +5028,16 @@ body.portal-locked main.app-container {
   color: #6B6580;
 }
 
-.feedback-btn.no:hover {
+.feedback-btn.no:hover,
+.feedback-btn.no.active {
   border-color: #8E2C6A;
   color: #8E2C6A;
+  background: #F8F5FC;
+}
+
+.feedback-btn:disabled {
+  opacity: 0.8;
+  cursor: default;
 }
 
 /* 7. Bottom-Sheet / Clean Modal (matching Image 3 & Image 4) */
