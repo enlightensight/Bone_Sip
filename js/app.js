@@ -5008,7 +5008,9 @@
     const filterPills = document.querySelectorAll('#dietSlotFilterPills .slot-filter-pill');
     if (filterPills && filterPills.length) {
       filterPills.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.slot === activeSlot);
+        const isActive = btn.dataset.slot === activeSlot;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
       });
     }
 
@@ -5113,7 +5115,9 @@
     const targetSlot = (slotKey === 'all' || !slotKey) ? 'm_sun_d3' : slotKey;
     state.activeSlotFilter = targetSlot;
     document.querySelectorAll('#dietSlotFilterPills .slot-filter-pill').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.slot === targetSlot);
+      const isActive = btn.dataset.slot === targetSlot;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
     document.querySelectorAll('#dietMilestonesList .meal-card').forEach(card => {
       card.style.display = (card.dataset.slotId === targetSlot) ? '' : 'none';

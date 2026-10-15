@@ -4556,9 +4556,10 @@ body.portal-locked main.app-container {
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
-  padding: 2px 2px 14px 2px;
-  margin-bottom: 16px;
+  padding: 4px 2px 14px 2px;
+  margin-bottom: 12px;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
 .meal-slot-filter-strip::-webkit-scrollbar {
@@ -4566,31 +4567,101 @@ body.portal-locked main.app-container {
 }
 
 .slot-filter-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   background: #FFFFFF;
   border: 1.5px solid #E7E3EF;
   border-radius: 50px;
-  padding: 8px 18px;
-  font-size: 0.84rem;
-  font-weight: 600;
+  padding: 10px 16px;
+  min-height: 44px;
+  font-family: var(--font-body, 'Outfit', sans-serif);
+  font-size: 0.92rem;
+  font-weight: 700;
   color: #4A4560;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(42, 37, 64, 0.04);
 }
 
-.slot-filter-pill:hover {
-  border-color: #D6265A;
-  color: #D6265A;
+.slot-filter-pill img {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  object-fit: contain;
+  vertical-align: middle;
+  transition: transform 0.2s ease;
+}
+
+.slot-filter-pill:hover:not(.active) {
+  border-color: #B4AECA;
+  color: #2A2540;
   background: #FAF9FC;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(42, 37, 64, 0.08);
+}
+
+.slot-filter-pill:active {
+  transform: scale(0.98);
 }
 
 .slot-filter-pill.active {
-  background: #D6265A;
-  border-color: #D6265A;
-  color: #FFFFFF;
+  background: var(--brand-navy, #2A2540) !important;
+  border-color: var(--brand-navy, #2A2540) !important;
+  color: #FFFFFF !important;
   font-weight: 800;
-  box-shadow: 0 2px 8px rgba(214, 38, 90, 0.2);
+  box-shadow: 0 4px 14px rgba(42, 37, 64, 0.22);
+  transform: translateY(-1px);
+}
+
+.slot-filter-pill.active img {
+  transform: scale(1.08);
+}
+
+@media (min-width: 520px) {
+  .meal-slot-filter-strip {
+    gap: 10px;
+    overflow-x: visible;
+    padding: 4px 0 16px;
+    margin-bottom: 16px;
+  }
+
+  .slot-filter-pill {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 12px 14px;
+    min-height: 48px;
+    font-size: 0.98rem;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(42, 37, 64, 0.05);
+  }
+
+  .slot-filter-pill img {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (min-width: 768px) {
+  .meal-slot-filter-strip {
+    gap: 12px;
+  }
+
+  .slot-filter-pill {
+    padding: 13px 16px;
+    min-height: 50px;
+    font-size: 1.02rem;
+    gap: 9px;
+  }
+
+  .slot-filter-pill img {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 /* 4. Simplified 6-Nutrient Bone Synergy Matrix (Red box fix from Image 1) */
