@@ -3777,9 +3777,12 @@
   // --------------------------------------------------------------------------
   const LOCALIZED_PWA_INSTALL_PROMPT = {
     en: {
-      title: "Install BONE SIP & Add Shortcut",
+      title: "Install and create shortcut",
       desc: "Add BONE SIP directly to your mobile home screen for 1-tap access, daily routine reminders & fast offline loading.",
-      btnInstall: "Install & Add Shortcut",
+      btnInstall: "Install",
+      subInstall: "Direct home screen shortcut · Fast & offline",
+      btnShortcut: "Create shortcut",
+      subShortcut: "Shortcuts open in Chrome",
       btnLater: "Maybe later",
       perk1: "Direct 1-tap launch from home screen",
       perk2: "Daily sunbath, meal & exercise reminders",
@@ -3792,9 +3795,12 @@
       barBtn: "Install"
     },
     hi: {
-      title: "BONE SIP इंस्टॉल करें और शॉर्टकट जोड़ें",
+      title: "Install and create shortcut",
       desc: "1-टैप एक्सेस, दैनिक रूटीन रिमाइंडर और तेज़ लोडिंग के लिए BONE SIP को सीधे अपनी मोबाइल होम स्क्रीन पर जोड़ें।",
-      btnInstall: "इंस्टॉल करें और शॉर्टकट जोड़ें",
+      btnInstall: "इंस्टॉल करें (Install)",
+      subInstall: "सीधा होम स्क्रीन शॉर्टकट · तेज़ और ऑफलाइन",
+      btnShortcut: "शॉर्टकट बनाएं (Create shortcut)",
+      subShortcut: "Chrome में शॉर्टकट खुलता है",
       btnLater: "बाद में",
       perk1: "होम स्क्रीन से 1-टैप में तुरंत खोलें",
       perk2: "दैनिक धूप, भोजन और व्यायाम रिमाइंडर",
@@ -3807,9 +3813,12 @@
       barBtn: "इंस्टॉल करें"
     },
     bn: {
-      title: "BONE SIP ইনস্টল করুন ও শর্টকাট যোগ করুন",
+      title: "Install and create shortcut",
       desc: "১-ট্যাপ অ্যাক্সেস, দৈনিক রুটিন রিমাইন্ডার এবং দ্রুত লোডিংয়ের জন্য BONE SIP সরাসরি আপনার হোম স্ক্রিনে যুক্ত করুন।",
-      btnInstall: "ইনস্টল করুন ও শর্টকাট যোগ করুন",
+      btnInstall: "ইনস্টল করুন (Install)",
+      subInstall: "হোম স্ক্রিন শর্টকাট · দ্রুত এবং অফলাইন",
+      btnShortcut: "শর্টকাট তৈরি করুন (Create shortcut)",
+      subShortcut: "Chrome-এ শর্টকাট খুলবে",
       btnLater: "পরে",
       perk1: "হোম স্ক্রিন থেকে ১-ট্যাপে সরাসরি খুলুন",
       perk2: "রোজ সকালের রোদ, খাবার ও ব্যায়াম রিমাইন্ডার",
@@ -3822,9 +3831,12 @@
       barBtn: "ইনস্টল করুন"
     },
     mr: {
-      title: "BONE SIP इन्स्टॉल करा आणि शॉर्टकट जोडा",
+      title: "Install and create shortcut",
       desc: "१-टॅप ॲक्सेस, दैनिक रूटीन रिमाइंडर्स आणि जलद लोडिंगसाठी BONE SIP थेट तुमच्या मोबाइल होम स्क्रीनवर जोडा.",
-      btnInstall: "इन्स्टॉल करा आणि शॉर्टकट जोडा",
+      btnInstall: "इन्स्टॉल करा (Install)",
+      subInstall: "थेट होम स्क्रीन शॉर्टकट · जलद आणि ऑफलाइन",
+      btnShortcut: "शॉर्टकट तयार करा (Create shortcut)",
+      subShortcut: "Chrome मध्ये शॉर्टकट उघडतो",
       btnLater: "नंतर",
       perk1: "होम स्क्रीनवरून १-टॅपमध्ये त्वरित सुरू करा",
       perk2: "दैनिक ऊन, आहार व व्यायामाचे रिमाइंडर्स",
@@ -3837,9 +3849,12 @@
       barBtn: "इन्स्टॉल करा"
     },
     te: {
-      title: "BONE SIP ఇన్‌స్టాల్ చేసి షార్ట్‌కట్ జోడించండి",
+      title: "Install and create shortcut",
       desc: "1-ట్యాప్ యాక్సెస్, రోజువారీ రొటీన్ రిమైండర్‌లు మరియు వేగవంతమైన లోడింగ్ కోసం BONE SIPని మీ హోమ్ స్క్రీన్‌కు జోడించండి.",
-      btnInstall: "ఇన్‌స్టాల్ చేసి షార్ట్‌కట్ జోడించండి",
+      btnInstall: "ఇన్‌స్టాల్ చేయండి (Install)",
+      subInstall: "నేరుగా హోమ్ స్క్రీన్ షార్ట్‌కట్ · వేగంగా మరియు ఆఫ్‌లైన్",
+      btnShortcut: "షార్ట్‌కట్ సృష్టించండి (Create shortcut)",
+      subShortcut: "షార్ట్‌కట్‌లు Chrome లో తెరవబడతాయి",
       btnLater: "తర్వాత",
       perk1: "హోమ్ స్క్రీన్ నుండి 1-ట్యాప్‌తో తెరవండి",
       perk2: "రోజువారీ ఎండ, ఆహారం & వ్యాయామ రిమైండర్‌లు",
@@ -3852,9 +3867,12 @@
       barBtn: "ఇన్‌స్టాల్ చేయండి"
     },
     ta: {
-      title: "BONE SIP நிறுவி குறுக்குவழியைச் சேர்க்கவும்",
+      title: "Install and create shortcut",
       desc: "1-தட்டல் அணுகல், தினசரி நினைவூட்டல்கள் மற்றும் விரைவான ஏற்றுதலுக்கு BONE SIP பயன்பாட்டை உங்கள் முகப்புத் திரையில் சேர்க்கவும்.",
-      btnInstall: "நிறுவி குறுக்குவழியைச் சேர்க்கவும்",
+      btnInstall: "நிறுவவும் (Install)",
+      subInstall: "நேரடி முகப்புத் திரை குறுக்குவழி · விரைவான மற்றும் ஆஃப்லைன்",
+      btnShortcut: "குறுக்குவழியை உருவாக்கவும் (Create shortcut)",
+      subShortcut: "Chrome இல் குறுக்குவழி திறக்கும்",
       btnLater: "பின்னர்",
       perk1: "முகப்புத் திரையிலிருந்து 1-தட்டலில் திறக்கவும்",
       perk2: "தினசரி வெயில், உணவு மற்றும் உடற்பயிற்சி நினைவூட்டல்கள்",
@@ -3867,9 +3885,12 @@
       barBtn: "நிறுவவும்"
     },
     gu: {
-      title: "BONE SIP ઇન્સ્ટોલ કરો અને શોર્ટકટ ઉમેરો",
+      title: "Install and create shortcut",
       desc: "1-ટેપ એક્સેસ, દૈનિક રૂટિન રિમાઇન્ડર્સ અને ઝડપી લોડિંગ માટે BONE SIP સીધું તમારી મોબાઇલ હોમ સ્ક્રીન પર ઉમેરો.",
-      btnInstall: "ઇન્સ્ટોલ કરો અને શોર્ટકટ ઉમેરો",
+      btnInstall: "ઇન્સ્ટોલ કરો (Install)",
+      subInstall: "સીધો હોમ સ્ક્રીન શોર્ટકટ · ઝડપી અને ઑફલાઇન",
+      btnShortcut: "શોર્ટકટ બનાવો (Create shortcut)",
+      subShortcut: "શોર્ટકટ Chrome માં ખુલે છે",
       btnLater: "પછી",
       perk1: "હોમ સ્ક્રીન પરથી 1-ટેપમાં ખોલો",
       perk2: "રોજ સવારનો તડકો, ખોરાક અને કસરત રિમાઇન્ડર્સ",
@@ -3882,9 +3903,12 @@
       barBtn: "ઇન્સ્ટોલ કરો"
     },
     kn: {
-      title: "BONE SIP ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ ಮತ್ತು ಶಾರ್ಟ್‌ಕಟ್ ಸೇರಿಸಿ",
+      title: "Install and create shortcut",
       desc: "1-ಟ್ಯಾಪ್ ಪ್ರವೇಶ, ದೈನಂದಿನ ದಿನಚರಿ ಜ್ಞಾಪನೆಗಳು ಮತ್ತು ವೇಗದ ಲೋಡಿಂಗ್‌ಗಾಗಿ BONE SIP ಅನ್ನು ನಿಮ್ಮ ಮೊಬೈಲ್ ಮುಖಪುಟ ಪರದೆಗೆ ಸೇರಿಸಿ.",
-      btnInstall: "ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ ಮತ್ತು ಶಾರ್ಟ್‌ಕಟ್ ಸೇರಿಸಿ",
+      btnInstall: "ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ (Install)",
+      subInstall: "ನೇರ ಮುಖಪುಟ ಶಾರ್ಟ್‌ಕಟ್ · ವೇಗದ ಮತ್ತು ಆಫ್‌ಲೈನ್",
+      btnShortcut: "ಶಾರ್ಟ್‌ಕಟ್ ರಚಿಸಿ (Create shortcut)",
+      subShortcut: "ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು Chrome ನಲ್ಲಿ ತೆರೆಯುತ್ತವೆ",
       btnLater: "ನಂತರ",
       perk1: "ಮುಖಪುಟದಿಂದ 1-ಟ್ಯಾಪ್‌ನಲ್ಲಿ ಸುಲಭ ಪ್ರವೇಶ",
       perk2: "ದೈನಂದಿನ ಬಿಸಿಲು, ಆಹಾರ ಮತ್ತು ವ್ಯಾಯಾಮ ಜ್ಞಾಪನೆಗಳು",
@@ -3897,9 +3921,12 @@
       barBtn: "ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ"
     },
     ml: {
-      title: "BONE SIP ഇൻസ്റ്റാൾ ചെയ്ത് കുറുക്കുവഴി ചേർക്കുക",
+      title: "Install and create shortcut",
       desc: "1-ടാപ്പ് ആക്‌സസ്, പ്രതിദിന ഓർമ്മപ്പെടുത്തലുകൾ, വേഗത്തിലുള്ള ലോഡിംഗ് എന്നിവയ്ക്കായി BONE SIP നിങ്ങളുടെ ഹോം സ്ക്രീനിൽ ചേർക്കുക.",
-      btnInstall: "ഇൻസ്റ്റാൾ ചെയ്ത് കുറുക്കുവഴി ചേർക്കുക",
+      btnInstall: "ഇൻസ്റ്റാൾ ചെയ്യുക (Install)",
+      subInstall: "നേരിട്ടുള്ള ഹോം സ്ക്രീൻ കുറുക്കുവഴി · വേഗതയുള്ളതും ഓഫ്‌ലൈനും",
+      btnShortcut: "കുറുക്കുവഴി ഉണ്ടാക്കുക (Create shortcut)",
+      subShortcut: "Chrome-ൽ കുറുക്കുവഴി തുറക്കും",
       btnLater: "പിന്നെ",
       perk1: "ഹോം സ്ക്രീനിൽ നിന്ന് 1-ടാപ്പിൽ വേഗത്തിൽ തുറക്കാം",
       perk2: "ദിവസേനയുള്ള വെയിൽ, ഭക്ഷണം, വ്യായാമ ഓർമ്മപ്പെടുത്തലുകൾ",
@@ -3912,9 +3939,12 @@
       barBtn: "ഇൻസ്റ്റാൾ ചെയ്യുക"
     },
     pa: {
-      title: "BONE SIP ਇੰਸਟਾਲ ਕਰੋ ਅਤੇ ਸ਼ਾਰਟਕੱਟ ਜੋੜੋ",
+      title: "Install and create shortcut",
       desc: "1-ਟੈਪ ਐਕਸੈਸ, ਰੋਜ਼ਾਨਾ ਰੁਟੀਨ ਰੀਮਾਈਂਡਰ ਅਤੇ ਤੇਜ਼ ਲੋਡਿੰਗ ਲਈ BONE SIP ਨੂੰ ਸਿੱਧਾ ਆਪਣੀ ਮੋਬਾਈਲ ਹੋਮ ਸਕ੍ਰੀਨ 'ਤੇ ਜੋੜੋ।",
-      btnInstall: "ਇੰਸਟਾਲ ਕਰੋ ਅਤੇ ਸ਼ਾਰਟਕੱਟ ਜੋੜੋ",
+      btnInstall: "ਇੰਸਟਾਲ ਕਰੋ (Install)",
+      subInstall: "ਸਿੱਧਾ ਹੋਮ ਸਕ੍ਰੀਨ ਸ਼ਾਰਟਕੱਟ · ਤੇਜ਼ ਅਤੇ ਔਫਲਾਈਨ",
+      btnShortcut: "ਸ਼ਾਰਟਕੱਟ ਬਣਾਓ (Create shortcut)",
+      subShortcut: "Chrome ਵਿੱਚ ਸ਼ਾਰਟਕੱਟ ਖੁੱਲ੍ਹਦਾ ਹੈ",
       btnLater: "ਬਾਅਦ ਵਿੱਚ",
       perk1: "ਹੋਮ ਸਕ੍ਰੀਨ ਤੋਂ 1-ਟੈਪ ਵਿੱਚ ਤੁਰੰਤ ਖੋਲ੍ਹੋ",
       perk2: "ਰੋਜ਼ਾਨਾ ਧੁੱਪ, ਖੁਰਾਕ ਅਤੇ ਕਸਰਤ ਰੀਮਾਈਂਡਰ",
@@ -3927,9 +3957,12 @@
       barBtn: "ਇੰਸਟਾਲ ਕਰੋ"
     },
     or: {
-      title: "BONE SIP ଇନଷ୍ଟଲ୍ କରନ୍ତୁ ଏବଂ ସର୍ଟକଟ୍ ଯୋଡ଼ନ୍ତୁ",
+      title: "Install and create shortcut",
       desc: "୧-ଟ୍ୟାପ୍ ପ୍ରବେଶ, ଦୈନିକ ରୁଟିନ୍ ରିମାଇଣ୍ଡର ଏବଂ ଦ୍ରୁତ ଲୋଡିଂ ପାଇଁ BONE SIP କୁ ସିଧାସଳଖ ଆପଣଙ୍କ ମୋବାଇଲ୍ ହୋମ୍ ସ୍କ୍ରିନରେ ଯୋଡ଼ନ୍ତୁ।",
-      btnInstall: "ଇନଷ୍ଟଲ୍ କରନ୍ତୁ ଏବଂ ସର୍ଟକଟ୍ ଯୋଡ଼ନ୍ତୁ",
+      btnInstall: "ଇନଷ୍ଟଲ୍ କରନ୍ତୁ (Install)",
+      subInstall: "ସିଧାସଳଖ ହୋମ୍ ସ୍କ୍ରିନ୍ ସର୍ଟକଟ୍ · ଦ୍ରୁତ ଏବଂ ଅଫଲାଇନ୍",
+      btnShortcut: "ସର୍ଟକଟ୍ ତିଆରି କରନ୍ତୁ (Create shortcut)",
+      subShortcut: "Chrome ରେ ସର୍ଟକଟ୍ ଖୋଲିବ",
       btnLater: "ପରେ",
       perk1: "ହୋମ୍ ସ୍କ୍ରିନରୁ ୧-ଟ୍ୟାପରେ ସହଜରେ ଖୋଲନ୍ତୁ",
       perk2: "ଦୈନିକ ଖରା, ଖାଦ୍ୟ ଓ ବ୍ୟାୟାମ ରିମାଇଣ୍ଡର",
@@ -3942,9 +3975,12 @@
       barBtn: "ଇନଷ୍ଟଲ୍ କରନ୍ତୁ"
     },
     as: {
-      title: "BONE SIP ইনষ্টল কৰক আৰু শ্বৰ্টকাট যোগ কৰক",
+      title: "Install and create shortcut",
       desc: "১-টেপ এক্সেছ, দৈনিক ৰুটিন ৰিমাইণ্ডাৰ আৰু দ্ৰুত ল’ডিংৰ বাবে BONE SIP পোনপটীয়াকৈ আপোনাৰ মোবাইলৰ হোম স্ক্ৰীণত যোগ কৰক।",
-      btnInstall: "ইনষ্টল কৰক আৰু শ্বৰ্টকাট যোগ কৰক",
+      btnInstall: "ইনষ্টল কৰক (Install)",
+      subInstall: "পোনপটীয়া হোম স্ক্ৰীণ শ্বৰ্টকাট · দ্ৰুত আৰু অফলাইন",
+      btnShortcut: "শ্বৰ্টকাট তৈয়াৰ কৰক (Create shortcut)",
+      subShortcut: "Chrome ত শ্বৰ্টকাট খোল খাব",
       btnLater: "পিছত",
       perk1: "হোম স্ক্ৰীণৰ পৰা ১-টেপত সহজে খোলক",
       perk2: "দৈনিক ৰ’দ, আহাৰ আৰু ব্যায়ামৰ ৰিমাইণ্ডাৰ",
@@ -3960,9 +3996,6 @@
 
   function isAppInstalled() {
     if (typeof window === 'undefined') return false;
-    try {
-      if (localStorage.getItem('bonesip_pwa_installed') === 'true') return true;
-    } catch (_) {}
     const nav = (typeof navigator !== 'undefined' ? navigator : (typeof window !== 'undefined' && window.navigator ? window.navigator : null));
     const isStandalone = (
       (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
@@ -4010,18 +4043,24 @@
     const perk2El = document.getElementById('pwaPerk2');
     const perk3El = document.getElementById('pwaPerk3');
     const btnLabelEl = document.getElementById('pwaInstallBtnLabel');
+    const btnSubEl = document.getElementById('pwaInstallBtnSub');
+    const btnShortcutLabelEl = document.getElementById('pwaShortcutBtnLabel');
+    const btnShortcutSubEl = document.getElementById('pwaShortcutBtnSub');
     const btnLaterEl = document.getElementById('pwaInstallLaterLabel');
     const floatTitleEl = document.getElementById('pwaFloatTitle');
     const floatSubEl = document.getElementById('pwaFloatSub');
     const floatBtnEl = document.getElementById('pwaFloatBtnLabel');
 
-    if (titleEl) titleEl.textContent = copy.title;
+    if (titleEl) titleEl.textContent = copy.title || 'Install and create shortcut';
     if (descEl) descEl.textContent = copy.desc;
     if (perk1El) perk1El.textContent = copy.perk1;
     if (perk2El) perk2El.textContent = copy.perk2;
     if (perk3El) perk3El.textContent = copy.perk3;
-    if (btnLabelEl) btnLabelEl.textContent = copy.btnInstall;
-    if (btnLaterEl) btnLaterEl.textContent = copy.btnLater;
+    if (btnLabelEl) btnLabelEl.textContent = copy.btnInstall || 'Install';
+    if (btnSubEl) btnSubEl.textContent = copy.subInstall || 'Direct home screen shortcut · Fast & offline';
+    if (btnShortcutLabelEl) btnShortcutLabelEl.textContent = copy.btnShortcut || 'Create shortcut';
+    if (btnShortcutSubEl) btnShortcutSubEl.textContent = copy.subShortcut || 'Shortcuts open in Chrome';
+    if (btnLaterEl) btnLaterEl.textContent = copy.btnLater || 'Maybe later';
     if (floatTitleEl) floatTitleEl.textContent = 'BONE SIP';
     if (floatSubEl) floatSubEl.textContent = copy.barText;
     if (floatBtnEl) floatBtnEl.textContent = copy.barBtn;
@@ -4052,20 +4091,6 @@
   function showDirectInstallPrompt(force = false) {
     if (isAppInstalled()) return;
 
-    if (!force) {
-      try {
-        const dismissedAt = localStorage.getItem('bonesip_pwa_install_dismissed');
-        if (dismissedAt) {
-          const hoursAgo = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60);
-          if (hoursAgo < 24) {
-            // Dismissed recently: show subtle floating bar instead
-            showFloatingInstallBar();
-            return;
-          }
-        }
-      } catch (_) {}
-    }
-
     const modal = document.getElementById('pwaInstallModal');
     if (!modal) return;
 
@@ -4081,14 +4106,13 @@
       modal.style.display = 'none';
       modal.classList.remove('active');
     }
-
     try {
       localStorage.setItem('bonesip_pwa_install_dismissed', Date.now().toString());
     } catch (_) {}
 
-    // Show floating bar on mobile so user still has an easy shortcut trigger
+    // Show floating bar on mobile so user still has an easy shortcut trigger if needed
     if (isMobileDevice() && !isAppInstalled()) {
-      setTimeout(showFloatingInstallBar, 800);
+      setTimeout(showFloatingInstallBar, 1000);
     }
   }
 
@@ -4104,13 +4128,21 @@
       return;
     }
 
+    if (!window.deferredInstallPrompt) {
+      // Allow brief window if prompt event is dispatching
+      await new Promise(r => {
+        const handler = () => { window.removeEventListener('pwa-prompt-available', handler); r(); };
+        window.addEventListener('pwa-prompt-available', handler, { once: true });
+        setTimeout(r, 1000);
+      });
+    }
+
     if (window.deferredInstallPrompt) {
       const promptEvent = window.deferredInstallPrompt;
       try {
         promptEvent.prompt();
         const choiceResult = await promptEvent.userChoice;
         if (choiceResult && choiceResult.outcome === 'accepted') {
-          try { localStorage.setItem('bonesip_pwa_installed', 'true'); } catch (_) {}
           const modal = document.getElementById('pwaInstallModal');
           if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
           hideFloatingInstallBar();
@@ -4154,19 +4186,31 @@
   function initPwaInstallPrompt() {
     if (typeof window === 'undefined') return;
 
-    window.addEventListener('pwa-prompt-available', (e) => {
-      window.deferredInstallPrompt = e.detail;
+    // Purge legacy blocking keys so the popup is never blocked for returning browser users
+    try {
+      localStorage.removeItem('bonesip_pwa_installed');
+      localStorage.removeItem('bonesip_pwa_install_dismissed');
+    } catch (_) {}
+
+    const onPromptAvailable = (promptEvt) => {
+      window.deferredInstallPrompt = promptEvt;
       updatePwaInstallUi();
+      if (!isAppInstalled() && isMobileDevice()) {
+        showDirectInstallPrompt(true);
+      }
+    };
+
+    window.addEventListener('pwa-prompt-available', (e) => {
+      onPromptAvailable(e.detail);
     });
 
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
-      window.deferredInstallPrompt = e;
-      updatePwaInstallUi();
+      onPromptAvailable(e);
     });
 
     window.addEventListener('appinstalled', () => {
-      try { localStorage.setItem('bonesip_pwa_installed', 'true'); } catch (_) {}
+      window.deferredInstallPrompt = null;
       const modal = document.getElementById('pwaInstallModal');
       if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
       hideFloatingInstallBar();
@@ -4178,21 +4222,18 @@
       hideFloatingInstallBar();
     });
 
-    // Auto-display for mobile users when opening the link
-    if (!isAppInstalled() && isMobileDevice()) {
-      const splash = document.getElementById('appSplashScreen');
-      const isSplashVisible = splash && !splash.classList.contains('dismissed') && !splash.classList.contains('hidden');
+    // If early script captured beforeinstallprompt before this listener initialized
+    if (window.deferredInstallPrompt) {
+      onPromptAvailable(window.deferredInstallPrompt);
+    }
 
-      if (isSplashVisible) {
-        // Will show after user starts, or fallback timer
-        setTimeout(() => {
-          if (!isAppInstalled()) showDirectInstallPrompt(false);
-        }, 3500);
-      } else {
-        setTimeout(() => {
-          if (!isAppInstalled()) showDirectInstallPrompt(false);
-        }, 1200);
-      }
+    // Auto-display for mobile users by default when opening the link
+    if (!isAppInstalled() && isMobileDevice()) {
+      setTimeout(() => {
+        if (!isAppInstalled()) {
+          showDirectInstallPrompt(true);
+        }
+      }, 500);
     }
   }
 

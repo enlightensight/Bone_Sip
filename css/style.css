@@ -5612,14 +5612,14 @@ body.portal-locked main.app-container {
    PWA DIRECT INSTALL MODAL & MOBILE FLOATING SHORTCUT
    ========================================================================== */
 #pwaInstallModal {
-  z-index: 100050;
+  z-index: 100250 !important;
 }
 
 .pwa-install-card {
   text-align: center;
-  max-width: 420px;
+  max-width: 440px;
   width: 92%;
-  padding: 26px 20px 22px 20px;
+  padding: 26px 22px 22px 22px;
   border-radius: 24px;
   position: relative;
   background: #FFFFFF;
@@ -5630,6 +5630,15 @@ body.portal-locked main.app-container {
 @keyframes pwaCardPop {
   0% { opacity: 0; transform: scale(0.92) translateY(20px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.pwa-sheet-pill {
+  display: none;
+  width: 38px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.28);
+  margin: 0 auto 14px auto;
 }
 
 .pwa-modal-close {
@@ -5647,6 +5656,7 @@ body.portal-locked main.app-container {
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 5;
 }
 .pwa-modal-close:hover {
   background: #E2E8F0;
@@ -5695,7 +5705,8 @@ body.portal-locked main.app-container {
   margin-bottom: 4px;
 }
 
-.pwa-install-card h3 {
+.pwa-install-card h3,
+.pwa-native-title {
   font-size: 1.25rem;
   font-weight: 700;
   color: #1E293B;
@@ -5750,16 +5761,113 @@ body.portal-locked main.app-container {
   gap: 10px;
 }
 
-.pwa-primary-install-btn {
-  font-size: 1rem;
-  font-weight: 700;
-  padding: 14px 20px;
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(177, 49, 93, 0.35);
+/* Chrome-Style Native Action Rows */
+.pwa-primary-install-btn,
+.pwa-install-native-row {
+  width: 100%;
   display: flex;
   align-items: center;
+  gap: 14px;
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 16px;
+  padding: 12px 14px;
+  color: #1E293B;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+.pwa-install-native-row:hover,
+.pwa-install-native-row:active {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.2);
+  transform: scale(0.99);
+}
+
+.pwa-install-native-row.highlighted {
+  border: 2px solid #E11D48 !important;
+  background: rgba(225, 29, 72, 0.06);
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.18);
+}
+
+.pwa-row-icon-box {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+}
+
+.pwa-row-img {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: block;
+  object-fit: cover;
+  background: #2A2540;
+}
+
+.pwa-row-badge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0F172A;
+  color: #FFFFFF;
+  border: 2px solid #FFFFFF;
+  display: grid;
+  place-items: center;
+  font-size: 0.62rem;
+}
+
+.pwa-row-badge.chrome-badge {
+  background: #FFFFFF;
+  color: #4285F4;
+}
+
+.pwa-row-label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pwa-row-label strong {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: inherit;
+}
+
+.pwa-row-label span {
+  font-size: 0.78rem;
+  color: #64748B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pwa-row-arrow {
+  color: #94A3B8;
+  font-size: 0.95rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.pwa-bottom-bars {
+  display: none;
   justify-content: center;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 6px 0;
+}
+.pwa-bottom-bars .pwa-bar {
+  width: 32px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .pwa-secondary-btn {
@@ -5778,6 +5886,109 @@ body.portal-locked main.app-container {
   align-items: center;
   justify-content: center;
   gap: 6px;
+}
+
+/* Mobile Authentic Chrome Dark Bottom-Sheet Overrides */
+@media (max-width: 768px) {
+  #pwaInstallModal.modal-backdrop {
+    align-items: flex-end !important;
+    padding: 0 !important;
+    background: rgba(0, 0, 0, 0.72) !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  #pwaInstallModal .pwa-install-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 26px 26px 0 0 !important;
+    padding: 14px 18px calc(20px + env(safe-area-inset-bottom, 0px)) 18px !important;
+    background: #1F2220 !important; /* Authentic dark bottom sheet background */
+    color: #F1F5F9 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: none !important;
+    box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.6) !important;
+    animation: pwaSheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    text-align: left !important;
+  }
+
+  @keyframes pwaSheetSlideUp {
+    0% { transform: translateY(100%); opacity: 0.6; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  #pwaInstallModal .pwa-sheet-pill {
+    display: block !important;
+  }
+
+  #pwaInstallModal .pwa-modal-close {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #CBD5E1 !important;
+  }
+
+  #pwaInstallModal .pwa-install-badge-wrap,
+  #pwaInstallModal .pwa-brand-kicker,
+  #pwaInstallModal .pwa-install-sub,
+  #pwaInstallModal .pwa-perks-list,
+  #pwaInstallModal .pwa-browser-hint {
+    display: none !important;
+  }
+
+  #pwaInstallModal .pwa-native-title {
+    font-size: 1.16rem !important;
+    font-weight: 600 !important;
+    color: #FFFFFF !important;
+    text-align: center !important;
+    margin: 4px 0 16px 0 !important;
+  }
+
+  #pwaInstallModal .pwa-install-native-row {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #FFFFFF !important;
+  }
+
+  #pwaInstallModal .pwa-install-native-row:hover,
+  #pwaInstallModal .pwa-install-native-row:active {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+  }
+
+  #pwaInstallModal .pwa-install-native-row.highlighted {
+    border: 2px solid #E11D48 !important;
+    background: rgba(225, 29, 72, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.25) !important;
+  }
+
+  #pwaInstallModal .pwa-row-badge {
+    background: #111827 !important;
+    border-color: #1F2220 !important;
+  }
+
+  #pwaInstallModal .pwa-row-badge.chrome-badge {
+    background: #FFFFFF !important;
+    border-color: #1F2220 !important;
+  }
+
+  #pwaInstallModal .pwa-row-label strong {
+    color: #FFFFFF !important;
+  }
+
+  #pwaInstallModal .pwa-row-label span {
+    color: #94A3B8 !important;
+  }
+
+  #pwaInstallModal .pwa-row-arrow {
+    color: #94A3B8 !important;
+  }
+
+  #pwaInstallModal .pwa-bottom-bars {
+    display: flex !important;
+  }
+
+  #pwaInstallModal .pwa-secondary-btn {
+    color: #94A3B8 !important;
+  }
 }
 
 /* iOS Safari Guide Box */
