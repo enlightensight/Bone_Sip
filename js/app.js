@@ -4195,7 +4195,7 @@
     const onPromptAvailable = (promptEvt) => {
       window.deferredInstallPrompt = promptEvt;
       updatePwaInstallUi();
-      if (!isAppInstalled() && isMobileDevice()) {
+      if (!isAppInstalled()) {
         showDirectInstallPrompt(true);
       }
     };
@@ -4227,8 +4227,8 @@
       onPromptAvailable(window.deferredInstallPrompt);
     }
 
-    // Auto-display for mobile users by default when opening the link
-    if (!isAppInstalled() && isMobileDevice()) {
+    // Auto-display by default when opening the link in browser (mobile or desktop)
+    if (!isAppInstalled()) {
       setTimeout(() => {
         if (!isAppInstalled()) {
           showDirectInstallPrompt(true);
