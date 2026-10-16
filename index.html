@@ -47,10 +47,10 @@
     } catch (_) {}
   </script>
   <!-- Languages: loaded first so a saved language is applied before the page shows -->
-  <script src="js/i18n.js?v=4.1.7"></script>
+  <script src="js/i18n.js?v=4.1.8"></script>
   <link rel="preload" as="image" href="assets/images/bonesip_logo_720.webp">
-  <link rel="stylesheet" href="css/style.css?v=4.1.7">
-  <link rel="stylesheet" href="css/brand.css?v=4.1.7">
+  <link rel="stylesheet" href="css/style.css?v=4.1.8">
+  <link rel="stylesheet" href="css/brand.css?v=4.1.8">
 
   <!-- Unified Global Typography: Outfit (geometric, modern, clean throughout entire app) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -218,7 +218,10 @@
         <button class="icon-pill lang-pill" id="headerLangBtn" onclick="BoneApp.openLanguagePicker()" title="Language" aria-label="Change language">
           <i class="fa-solid fa-language" aria-hidden="true"></i> <span id="headerLangLabel" translate="no">English</span>
         </button>
-        <button class="header-report-btn" onclick="BoneApp.openProgressiveReportModal()" title="My health report" aria-label="Open my health report">
+        <button class="header-login-btn" id="headerLoginBtn" onclick="BoneApp.openLogin()" aria-label="Log in">
+          <i class="fa-solid fa-right-to-bracket"></i> <span>Log in</span>
+        </button>
+        <button class="header-report-btn" id="headerReportBtn" onclick="BoneApp.openProgressiveReportModal()" title="My health report" aria-label="Open my health report">
           <img src="assets/icons3d/bone_report_3d.webp" alt="My health report" class="header-report-img" width="38" height="38">
         </button>
         <div id="userHeaderProfile" onclick="BoneApp.openUserProfileModal()">
@@ -256,6 +259,54 @@
           </div>
 
           <button class="cta-btn btn-full" onclick="BoneApp.saveHeightWeightModal()">Save</button>
+        </div>
+      </div>
+
+      <!-- Diet Plan Choice Modal (Standard PDF vs Personalised Assessment) -->
+      <div class="modal-backdrop" id="dietChoiceModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="dietChoiceTitle">
+        <div class="modal-card sheet diet-choice-card">
+          <div class="sheet-head">
+            <h3 id="dietChoiceTitle"><img src="assets/icons3d/salad.webp" alt="" width="28" height="28"> Choose your diet plan</h3>
+            <button class="modal-close-btn" onclick="BoneApp.closeDietChoiceModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <p class="diet-choice-sub">Get the evidence-based standard bone health meal chart, or personalise your diet in 1 minute.</p>
+
+          <div class="diet-choice-options">
+            <!-- Option 1: Download Standard Diet Plan PDF -->
+            <div class="diet-choice-card-item" onclick="BoneApp.downloadStandardDietPdf()">
+              <div class="diet-choice-top-row">
+                <div class="diet-choice-icon-wrap standard">
+                  <img src="assets/icons3d/bone_report_3d.webp" alt="Standard Diet" width="42" height="42">
+                </div>
+                <div class="diet-choice-info">
+                  <span class="diet-choice-badge standard"><i class="fa-solid fa-file-pdf"></i> Instant PDF</span>
+                  <h4 class="diet-choice-name">Download standard diet</h4>
+                  <p class="diet-choice-desc">The complete 3-2-1 daily bone nutrition guide with high-calcium, protein &amp; vitamin D foods.</p>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline btn-full diet-choice-btn" id="btnDownloadStandardDiet" aria-label="Download standard diet PDF">
+                <i class="fa-solid fa-download"></i> Download standard diet (PDF)
+              </button>
+            </div>
+
+            <!-- Option 2: Personalised Diet Plan -->
+            <div class="diet-choice-card-item highlight" onclick="BoneApp.startPersonalisedAssessment()">
+              <div class="diet-choice-top-row">
+                <div class="diet-choice-icon-wrap personalised">
+                  <img src="assets/icons3d/biceps.webp" alt="Personalised Diet" width="42" height="42">
+                </div>
+                <div class="diet-choice-info">
+                  <span class="diet-choice-badge personalised"><i class="fa-solid fa-wand-magic-sparkles"></i> Customised · 1 min</span>
+                  <h4 class="diet-choice-name">Personalise in 1 minute</h4>
+                  <p class="diet-choice-desc">Tailor meals to your kitchen cuisine, age, height, weight, activity and health conditions.</p>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-full diet-choice-btn" id="btnStartPersonalisedAssessment" aria-label="Start personalised diet assessment">
+                Personalise in 1 minute <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1227,9 +1278,9 @@
   <noscript><div class="noscript">BONE SIP needs JavaScript to run.</div></noscript>
 
   <script src="js/vendor/confetti.browser.min.js" defer></script>
-  <script src="js/config.js?v=4.1.7"></script>
-  <script src="js/data.js?v=4.1.7"></script>
-  <script src="js/notifications.js?v=4.1.7"></script>
-  <script src="js/app.js?v=4.1.7"></script>
+  <script src="js/config.js?v=4.1.8"></script>
+  <script src="js/data.js?v=4.1.8"></script>
+  <script src="js/notifications.js?v=4.1.8"></script>
+  <script src="js/app.js?v=4.1.8"></script>
 </body>
 </html>

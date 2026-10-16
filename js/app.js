@@ -816,7 +816,7 @@
         </div>
         <p class="wiz-note"><i class="fa-solid fa-circle-info"></i> Aim for about 1,000–1,200 mg calcium a day, or as your doctor advises.</p>
         <div class="wiz-footer">
-          <button class="cta-btn" onclick="BoneApp.setBuildAssessmentStep('diet')">Personalise in 1 minute <i class="fa-solid fa-arrow-right"></i></button>
+          <button class="cta-btn" onclick="BoneApp.openDietChoiceModal()">Continue <i class="fa-solid fa-arrow-right"></i></button>
         </div>`;
     }
     else if (step === 'diet') {
@@ -1156,6 +1156,33 @@
     playSound('tap');
     const modal = document.getElementById('heightWeightModal');
     if (modal) modal.style.display = 'none';
+  }
+
+  function openDietChoiceModal() {
+    playSound('tap');
+    const modal = document.getElementById('dietChoiceModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeDietChoiceModal() {
+    playSound('tap');
+    const modal = document.getElementById('dietChoiceModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function downloadStandardDietPdf() {
+    playSound('tap');
+    closeDietChoiceModal();
+    showToast('Preparing standard diet PDF...', 'fa-file-pdf');
+    setTimeout(() => {
+      printDocument('standard_diet');
+    }, 250);
+  }
+
+  function startPersonalisedAssessment() {
+    playSound('tap');
+    closeDietChoiceModal();
+    setBuildAssessmentStep('diet');
   }
 
   function onHeightChange(val) {
@@ -2319,8 +2346,8 @@
     const input = document.getElementById('inlineMobileNumberInput');
     if (input) {
       setTimeout(() => {
-        input.focus();
-        input.select();
+        if (typeof input.focus === 'function') input.focus();
+        if (typeof input.select === 'function') input.select();
       }, 150);
     }
   }
@@ -3646,14 +3673,27 @@
   }
 
   function updateHeaderProfileBadge() {
-    const userProf = document.getElementById('userHeaderProfile');
-    if (!userProf) return;
     const verified = isLoggedIn();
-    userProf.innerHTML = `
-      <button class="avatar-btn" id="loginHeaderBtn" aria-label="${verified ? 'Open profile (verified)' : 'Open profile'}" title="My profile">
-        <i class="fa-solid fa-user"></i>
-        ${verified ? '<span class="avatar-dot"><i class="fa-solid fa-check"></i></span>' : ''}
-      </button>`;
+    const userProf = document.getElementById('userHeaderProfile');
+    const reportBtn = document.getElementById('headerReportBtn') || document.querySelector('.header-report-btn');
+    const loginBtn = document.getElementById('headerLoginBtn');
+
+    if (loginBtn) {
+      loginBtn.style.display = verified ? 'none' : 'inline-flex';
+    }
+    if (reportBtn) {
+      reportBtn.style.display = verified ? 'inline-flex' : 'none';
+    }
+    if (userProf) {
+      userProf.style.display = verified ? 'block' : 'none';
+      if (verified) {
+        userProf.innerHTML = `
+          <button class="avatar-btn" id="loginHeaderBtn" aria-label="Open profile (verified)" title="My profile">
+            <i class="fa-solid fa-user"></i>
+            <span class="avatar-dot"><i class="fa-solid fa-check"></i></span>
+          </button>`;
+      }
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -8205,6 +8245,52 @@
     });
   }
 
+  function standardDietDocHtml() {
+    const body = `
+      ${pdSection(1, 'The Daily 3-2-1 Bone Nutrition Formula', `
+        <p class="pd-intro" style="margin-bottom: 4mm;">Three simple, evidence-based daily food habits meet the standard recommended intake of 1,000–1,200 mg calcium, 50–65g protein, and essential Vitamin D.</p>
+        ${pdTable(['Rule', 'Daily Target', 'Recommended Food Sources', 'Bone Health Purpose'], [
+          ['<b>3</b> Servings', '<b>Calcium (~1,000–1,200 mg)</b>', 'Milk (250ml = 300mg), Curd/Dahi (200g = 250mg), Paneer (100g = 480mg), Ragi (100g = 344mg), White Sesame/Til (1 tbsp = 100mg), Leafy Greens (Palak, Methi, Moringa)', 'Mineralises bone matrix and maintains bone mineral density (BMD)'],
+          ['<b>2</b> Servings', '<b>Protein (~50–65 g)</b>', 'Thick Dal (1 bowl = 7g), Soya chunks / Tofu (100g = 15-50g), Paneer (100g = 18g), Eggs (2 eggs = 12g), Steamed Fish / Chicken (100g = 20-25g)', 'Forms collagen scaffold in bone and preserves skeletal muscle mass'],
+          ['<b>1</b> Source', '<b>Vitamin D (600–1000 IU)</b>', 'Direct morning sunlight (15–20 min between 7 AM – 9 AM with arms/face uncovered), Fortified milk, Egg yolk, Fatty fish, or doctor-advised supplement', 'Enables intestinal calcium absorption; calcium cannot enter bone without Vitamin D']
+        ], 'pd-fill')}`)}
+
+      ${pdSection(2, 'Standard Full-Day Bone Diet Schedule', `
+        ${pdTable(['Meal Slot', 'Timing', 'Recommended Meal & Nutrients', 'Calcium Est.'], [
+          ['<b>Morning Ritual</b>', '7:00 – 7:30 AM', '15–20 minutes morning sunbath + 1 glass warm milk or fortified almond/soy milk with 1 tsp soaked sesame/til seeds.', '~320 mg'],
+          ['<b>Breakfast</b>', '8:30 – 9:00 AM', 'Ragi dosa / vegetable paneer paratha / sprouted moong dal cheela + 1 small bowl curd/dahi.', '~350 mg'],
+          ['<b>Lunch</b>', '1:00 – 1:30 PM', '2 multigrain or bajra/ragi rotis + 1 cup leafy greens (methi/palak) + 1 bowl thick dal/chana + fresh vegetable salad with lemon.', '~280 mg'],
+          ['<b>Evening Snack</b>', '4:30 – 5:00 PM', 'Roasted makhana + handful of soaked almonds & walnuts, or 1 small til-jaggery laddoo + warm herbal tea.', '~140 mg'],
+          ['<b>Dinner</b>', '7:30 – 8:00 PM', 'Vegetable khichdi with ghee / paneer bhurji with roti / grilled fish or tofu curry + sautéed green beans.', '~260 mg']
+        ], 'pd-fill')}`)}
+
+      ${pdSection(3, 'High-Calcium Quick Food Guide (Per 100g)', `
+        ${pdTable(['Food Item', 'Serving Size', 'Calcium Content', 'Dietary Type'], [
+          ['<b>White Sesame (Til)</b>', '1 tablespoon (10g)', '<b>100 mg</b>', 'Plant-based (Vegan)'],
+          ['<b>Ragi (Finger Millet)</b>', '1 medium roti / 100g flour', '<b>344 mg</b>', 'Gluten-free cereal'],
+          ['<b>Cow Milk / Curd</b>', '1 medium glass (250 ml)', '<b>300 mg</b>', 'Dairy / Vegetarian'],
+          ['<b>Paneer (Cottage Cheese)</b>', '100g portion', '<b>480 mg</b>', 'Dairy / High Protein'],
+          ['<b>Soybeans / Tofu</b>', '100g cooked', '<b>180–350 mg</b>', 'Plant-based Protein'],
+          ['<b>Moringa (Drumstick Leaves)</b>', '1 small cup cooked (100g)', '<b>440 mg</b>', 'Dark leafy vegetable'],
+          ['<b>Almonds (Badam)</b>', 'Handful (10–12 soaked, 30g)', '<b>75 mg</b>', 'Healthy fats & Vitamin E']
+        ], 'pd-fill')}`)}
+
+      ${pdSection(4, 'Vital Bone Absorption Guidelines', `
+        <ul class="pd-list">
+          <li><b>Space calcium across the day:</b> The human body absorbs calcium best in doses of 500 mg or less at one time.</li>
+          <li><b>Avoid tea & coffee with meals:</b> Tannins and phytates inhibit calcium absorption; wait at least 45 minutes after meals.</li>
+          <li><b>Watch salt intake:</b> High dietary sodium increases calcium excretion through the kidneys.</li>
+          <li><b>Stay physically active:</b> Weight-bearing steps and resistance movement signal osteoblasts to deposit calcium into bone tissue.</li>
+        </ul>`)}
+      <p class="pd-note">This standard diet guide provides evidence-based nutritional baselines developed by BONE SIP for healthy bone preservation. Patients with chronic kidney disease, hypercalcemia, or specific medical restrictions should consult their physician before starting high-calcium regimens.</p>`;
+
+    return pdShell({
+      title: 'Standard Bone Health Diet Plan',
+      intro: 'The clinical 3-2-1 daily nutrition plan for peak bone density, optimal calcium absorption, and muscle strength.',
+      body
+    });
+  }
+
   async function printDocument(kind) {
     playSound('tap');
     const host = document.getElementById('printDoc');
@@ -8214,6 +8300,8 @@
       host.innerHTML = doctorSummaryDocHtml();
     } else if (kind === 'protect') {
       host.innerHTML = protectSafetyDocHtml();
+    } else if (kind === 'standard_diet') {
+      host.innerHTML = standardDietDocHtml();
     } else {
       host.innerHTML = healthReportDocHtml();
     }
@@ -8232,7 +8320,9 @@
     const prevTitle = document.title;
     const docTitle = kind === 'doctor'
       ? 'Doctor Visit Summary'
-      : (kind === 'protect' ? 'Fall Prevention & Home Safety Plan' : 'Bone Health Report');
+      : (kind === 'protect'
+          ? 'Fall Prevention & Home Safety Plan'
+          : (kind === 'standard_diet' ? 'Standard Bone Health Diet Plan' : 'Bone Health Report'));
     document.title = `BONE SIP ${docTitle} ${getTodayISODate()}`;
 
     document.body.classList.add('printing-doc');
@@ -8753,6 +8843,10 @@
     shareProgressiveReportWhatsApp,
 
     // Clean Diet Experience (matching Images 2, 3, 4, 5)
+    openDietChoiceModal,
+    closeDietChoiceModal,
+    downloadStandardDietPdf,
+    startPersonalisedAssessment,
     cycleSlotMeal,
     filterMealSlotView,
     recordYesterdayFeedback,

@@ -1018,6 +1018,50 @@ setTimeout(() => {
     'continueFromDiet advances to regional_food step');
 
   // ---------------------------------------------------------------------------
+  console.log('\n--- 14. Testing Diet Choice Modal, Standard Diet PDF & Header Auth Layout ---');
+
+  const indexHtmlSource = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+
+  assert(indexHtmlSource.includes('id="dietChoiceModal"'),
+    'index.html defines #dietChoiceModal popup');
+  assert(indexHtmlSource.includes('id="btnDownloadStandardDiet"'),
+    'index.html defines Standard Diet PDF download button');
+  assert(indexHtmlSource.includes('id="btnStartPersonalisedAssessment"'),
+    'index.html defines Start Personalised Assessment button');
+  assert(indexHtmlSource.includes('id="headerLoginBtn"'),
+    'index.html defines header Log in button for guests');
+
+  assert(typeof verifiedApp.openDietChoiceModal === 'function',
+    'BoneApp exports openDietChoiceModal function');
+  assert(typeof verifiedApp.closeDietChoiceModal === 'function',
+    'BoneApp exports closeDietChoiceModal function');
+  assert(typeof verifiedApp.downloadStandardDietPdf === 'function',
+    'BoneApp exports downloadStandardDietPdf function');
+  assert(typeof verifiedApp.startPersonalisedAssessment === 'function',
+    'BoneApp exports startPersonalisedAssessment function');
+
+  mockElements['dietChoiceModal'] = { style: { display: 'none' } };
+  verifiedApp.openDietChoiceModal();
+  assert(mockElements['dietChoiceModal'].style.display === 'flex',
+    'openDietChoiceModal sets dietChoiceModal display to flex');
+
+  verifiedApp.closeDietChoiceModal();
+  assert(mockElements['dietChoiceModal'].style.display === 'none',
+    'closeDietChoiceModal hides dietChoiceModal');
+
+  verifiedApp.startPersonalisedAssessment();
+  assert(verifiedApp.getState().buildAssessmentStep === 'diet',
+    'startPersonalisedAssessment opens the personalised diet assessment');
+
+  // Verify standard_diet doc title and generation
+  mockElements['printDoc'] = { innerHTML: '', setAttribute: () => {}, querySelectorAll: () => [] };
+  verifiedApp.printDocument('standard_diet');
+  assert(mockElements['printDoc'].innerHTML.includes('Standard Bone Health Diet Plan'),
+    'printDocument("standard_diet") generates Standard Bone Health Diet Plan');
+  assert(mockElements['printDoc'].innerHTML.includes('The Daily 3-2-1 Bone Nutrition Formula'),
+    'Standard diet plan includes 3-2-1 Bone Nutrition Formula');
+
+  // ---------------------------------------------------------------------------
   // FINAL SUMMARY
   // ---------------------------------------------------------------------------
   console.log('\n================================================================');
