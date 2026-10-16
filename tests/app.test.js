@@ -1097,6 +1097,42 @@ setTimeout(() => {
     'brand.css guarantees #printDoc has display: block !important when printing-doc is active');
 
   // ---------------------------------------------------------------------------
+  // 15. Testing Onboarding Slide 2 Animated 3-Step Structure (Image 1 Spec)
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 15. Testing Onboarding Slide 2 Animated 3-Step Structure (Image 1) ---');
+
+  mockElements['onboardingCarousel'] = { innerHTML: '' };
+  mockElements['onboardingDots'] = { innerHTML: '' };
+  mockElements['onboardNextBtn'] = { innerHTML: '', classList: { toggle: () => {} } };
+
+  // Set onboarding slide to 1 (Slide 2: onboard_moves)
+  verifiedApp.goToOnboardingSlide(1);
+
+  const carouselHtml = mockElements['onboardingCarousel'].innerHTML;
+  assert(carouselHtml.includes('onboard-slide-moves'),
+    'Onboarding slide 2 has onboard-slide-moves class');
+  assert(carouselHtml.includes('onboard-steps-stack'),
+    'Onboarding slide 2 renders onboard-steps-stack container');
+  assert(carouselHtml.includes('step-1') && carouselHtml.includes('step-2') && carouselHtml.includes('step-3'),
+    'Onboarding slide 2 renders 3 individual step cards (step-1, step-2, step-3)');
+  assert(carouselHtml.includes('salad.webp') && carouselHtml.includes('Eat &amp; move') && carouselHtml.includes('Build'),
+    'Step 1 card has salad icon, Build badge, Eat & move label and number 1');
+  assert(carouselHtml.includes('shield.webp') && carouselHtml.includes('Prevent falls') && carouselHtml.includes('Protect'),
+    'Step 2 card has shield icon, Protect badge, Prevent falls label and number 2');
+  assert(carouselHtml.includes('stethoscope.webp') && carouselHtml.includes('Check in with your doctor') && carouselHtml.includes('Strengthen'),
+    'Step 3 card has stethoscope icon, Strengthen badge, Check in with your doctor label and number 3');
+
+  // Verify CSS animations in brand.css
+  assert(brandCssSource.includes('.onboard-step-card.step-1') && brandCssSource.includes('0.15s both'),
+    'brand.css configures step-1 entrance animation with 0.15s delay');
+  assert(brandCssSource.includes('.onboard-step-card.step-2') && brandCssSource.includes('0.48s both'),
+    'brand.css configures step-2 entrance animation with 0.48s delay');
+  assert(brandCssSource.includes('.onboard-step-card.step-3') && brandCssSource.includes('0.82s both'),
+    'brand.css configures step-3 entrance animation with 0.82s delay');
+  assert(brandCssSource.includes('@keyframes onboardStepIn'),
+    'brand.css defines @keyframes onboardStepIn for sequential pop-in');
+
+  // ---------------------------------------------------------------------------
   // FINAL SUMMARY
   // ---------------------------------------------------------------------------
   console.log('\n================================================================');

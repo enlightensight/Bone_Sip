@@ -540,25 +540,56 @@
 
     container.innerHTML = slides.map((slide, index) => {
       const art = slide.art || ['bone'];
-      let artHtml;
       if (slide.id === 'onboard_moves') {
-        artHtml = `
-          <div class="onboard-art trio">
-            <div class="trio-item build pop" style="--i: 1;">${img3d(art[0], '', 76)}<span>Build</span></div>
-            <i class="fa-solid fa-chevron-right trio-arrow"></i>
-            <div class="trio-item protect pop" style="--i: 3;">${img3d(art[1], '', 76)}<span>Protect</span></div>
-            <i class="fa-solid fa-chevron-right trio-arrow"></i>
-            <div class="trio-item strengthen pop" style="--i: 5;">${img3d(art[2], '', 76)}<span>Strengthen</span></div>
-          </div>`;
-      } else {
-        artHtml = `
-          <div class="onboard-art">
-            ${img3d(art[0], 'hero float', 132)}
-            ${art[1] ? img3d(art[1], 'sat s1 pop', 64, 'style="--i: 2;"') : ''}
-            ${art[2] ? img3d(art[2], 'sat s2 pop', 64, 'style="--i: 4;"') : ''}
-            ${art[3] ? img3d(art[3], 'sat s3 pop', 64, 'style="--i: 6;"') : ''}
+        return `
+          <div class="onboard-slide onboard-slide-moves ${index === state.onboardingSlide ? 'active' : ''}" data-slide="${index}">
+            <div class="onboard-eyebrow">${slide.tag}</div>
+            <h2 class="onboard-heading">${slide.title}</h2>
+            <div class="onboard-steps-stack" aria-label="Three moves for bone health">
+              <div class="onboard-step-card step-1">
+                <div class="onboard-step-icon">
+                  ${img3d('salad', '', 36)}
+                </div>
+                <div class="onboard-step-info">
+                  <span class="onboard-step-badge build">Build</span>
+                  <strong class="onboard-step-name">Eat &amp; move</strong>
+                </div>
+                <span class="onboard-step-num">1</span>
+              </div>
+
+              <div class="onboard-step-card step-2">
+                <div class="onboard-step-icon">
+                  ${img3d('shield', '', 36)}
+                </div>
+                <div class="onboard-step-info">
+                  <span class="onboard-step-badge protect">Protect</span>
+                  <strong class="onboard-step-name">Prevent falls</strong>
+                </div>
+                <span class="onboard-step-num">2</span>
+              </div>
+
+              <div class="onboard-step-card step-3">
+                <div class="onboard-step-icon">
+                  ${img3d('stethoscope', '', 36)}
+                </div>
+                <div class="onboard-step-info">
+                  <span class="onboard-step-badge strengthen">Strengthen</span>
+                  <strong class="onboard-step-name">Check in with your doctor</strong>
+                </div>
+                <span class="onboard-step-num">3</span>
+              </div>
+            </div>
           </div>`;
       }
+
+      const artHtml = `
+        <div class="onboard-art">
+          ${img3d(art[0], 'hero float', 132)}
+          ${art[1] ? img3d(art[1], 'sat s1 pop', 64, 'style="--i: 2;"') : ''}
+          ${art[2] ? img3d(art[2], 'sat s2 pop', 64, 'style="--i: 4;"') : ''}
+          ${art[3] ? img3d(art[3], 'sat s3 pop', 64, 'style="--i: 6;"') : ''}
+        </div>`;
+
       return `
         <div class="onboard-slide ${index === state.onboardingSlide ? 'active' : ''}" data-slide="${index}">
           ${artHtml}

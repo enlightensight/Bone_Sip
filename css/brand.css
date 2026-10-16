@@ -470,6 +470,182 @@ html.splash-already-shown .splash {
   .trio-item { width: 90px; }
   .trio-item img { width: 76px; height: 76px; }
 }
+
+/* --------------------------------------------------------------------------
+   ONBOARDING SLIDE 2: 3 ANIMATED STEPS (IMAGE 1 SPECIFICATION)
+   -------------------------------------------------------------------------- */
+.onboard-slide-moves {
+  padding: 10px 8px 6px;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.onboard-steps-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  max-width: 380px;
+  margin: 18px auto 6px;
+  width: 100%;
+}
+
+.onboard-step-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 18px 10px 10px;
+  background: #FDF5F8;
+  border: 1.5px solid rgba(177, 49, 93, 0.12);
+  border-radius: 22px;
+  box-shadow: 0 4px 14px rgba(35, 31, 51, 0.04);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  opacity: 0;
+  transform: translateY(24px) scale(0.96);
+  will-change: transform, opacity;
+}
+
+.onboard-step-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(177, 49, 93, 0.25);
+  box-shadow: 0 8px 22px rgba(177, 49, 93, 0.08);
+}
+
+/* Staggered Entrance Animations: Step 1 -> Step 2 -> Step 3 */
+.onboard-slide.active .onboard-step-card.step-1 {
+  animation: onboardStepIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+.onboard-slide.active .onboard-step-card.step-2 {
+  animation: onboardStepIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.48s both;
+}
+
+.onboard-slide.active .onboard-step-card.step-3 {
+  animation: onboardStepIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.82s both;
+}
+
+@keyframes onboardStepIn {
+  0% {
+    opacity: 0;
+    transform: translateY(26px) scale(0.95);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.onboard-step-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(35, 31, 51, 0.08);
+  border: 1px solid rgba(228, 224, 234, 0.6);
+}
+
+.onboard-step-icon img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Micro-spring rotation on each 3D icon */
+.onboard-slide.active .onboard-step-card.step-1 .onboard-step-icon img {
+  animation: iconSpringPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.28s both;
+}
+.onboard-slide.active .onboard-step-card.step-2 .onboard-step-icon img {
+  animation: iconSpringPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.62s both;
+}
+.onboard-slide.active .onboard-step-card.step-3 .onboard-step-icon img {
+  animation: iconSpringPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.95s both;
+}
+
+@keyframes iconSpringPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.65) rotate(-10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.onboard-step-info {
+  flex: 1;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.onboard-step-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.onboard-step-badge.build {
+  color: var(--build, #B1315D);
+  background: rgba(177, 49, 93, 0.12);
+  border: 1px solid rgba(177, 49, 93, 0.2);
+}
+
+.onboard-step-badge.protect {
+  color: var(--protect, #1E9E62);
+  background: rgba(30, 158, 98, 0.12);
+  border: 1px solid rgba(30, 158, 98, 0.2);
+}
+
+.onboard-step-badge.strengthen {
+  color: var(--strengthen, #8E2C6A);
+  background: rgba(142, 44, 106, 0.12);
+  border: 1px solid rgba(142, 44, 106, 0.2);
+}
+
+.onboard-step-name {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.04rem;
+  font-weight: 800;
+  color: var(--text-primary, #231F33);
+  line-height: 1.25;
+}
+
+@media (max-width: 360px) {
+  .onboard-step-name {
+    font-size: 0.92rem;
+  }
+}
+
+.onboard-step-num {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--build, #B1315D);
+  flex-shrink: 0;
+  padding-right: 2px;
+}
+
 .onboard-eyebrow { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.14em; color: var(--build); margin-bottom: 8px; }
 .onboard-heading { font-size: clamp(1.6rem, 6vw, 2rem); font-weight: 800; line-height: 1.15; margin: 0 0 10px; }
 .onboard-desc { color: var(--text-secondary); font-size: 1rem; margin: 0 auto; max-width: 320px; }
