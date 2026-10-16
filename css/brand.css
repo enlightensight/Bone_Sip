@@ -2157,7 +2157,7 @@ body[data-view="assessment"] .bone-ai-fab, body[data-view="auth"] .bone-ai-fab {
 .pref-pill { display: inline-flex; align-items: center; gap: 6px; }
 .pref-pill img { width: 18px; height: 18px; }
 .pref-pill.active { background: var(--build-bg) !important; border-color: var(--build) !important; color: var(--build) !important; }
-.profile-data-actions { display: flex; justify-content: space-between; margin-top: 10px; }
+.profile-data-actions { display: flex; justify-content: center; margin-top: 10px; }
 .privacy-note { text-align: center; font-size: 0.76rem; color: var(--text-muted); margin: 6px 0 0; }
 
 /* Timer */

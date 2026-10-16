@@ -729,6 +729,7 @@ BoneI18n.register('ml', {
   "Next {0}/{1}": "അടുത്തത് {0}/{1}",
   "Next {meal} idea": "{meal}-ന് അടുത്ത നിർദ്ദേശം",
   "Next appointment": "അടുത്ത അപ്പോയിന്റ്മെന്റ്",
+  "Next visit: Ask your doctor": "അടുത്ത സന്ദർശനം: ഡോക്ടറോട് ചോദിക്കൂ",
   "Next doctor visit": "അടുത്ത ഡോക്ടർ സന്ദർശനം",
   "Next DXA scan": "അടുത്ത DXA പരിശോധന",
   "Next month": "അടുത്ത മാസം",

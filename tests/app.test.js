@@ -1147,6 +1147,13 @@ setTimeout(() => {
     'brand.css guarantees .onboard-slide-moves is display: none !important when not active');
   assert(brandCssSource.includes('.onboard-slide-moves.active {') && brandCssSource.includes('display: flex !important'),
     'brand.css guarantees .onboard-slide-moves.active is display: flex !important');
+  // 16. Testing Profile Data Actions & Strengthen Next Visit Title
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 16. Testing Profile Data Actions & Strengthen Next Visit Title ---');
+  assert(!indexHtmlSource.includes('Export my data'), 'index.html does not render unwanted Export my data button');
+  assert(!indexHtmlSource.includes('exportDatabaseJSON'), 'index.html has no exportDatabaseJSON buttons');
+  assert(indexHtmlSource.includes('Next visit: Ask your doctor'), 'Strengthen simple card displays "Next visit: Ask your doctor"');
+  assert(!indexHtmlSource.includes('<h3><img src="assets/icons3d/clipboard.webp" alt="" width="28" height="28"> Ask your doctor</h3>'), 'Old "Ask your doctor" header is replaced');
 
   // ---------------------------------------------------------------------------
   // FINAL SUMMARY

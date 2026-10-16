@@ -729,6 +729,7 @@ BoneI18n.register('gu', {
   "Next {0}/{1}": "આગળ {0}/{1}",
   "Next {meal} idea": "{meal} માટે આગળનું સૂચન",
   "Next appointment": "આગામી મુલાકાત",
+  "Next visit: Ask your doctor": "આગલી મુલાકાત: ડૉક્ટરને પૂછો",
   "Next doctor visit": "ડૉક્ટરની આગામી મુલાકાત",
   "Next DXA scan": "આગામી DXA તપાસ",
   "Next month": "આવતો મહિનો",

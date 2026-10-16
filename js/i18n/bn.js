@@ -729,6 +729,7 @@ BoneI18n.register('bn', {
   "Next {0}/{1}": "পরবর্তী {0}/{1}",
   "Next {meal} idea": "{meal}-এর পরের প্রস্তাব",
   "Next appointment": "পরের সাক্ষাৎ",
+  "Next visit: Ask your doctor": "পরবর্তী সাক্ষাত: ডাক্তারকে জিজ্ঞাসা করুন",
   "Next doctor visit": "পরের ডাক্তার দেখানো",
   "Next DXA scan": "পরের DXA পরীক্ষা",
   "Next month": "পরের মাস",

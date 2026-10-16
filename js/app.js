@@ -5105,7 +5105,7 @@
 
     // 9. PLATFORM FLOW & WHERE EVERYTHING IS
     if (text.includes('platform') || text.includes('how to use') || text.includes('where is') || text.includes('unlock') || text.includes('pillar') || text.includes('how does this platform work')) {
-      return `🌟 **How BONE SIP Works & Where Everything Is:**\n\n• **Top Header:**\n  - **BONE SIP Logo:** Tap anytime to return to the Build home.\n  - **Language Picker:** Tap the language pill to switch between English and 11 Indian languages.\n  - **Health Report Icon:** Tap the clipboard/chart icon to view your live Bone Score (0–100), 7-day trend, WhatsApp summary, and PDF report.\n  - **Profile Avatar:** Tap the person icon at top-right to edit Height, Weight, Diet, Activity, Regional cuisine, and Health/Metabolic conditions.\n\n• **Three Core Pillars (Bottom Nav):**\n  1. **Build:** Daily 3-2-1 Diet checklist (Breakfast, Lunch, Snack, Dinner, Sun D3) + 4 guided video bone-loading workouts.\n  2. **Protect:** Fall-risk assessment and 5-room home safety hazard audit.\n  3. **Strengthen:** "Ask your doctor" printable checklist and DXA T-Score interpretation guide.\n\n• **AI Guide (Bone Buddy):** Floating button at bottom-right for 24/7 personal answers!`;
+      return `🌟 **How BONE SIP Works & Where Everything Is:**\n\n• **Top Header:**\n  - **BONE SIP Logo:** Tap anytime to return to the Build home.\n  - **Language Picker:** Tap the language pill to switch between English and 11 Indian languages.\n  - **Health Report Icon:** Tap the clipboard/chart icon to view your live Bone Score (0–100), 7-day trend, WhatsApp summary, and PDF report.\n  - **Profile Avatar:** Tap the person icon at top-right to edit Height, Weight, Diet, Activity, Regional cuisine, and Health/Metabolic conditions.\n\n• **Three Core Pillars (Bottom Nav):**\n  1. **Build:** Daily 3-2-1 Diet checklist (Breakfast, Lunch, Snack, Dinner, Sun D3) + 4 guided video bone-loading workouts.\n  2. **Protect:** Fall-risk assessment and 5-room home safety hazard audit.\n  3. **Strengthen:** "Next visit: Ask your doctor" printable checklist and DXA T-Score interpretation guide.\n\n• **AI Guide (Bone Buddy):** Floating button at bottom-right for 24/7 personal answers!`;
     }
 
     // DEFAULT INTELLIGENT CLINICAL RESPONSE
@@ -7723,7 +7723,7 @@
           ${stat('pill', t('Medicines'), `${(state.meds || []).length}`)}
           ${stat('house', t('Home safety'), home.answered ? `${home.safe}/${home.total}` : t('Not checked yet'))}
         </div>
-        <h4 class="psx-h"><span>💬</span> ${t('Ask your doctor')}</h4>
+        <h4 class="psx-h"><span>💬</span> ${t('Next visit: Ask your doctor')}</h4>
         <ul class="sx-asks">
           ${autoDoctorQuestions().map(([icon, text], i) => `<li style="--i:${i}"><em>${icon}</em><span>${text}</span></li>`).join('')}
           ${(visit.questions || []).map((q, i) => `<li class="mine"><em>✍️</em><span>${escapeHtml(q)}</span>

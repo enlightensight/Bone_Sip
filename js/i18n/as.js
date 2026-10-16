@@ -729,6 +729,7 @@ BoneI18n.register('as', {
   "Next {0}/{1}": "অগলা {0}/{1}",
   "Next {meal} idea": "{meal} কা অগলা সুঝাৱ",
   "Next appointment": "অগলী মুলাক़াত",
+  "Next visit: Ask your doctor": "পৰৱৰ্তী ভ্ৰমণ: চিকিৎসকক সোধক",
   "Next doctor visit": "পৰৱৰ্তী চিকিৎসক সাক্ষাৎ",
   "Next DXA scan": "অগলী DXA জাँচ",
   "Next month": "পৰৱৰ্তী মাহ",

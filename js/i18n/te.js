@@ -729,6 +729,7 @@ BoneI18n.register('te', {
   "Next {0}/{1}": "తదుపరి {0}/{1}",
   "Next {meal} idea": "{meal} కోసం తదుపరి సూచన",
   "Next appointment": "తదుపరి అపాయింట్‌మెంట్",
+  "Next visit: Ask your doctor": "తదుపరి సందర్శన: డాక్టర్‌ని అడగండి",
   "Next doctor visit": "తదుపరి డాక్టర్ సందర్శన",
   "Next DXA scan": "తదుపరి DXA పరీక్ష",
   "Next month": "తదుపరి నెల",

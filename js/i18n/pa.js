@@ -729,6 +729,7 @@ BoneI18n.register('pa', {
   "Next {0}/{1}": "ਅਗਲਾ {0}/{1}",
   "Next {meal} idea": "{meal} ਲਈ ਅਗਲਾ ਸੁਝਾਅ",
   "Next appointment": "ਅਗਲੀ ਮੁਲਾਕਾਤ",
+  "Next visit: Ask your doctor": "ਅਗਲੀ ਵਿਜ਼ਿਟ: ਡਾਕਟਰ ਨੂੰ ਪੁੱਛੋ",
   "Next doctor visit": "ਡਾਕਟਰ ਨਾਲ ਅਗਲੀ ਮੁਲਾਕਾਤ",
   "Next DXA scan": "ਅਗਲੀ DXA ਜਾਂਚ",
   "Next month": "ਅਗਲਾ ਮਹੀਨਾ",
