@@ -1061,6 +1061,41 @@ setTimeout(() => {
   assert(mockElements['printDoc'].innerHTML.includes('The Daily 3-2-1 Bone Nutrition Formula'),
     'Standard diet plan includes 3-2-1 Bone Nutrition Formula');
 
+  // Verify #printDoc is a top-level direct child of <body> (never trapped inside a hidden modal)
+  const tagRegex = /<\/?([a-zA-Z0-9]+)(\s+[^>]*)?>/g;
+  let match;
+  const tagStack = [];
+  const selfClosingTags = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+  let printDocParents = [];
+
+  while ((match = tagRegex.exec(indexHtmlSource)) !== null) {
+    const isClosing = match[0].startsWith('</');
+    const tagName = match[1].toLowerCase();
+    const fullTag = match[0];
+    if (fullTag.includes('id="printDoc"')) {
+      printDocParents = tagStack.map(t => t.tagName);
+      break;
+    }
+    if (selfClosingTags.has(tagName) || fullTag.endsWith('/>')) continue;
+    if (isClosing) {
+      for (let i = tagStack.length - 1; i >= 0; i--) {
+        if (tagStack[i].tagName === tagName) {
+          tagStack.splice(i, 1);
+          break;
+        }
+      }
+    } else {
+      tagStack.push({ tagName });
+    }
+  }
+
+  assert(printDocParents.length === 2 && printDocParents[0] === 'html' && printDocParents[1] === 'body',
+    'DOM hierarchy: #printDoc is a direct child of <body>, completely outside any modal backdrops');
+
+  const brandCssSource = fs.readFileSync(path.join(__dirname, '..', 'css', 'brand.css'), 'utf8');
+  assert(brandCssSource.includes('body.printing-doc #printDoc') && brandCssSource.includes('display: block !important'),
+    'brand.css guarantees #printDoc has display: block !important when printing-doc is active');
+
   // ---------------------------------------------------------------------------
   // FINAL SUMMARY
   // ---------------------------------------------------------------------------

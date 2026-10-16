@@ -8313,7 +8313,11 @@
     await Promise.all(imgs.map(img => {
       if (img.complete) return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
       return new Promise(resolve => {
-        img.onload = img.onerror = resolve;
+        const timer = setTimeout(resolve, 300);
+        img.onload = img.onerror = () => {
+          clearTimeout(timer);
+          resolve();
+        };
       });
     }));
 

@@ -2130,6 +2130,10 @@ body[data-view="assessment"] .bone-ai-fab, body[data-view="auth"] .bone-ai-fab {
    header/footer so the browser's own URL/date header is left out.
    -------------------------------------------------------------------------- */
 .print-doc { display: none; }
+body.printing-doc .print-doc,
+body.printing-doc #printDoc {
+  display: block !important;
+}
 .print-doc { --pd-ink: #231F33; --pd-muted: #6B6580; --pd-rule: #E4E0EA; --pd-accent: #8E2C6A; --pd-soft: #F8F5F9;
   color: var(--pd-ink); font-family: var(--font-body); font-size: 10.5pt; line-height: 1.45;
   -webkit-print-color-adjust: exact; print-color-adjust: exact; }
