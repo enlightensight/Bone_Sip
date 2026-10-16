@@ -47,10 +47,10 @@
     } catch (_) {}
   </script>
   <!-- Languages: loaded first so a saved language is applied before the page shows -->
-  <script src="js/i18n.js?v=4.2.7"></script>
+  <script src="js/i18n.js?v=4.2.8"></script>
   <link rel="preload" as="image" href="assets/images/bonesip_logo_720.webp">
-  <link rel="stylesheet" href="css/style.css?v=4.2.7">
-  <link rel="stylesheet" href="css/brand.css?v=4.2.7">
+  <link rel="stylesheet" href="css/style.css?v=4.2.8">
+  <link rel="stylesheet" href="css/brand.css?v=4.2.8">
 
   <!-- Unified Global Typography: Outfit (geometric, modern, clean throughout entire app) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -497,16 +497,23 @@
               <i class="fa-solid fa-file-pdf"></i>
             </div>
             <div class="diet-download-text">
-              <h4>Download Diet Plan</h4>
-              <p>Save or print your personalised bone nutrition schedule as PDF</p>
+              <h4>Download your personalised diet plan</h4>
             </div>
           </div>
           <div class="diet-download-actions">
             <button type="button" class="btn-diet-download primary" id="btnDownloadTodayDiet" onclick="BoneApp.downloadTodayDietPdf()" aria-label="Download today's diet plan PDF">
-              <i class="fa-solid fa-calendar-day"></i> <span>Today's Diet (PDF)</span>
+              <div class="btn-diet-content-left">
+                <span class="btn-diet-icon-pill"><i class="fa-solid fa-calendar-day"></i></span>
+                <span class="btn-diet-label">Today's Diet (PDF)</span>
+              </div>
+              <span class="btn-diet-action-pill" aria-hidden="true"><i class="fa-solid fa-arrow-down-to-bracket"></i></span>
             </button>
             <button type="button" class="btn-diet-download outline" id="btnDownloadWeeklyDiet" onclick="BoneApp.downloadWeeklyDietPdf()" aria-label="Download weekly 7-day diet plan PDF">
-              <i class="fa-solid fa-calendar-week"></i> <span>Weekly Diet (PDF)</span>
+              <div class="btn-diet-content-left">
+                <span class="btn-diet-icon-pill"><i class="fa-solid fa-calendar-week"></i></span>
+                <span class="btn-diet-label">Weekly Diet (PDF)</span>
+              </div>
+              <span class="btn-diet-action-pill" aria-hidden="true"><i class="fa-solid fa-arrow-down-to-bracket"></i></span>
             </button>
           </div>
         </div>
@@ -1279,9 +1286,9 @@
   <noscript><div class="noscript">BONE SIP needs JavaScript to run.</div></noscript>
 
   <script src="js/vendor/confetti.browser.min.js" defer></script>
-  <script src="js/config.js?v=4.2.7"></script>
-  <script src="js/data.js?v=4.2.7"></script>
-  <script src="js/notifications.js?v=4.2.7"></script>
-  <script src="js/app.js?v=4.2.7"></script>
+  <script src="js/config.js?v=4.2.8"></script>
+  <script src="js/data.js?v=4.2.8"></script>
+  <script src="js/notifications.js?v=4.2.8"></script>
+  <script src="js/app.js?v=4.2.8"></script>
 </body>
 </html>
