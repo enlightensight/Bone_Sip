@@ -1156,6 +1156,7 @@ setTimeout(() => {
   assert(!indexHtmlSource.includes('<h3><img src="assets/icons3d/clipboard.webp" alt="" width="28" height="28"> Ask your doctor</h3>'), 'Old "Ask your doctor" header is replaced');
   assert(brandCssSource.includes('flex-wrap: nowrap'), 'brand.css guarantees card-head never wraps actions to line 2');
   assert(brandCssSource.includes('.card-head-actions .btn-sm {') && brandCssSource.includes('border-radius: 50% !important'), 'brand.css styles compact circular action buttons on mobile');
+  assert(!indexHtmlSource.includes('profReminderToggle'), 'Profile modal does not render redundant push notifications reminder toggle');
 
   // ---------------------------------------------------------------------------
   // FINAL SUMMARY

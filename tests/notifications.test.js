@@ -146,7 +146,7 @@ assert(indexHtml.includes('id="remindersStatusBadge"'), 'Reminders status badge 
 assert(indexHtml.includes('id="remindersScheduleList"'), 'Reminders schedule list #remindersScheduleList is present');
 assert(!indexHtml.includes('id="btnSendTestReminder"'), 'Test reminder button #btnSendTestReminder is removed from index.html');
 assert(indexHtml.includes('id="remindersIosTip"'), 'iOS home screen helper tip #remindersIosTip is present');
-assert(indexHtml.includes('id="profReminderToggle"'), 'Profile modal reminder toggle #profReminderToggle is present');
+assert(!indexHtml.includes('id="profReminderToggle"'), 'Profile modal reminder toggle #profReminderToggle is removed (dedicated Reminders modal used instead)');
 assert(/<script src="js\/notifications\.js(\?v=\d+\.\d+\.\d+)?"><\/script>/.test(indexHtml), 'js/notifications.js script tag loaded in index.html');
 
 assert(indexHtml.includes('id="notifInstallModal"'), 'PWA install notification prompt modal #notifInstallModal is present');
