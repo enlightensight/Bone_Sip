@@ -475,11 +475,18 @@ html.splash-already-shown .splash {
    ONBOARDING SLIDE 2: 3 ANIMATED STEPS (IMAGE 1 SPECIFICATION)
    -------------------------------------------------------------------------- */
 .onboard-slide-moves {
-  padding: 10px 8px 6px;
-  min-height: 360px;
-  display: flex;
+  display: none !important;
+  width: 100%;
+  text-align: center;
+  padding: 10px 6px;
+}
+
+.onboard-slide-moves.active {
+  display: flex !important;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
+  animation: fadeUp 0.45s ease both;
 }
 
 .onboard-steps-stack {

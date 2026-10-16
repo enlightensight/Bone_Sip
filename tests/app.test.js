@@ -1132,6 +1132,16 @@ setTimeout(() => {
   assert(brandCssSource.includes('@keyframes onboardStepIn'),
     'brand.css defines @keyframes onboardStepIn for sequential pop-in');
 
+  // Verify Slide 2 is strictly hidden when Slide 1 or 3 is active
+  verifiedApp.goToOnboardingSlide(0);
+  const slide1CarouselHtml = mockElements['onboardingCarousel'].innerHTML;
+  assert(!slide1CarouselHtml.includes('onboard-slide-moves active'),
+    'When slide 1 is active, slide 2 does NOT have active class');
+  assert(brandCssSource.includes('.onboard-slide-moves {') && brandCssSource.includes('display: none !important'),
+    'brand.css guarantees .onboard-slide-moves is display: none !important when not active');
+  assert(brandCssSource.includes('.onboard-slide-moves.active {') && brandCssSource.includes('display: flex !important'),
+    'brand.css guarantees .onboard-slide-moves.active is display: flex !important');
+
   // ---------------------------------------------------------------------------
   // FINAL SUMMARY
   // ---------------------------------------------------------------------------
