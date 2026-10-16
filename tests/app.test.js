@@ -811,13 +811,19 @@ setTimeout(() => {
   const yestIso = verifiedApp.getYesterdayISODate();
   const testState = verifiedSandbox.window.BoneApp.getState();
 
-  // Reset yesterday feedback state for testing
+  // Reset yesterday feedback state for testing with an established plan
   testState.yesterdayFeedbackDate = '';
   testState.yesterdayFollowed = null;
+  testState.planCreatedAt = '2026-10-01'; // established user from prior days
   delete testState.checkedDietMilestones[yestIso];
   delete testState.checkedExerciseMilestones[yestIso];
 
-  assert(verifiedApp.shouldShowYesterdayFeedback() === true, 'Yesterday feedback bar appears when yesterday is empty/unopened');
+  assert(verifiedApp.shouldShowYesterdayFeedback() === true, 'Yesterday feedback bar appears for established user when yesterday is empty/unopened');
+
+  // First-day user test: if user created plan today, they had no plan yesterday, so bar MUST be hidden
+  testState.planCreatedAt = verifiedApp.getTodayISODate();
+  assert(verifiedApp.shouldShowYesterdayFeedback() === false, 'Yesterday feedback bar is hidden if user created their plan today for the first time');
+  testState.planCreatedAt = '2026-10-01'; // restore established plan date
 
   // If yesterday has checks, it should NOT appear
   testState.checkedDietMilestones[yestIso] = new Set(['m_breakfast']);

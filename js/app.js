@@ -133,6 +133,7 @@
     activeStreakDays: 0,
     yesterdayFollowed: null,
     yesterdayFeedbackDate: '',
+    planCreatedAt: '',
 
     // Exercise Workout Timer
     timer: {
@@ -1739,6 +1740,9 @@
   function completeBuildPillar(opts = {}) {
     state.completedPillars.build = true;
     state.unlockedPillars.protect = true;
+    if (!state.planCreatedAt) {
+      state.planCreatedAt = getTodayISODate();
+    }
 
     state.activePillar = 'build';
     state.activeBuildSubTab = 'diet';
@@ -1961,7 +1965,8 @@
         medTaken: state.medTaken || {},
         doctorVisit: state.doctorVisit || { date: '', questions: [] },
         yesterdayFollowed: state.yesterdayFollowed,
-        yesterdayFeedbackDate: state.yesterdayFeedbackDate || ''
+        yesterdayFeedbackDate: state.yesterdayFeedbackDate || '',
+        planCreatedAt: state.planCreatedAt || ''
       };
     },
 
@@ -2032,6 +2037,7 @@
         if (typeof data.activeStreakDays === 'number') state.activeStreakDays = data.activeStreakDays;
         if (typeof data.yesterdayFollowed === 'boolean') state.yesterdayFollowed = data.yesterdayFollowed;
         if (typeof data.yesterdayFeedbackDate === 'string') state.yesterdayFeedbackDate = data.yesterdayFeedbackDate;
+        if (typeof data.planCreatedAt === 'string') state.planCreatedAt = data.planCreatedAt;
         if (Array.isArray(data.chatHistory)) {
           data.chatHistory.forEach(m => {
             if (m && typeof m.text === 'string' && /ojas|ओजस|ওজস|ఓజస్|ஓஜஸ்|ઓજસ|ಓಜಸ್|ഓജസ്|ਓਜਸ|ଓଜସ/i.test(m.text)) {
@@ -5395,9 +5401,15 @@
       return false;
     }
 
+    // 2. If user joined or created their plan today for the first time, they had no plan yesterday!
+    const planStartDate = state.planCreatedAt || (state.auth && state.auth.createdAt ? toISODate(new Date(state.auth.createdAt)) : '') || historyStartDay();
+    if (!planStartDate || planStartDate >= todayISO) {
+      return false;
+    }
+
     const yesterdayISO = getYesterdayISODate();
 
-    // 2. Did the user check anything yesterday?
+    // 3. Did the user check anything yesterday?
     const yestDiet = state.checkedDietMilestones[yesterdayISO];
     const dietCount = yestDiet ? (typeof yestDiet.size === 'number' ? yestDiet.size : (Array.isArray(yestDiet) ? yestDiet.length : 0)) : 0;
     const yestEx = state.checkedExerciseMilestones[yesterdayISO];
@@ -5408,7 +5420,7 @@
       return false;
     }
 
-    // 3. If yesterday was already marked complete, do not show
+    // 4. If yesterday was already marked complete, do not show
     if (isDayComplete(yesterdayISO)) {
       return false;
     }
@@ -8885,6 +8897,7 @@
     cycleSlotMeal,
     filterMealSlotView,
     recordYesterdayFeedback,
+    getTodayISODate,
     getYesterdayISODate,
     shouldShowYesterdayFeedback,
     renderYesterdayFeedbackBar,
