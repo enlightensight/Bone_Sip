@@ -4357,3 +4357,123 @@ button.history-entry { width: 100%; border: none; text-align: left; font-family:
 .sx-mode-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; font-size: 0.85rem; font-weight: 600; border-radius: 20px; background: rgba(255,255,255,0.9); border: 1px solid var(--border-subtle, #e2e8f0); color: var(--primary, #0d9488); box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: all 0.2s ease; cursor: pointer; }
 .sx-mode-btn:hover { background: var(--primary, #0d9488); color: #fff; border-color: var(--primary, #0d9488); transform: translateY(-1px); }
 
+/* =========================================================================
+   DIET DOWNLOAD CARD (Today's Diet & Weekly 7-Day Diet PDF)
+   ========================================================================= */
+.diet-download-card {
+  margin: 16px 0 18px;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(30, 158, 98, 0.22);
+  border-radius: 20px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 16px rgba(35, 31, 51, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.diet-download-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.diet-download-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(30, 158, 98, 0.12);
+  color: var(--primary-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.diet-download-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.diet-download-text h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.diet-download-text p {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.diet-download-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-diet-download {
+  flex: 1 1 140px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  font-family: inherit;
+  border: none;
+  line-height: 1.2;
+}
+
+.btn-diet-download.primary {
+  background: linear-gradient(135deg, #1E9E62 0%, #167C4D 100%);
+  color: #FFFFFF;
+  box-shadow: 0 3px 10px rgba(30, 158, 98, 0.28);
+}
+
+.btn-diet-download.primary:hover,
+.btn-diet-download.primary:active {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(30, 158, 98, 0.38);
+}
+
+.btn-diet-download.outline {
+  background: #FFFFFF;
+  color: var(--brand-pink);
+  border: 1.5px solid var(--brand-pink);
+}
+
+.btn-diet-download.outline:hover,
+.btn-diet-download.outline:active {
+  background: #FFF1F5;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 480px) {
+  .diet-download-card {
+    padding: 14px;
+    margin: 14px 0 16px;
+  }
+  .diet-download-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .btn-diet-download {
+    width: 100%;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+  }
+}
+
+

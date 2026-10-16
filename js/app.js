@@ -8312,6 +8312,225 @@
     });
   }
 
+  function resolveMilestonesForWeekDay(dateKey, dayIndex = 0) {
+    const slots = [
+      { id: 'm_sun_d3', slotId: 'sun_d3', slotName: 'Morning sun', time: '6:30–8:00 AM' },
+      { id: 'm_breakfast', slotId: 'breakfast', slotName: 'Breakfast', time: '8:00–9:30 AM' },
+      { id: 'm_lunch', slotId: 'lunch', slotName: 'Lunch', time: '1:00–2:30 PM' },
+      { id: 'm_snack', slotId: 'snack', slotName: 'Evening Snack', time: '4:30–5:30 PM' },
+      { id: 'm_dinner', slotId: 'dinner', slotName: 'Dinner', time: '7:30–8:30 PM' }
+    ];
+
+    const catalog = BONE_SIP_DATA.fullDietCatalog || [];
+    const userReg = state.userProfile.regionalFood || 'north';
+    const userDiet = state.userProfile.diet || 'veg';
+    const userConditions = state.userProfile.healthConditions || [];
+
+    return slots.map(slot => {
+      // 1. Check custom meal swap for this date & slot
+      if (state.customMealSwaps && state.customMealSwaps[dateKey] && state.customMealSwaps[dateKey][slot.id]) {
+        const customMeal = Object.assign({}, state.customMealSwaps[dateKey][slot.id]);
+        customMeal.clinicalNote = getClinicalMealNote(customMeal, userConditions);
+        return {
+          id: slot.id,
+          slot: slot.slotName,
+          slotId: slot.id,
+          time: slot.time,
+          meal: applyItemSwaps(dateKey, slot.id, customMeal),
+          isCustomSwapped: true
+        };
+      }
+
+      // 2. Intelligent selection from 100+ catalog matching user's region, diet, and metabolic conditions
+      let candidate = null;
+      if (slot.slotId === 'sun_d3') {
+        const pool = catalog.filter(m => m.slot === 'sun_d3');
+        const regPool = pool.filter(m => m.region === userReg);
+        const activePool = regPool.length ? regPool : pool;
+        candidate = activePool[dayIndex % Math.max(1, activePool.length)] || activePool[0];
+      } else {
+        const pool = catalog.filter(m => m.slot === slot.slotId && dietAllows(userDiet, m.diet));
+        if (pool.length) {
+          pool.sort((a, b) => getMealMetabolicScore(b, userConditions, userDiet, userReg) - getMealMetabolicScore(a, userConditions, userDiet, userReg));
+          candidate = pool[dayIndex % pool.length];
+        }
+      }
+
+      if (!candidate) {
+        candidate = {
+          name: slot.slotId === 'sun_d3' ? '15 mins safe sunlight + 2.5L water & Vitamin D3' : `${formatRegionName(userReg)} Balanced Dish`,
+          calcium: 250,
+          protein: 12,
+          desc: 'Balanced bone mineral deposit'
+        };
+      }
+
+      const mealObj = Object.assign({}, candidate);
+      mealObj.clinicalNote = getClinicalMealNote(mealObj, userConditions);
+
+      return {
+        id: slot.id,
+        slot: slot.slotName,
+        slotId: slot.id,
+        time: slot.time,
+        meal: applyItemSwaps(dateKey, slot.id, mealObj),
+        isCustomSwapped: false
+      };
+    });
+  }
+
+  function todayDietDocHtml() {
+    const dateKey = state.selectedCalendarDate || getTodayISODate();
+    const resolved = resolveDailyMilestones(dateKey, null)
+      .sort((a, b) => SLOT_ORDER.indexOf(a.id) - SLOT_ORDER.indexOf(b.id));
+
+    let totalCa = 0;
+    let totalProtein = 0;
+
+    const tableRows = resolved.map(m => {
+      const meta = SLOT_META[m.id] || { name: 'Meal', time: 'Daily' };
+      const meal = m.meal;
+      totalCa += (meal.calcium || 0);
+      totalProtein += (meal.protein || 0);
+
+      const itemsText = (meal.items && meal.items.length)
+        ? meal.items.map(it => `• <b>${escapeHtml(it.name)}</b>${it.portion ? ` <span class="pd-muted">(${escapeHtml(it.portion)})</span>` : ''}`).join('<br>')
+        : `<b>${escapeHtml(meal.name)}</b>`;
+
+      const benefit = escapeHtml(meal.desc || meal.clinicalNote || 'Supports daily bone mineral scaffolding');
+
+      return [
+        `<b>${meta.name}</b><br><span class="pd-muted">${meta.time}</span>`,
+        itemsText,
+        `<b>${meal.calcium} mg Ca</b><br><span class="pd-muted">${meal.protein} g pro</span>`,
+        benefit
+      ];
+    });
+
+    const u = state.userProfile;
+    const conditions = (u.healthConditions || []).filter(c => c && c !== 'none')
+      .map(c => optionTitle(BONE_SIP_DATA.healthConditionOptions, c)).filter(Boolean);
+
+    const body = `
+      ${pdSection(1, 'Patient & Nutritional Profile', pdPatientHtml())}
+      ${pdSection(2, `Today's Personalised Bone Diet Schedule (${fmtRecordDate(dateKey)})`, `
+        <p class="pd-intro" style="margin-bottom: 4mm;">Curated for <b>${formatDietName(u.diet)}</b> preferences and <b>${formatRegionName(u.regionalFood || 'north')} Indian</b> cuisine${conditions.length ? `, clinically adapted for <b>${conditions.join(', ')}</b>` : ''}.</p>
+        ${pdTable(['Meal Slot', 'Recommended Meal & Dish Components', 'Calcium & Protein', 'Clinical Bone Benefit'], tableRows, 'pd-fill')}
+        <div style="margin-top: 4mm; display: flex; justify-content: space-between; align-items: center; background: #F0FDF4; border: 1.5px solid #BBF7D0; border-radius: 8px; padding: 10px 14px; font-size: 0.92rem;">
+          <div><b>Estimated Daily Total:</b> <span style="color: #1E9E62; font-weight: 800; font-size: 1.05rem;">${totalCa} mg Calcium</span> · <b>${totalProtein} g Protein</b></div>
+          <div><b>Daily Target:</b> 1,000–1,200 mg Ca · 50–65g Protein</div>
+        </div>`, true)}
+      ${pdSection(3, 'Clinical Guidance & Food Synergy Rules', `
+        <ul class="pd-list">
+          <li><b>Calcium Absorption Window:</b> Space high-calcium meals across morning, afternoon, and evening. The body absorbs calcium best in portions under 500 mg at one time.</li>
+          <li><b>Phytate & Caffeine Separation:</b> Avoid black tea, coffee, and aerated drinks within 45 minutes of calcium-rich meals to avoid binding minerals.</li>
+          <li><b>Sunlight Synergy:</b> The 15–20 minutes morning sunbath activates cutaneous synthesis of cholecalciferol (Vitamin D3), which is indispensable for calcium transport across the intestinal wall.</li>
+          ${conditions.includes('Kidney Impairment/Disease') || conditions.some(c => c.toLowerCase().includes('kidney')) ? '<li><b>Renal Equilibrium:</b> Moderate protein with carefully balanced dietary potassium and phosphorus to protect nephron filtration while preserving skeleton strength.</li>' : ''}
+          ${conditions.includes('Diabetes') || conditions.some(c => c.toLowerCase().includes('diabetes')) ? '<li><b>Glycemic Control:</b> Complex millets (ragi, bajra) and high-fiber lentils maintain steady blood sugar with no refined sugars.</li>' : ''}
+          ${conditions.includes('High blood pressure (Hypertension)') || conditions.some(c => c.toLowerCase().includes('hypertension')) ? '<li><b>Electrolyte Balance:</b> Low dietary sodium with potassium-dense vegetables (moringa, spinach, curd) promotes vascular elasticity.</li>' : ''}
+          ${conditions.includes('Lactose-free') || conditions.some(c => c.toLowerCase().includes('lactose')) ? '<li><b>Lactose-Free Richness:</b> Emphasises finger millet (ragi), white sesame (til), tofu, and drumstick leaves for high bioavailable calcium without dairy discomfort.</li>' : ''}
+        </ul>`)}
+      ${pdSection(4, 'Physician & Clinical Nutritionist Notes', `
+        <div class="pd-write tall"><span>Doctor / Dietitian Advice & Review Notes</span><i></i><i></i><i></i></div>`)}
+      <p class="pd-note">Generated from your personalized BONE SIP daily plan. Calibrated to Indian Council of Medical Research (ICMR-NIN) bone density nutrition baselines.</p>`;
+
+    return pdShell({
+      title: "Today's Personalised Bone Diet Plan",
+      intro: `Your tailored 5-milestone daily bone nutrition schedule for ${fmtRecordDate(dateKey)}.`,
+      body
+    });
+  }
+
+  function weeklyDietDocHtml() {
+    const today = new Date();
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const iso = toISODate(d);
+      const dayName = d.toLocaleDateString('en-IN', { weekday: 'long' });
+      const dayDateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      const resolved = resolveMilestonesForWeekDay(iso, i)
+        .sort((a, b) => SLOT_ORDER.indexOf(a.id) - SLOT_ORDER.indexOf(b.id));
+
+      let dayCa = 0;
+      let dayPro = 0;
+      resolved.forEach(m => {
+        dayCa += (m.meal.calcium || 0);
+        dayPro += (m.meal.protein || 0);
+      });
+
+      days.push({
+        iso,
+        dayName,
+        dayDateStr,
+        resolved,
+        dayCa,
+        dayPro
+      });
+    }
+
+    const u = state.userProfile;
+    const conditions = (u.healthConditions || []).filter(c => c && c !== 'none')
+      .map(c => optionTitle(BONE_SIP_DATA.healthConditionOptions, c)).filter(Boolean);
+
+    // Build 7-day matrix rows
+    const matrixRows = days.map(d => {
+      const mealMap = {};
+      d.resolved.forEach(m => { mealMap[m.id] = m.meal.name; });
+
+      return [
+        `<b>${d.dayName}</b><br><span class="pd-muted">${d.dayDateStr}</span>`,
+        escapeHtml(mealMap['m_sun_d3'] || '15 min morning sunbath + soaked til water'),
+        escapeHtml(mealMap['m_breakfast'] || 'Balanced breakfast'),
+        escapeHtml(mealMap['m_lunch'] || 'Balanced lunch'),
+        escapeHtml(mealMap['m_snack'] || 'Calcium snack'),
+        escapeHtml(mealMap['m_dinner'] || 'Light bone dinner'),
+        `<b>${d.dayCa} mg</b><br><span class="pd-muted">${d.dayPro}g pro</span>`
+      ];
+    });
+
+    const body = `
+      ${pdSection(1, 'Patient & Nutritional Goals', pdPatientHtml())}
+      ${pdSection(2, '7-Day Weekly Bone Health Meal Matrix', `
+        <p class="pd-intro" style="margin-bottom: 4mm;">Complete 7-day rotational schedule tailored for <b>${formatDietName(u.diet)}</b> and <b>${formatRegionName(u.regionalFood || 'north')} Indian</b> cuisine${conditions.length ? `, clinically aligned for <b>${conditions.join(', ')}</b>` : ''}.</p>
+        ${pdTable(
+          ['Day', 'Morning Sun (7 AM)', 'Breakfast (8:30 AM)', 'Lunch (1 PM)', 'Snack (4:30 PM)', 'Dinner (7:30 PM)', 'Est. Nutrients'],
+          matrixRows,
+          'pd-fill'
+        )}`, true)}
+      ${pdSection(3, 'Weekly High-Calcium Grocery & Pantry Checklist', `
+        ${pdTable(['Food Category', 'Recommended Items to Stock for the Week', 'Weekly Purpose'], [
+          ['<b>Millets & Grains</b>', 'Ragi flour (Finger millet), Bajra flour (Pearl millet), Whole wheat flour, Moong dal, Chana dal', 'Primary calcium-dense complex carbohydrates and fiber'],
+          ['<b>Dairy / Alternatives</b>', 'Curd/Dahi (probiotic calcium), Fresh Paneer, Low-fat cow milk / fortified soy or almond milk', 'High-bioavailability calcium (300–480 mg per serving)'],
+          ['<b>Seeds & Superfoods</b>', 'White sesame seeds (Til), Roasted makhana (Foxnuts), Soaked almonds, Walnuts, Flaxseeds', 'High-density mineral powerhouses (Til provides 975mg Ca/100g)'],
+          ['<b>Vegetables & Greens</b>', 'Moringa (Drumstick pods & leaves), Methi (Fenugreek), Palak (Spinach), Bottle gourd (Lauki), Cucumbers', 'Trace mineral catalysts, Vitamin K1/K2, and alkalinity'],
+          ['<b>Healthy Fats & Seasonings</b>', 'Desi A2 cow ghee, Cold-pressed mustard/sesame oil, Turmeric, Cumin, Roasted jeera, Himalayan pink salt', 'Fat-soluble Vitamin D/K absorption and digestive support']
+        ], 'pd-fill')}`, true)}
+      ${pdSection(4, 'The 3-2-1 Weekly Habit Adherence Guide', `
+        <ul class="pd-list">
+          <li><b>Daily 3-2-1 Rule:</b> Ensure 3 servings of calcium-rich foods (~1,000–1,200 mg total), 2 servings of quality protein, and 1 morning sunlight session daily.</li>
+          <li><b>Consistency over Perfection:</b> Track your daily meals in the BONE SIP app to monitor your 100-point bone deposit streak.</li>
+          <li><b>Hydration Baseline:</b> Drink 2 to 2.5 litres of water throughout the day to support nutrient delivery and renal clearance.</li>
+        </ul>
+        <div class="pd-write tall" style="margin-top: 4mm;"><span>Doctor / Dietitian Review & Follow-up Notes</span><i></i><i></i><i></i></div>`)}
+      <p class="pd-note">Weekly meal schedule generated by BONE SIP. For personal medical modifications, discuss with your registered dietitian or treating physician.</p>`;
+
+    return pdShell({
+      title: '7-Day Weekly Bone Health Diet Plan',
+      intro: 'A complete 7-day evidence-based rotational diet schedule for peak bone mineral density and strength.',
+      body
+    });
+  }
+
+  function downloadTodayDietPdf() {
+    return printDocument('today_diet');
+  }
+
+  function downloadWeeklyDietPdf() {
+    return printDocument('weekly_diet');
+  }
+
   async function printDocument(kind) {
     playSound('tap');
     const host = document.getElementById('printDoc');
@@ -8323,6 +8542,10 @@
       host.innerHTML = protectSafetyDocHtml();
     } else if (kind === 'standard_diet') {
       host.innerHTML = standardDietDocHtml();
+    } else if (kind === 'today_diet') {
+      host.innerHTML = todayDietDocHtml();
+    } else if (kind === 'weekly_diet') {
+      host.innerHTML = weeklyDietDocHtml();
     } else {
       host.innerHTML = healthReportDocHtml();
     }
@@ -8347,7 +8570,13 @@
       ? 'Doctor Visit Summary'
       : (kind === 'protect'
           ? 'Fall Prevention & Home Safety Plan'
-          : (kind === 'standard_diet' ? 'Standard Bone Health Diet Plan' : 'Bone Health Report'));
+          : (kind === 'standard_diet'
+              ? 'Standard Bone Health Diet Plan'
+              : (kind === 'today_diet'
+                  ? "Today's Personalised Bone Diet Plan"
+                  : (kind === 'weekly_diet'
+                      ? '7-Day Weekly Bone Health Diet Plan'
+                      : 'Bone Health Report'))));
     document.title = `BONE SIP ${docTitle} ${getTodayISODate()}`;
 
     document.body.classList.add('printing-doc');
@@ -8841,6 +9070,8 @@
     setChatLanguage,
     runAssistantAction,
     printDocument,
+    downloadTodayDietPdf,
+    downloadWeeklyDietPdf,
 
     // Meal Swap System
     openMealSwapModal,

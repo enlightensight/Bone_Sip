@@ -1160,6 +1160,42 @@ setTimeout(() => {
   assert(!indexHtmlSource.includes('dietReminderBannerContainer'), 'Diet page does not render unwanted reminder prompt banner');
 
   // ---------------------------------------------------------------------------
+  // 17. Testing Personalised Diet Plan Download Card & PDF Generation
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 17. Testing Personalised Diet Plan Download Card & PDF Generation ---');
+  assert(indexHtmlSource.includes('id="dietDownloadCard"'), 'index.html defines #dietDownloadCard element');
+  assert(indexHtmlSource.includes('id="btnDownloadTodayDiet"'), 'index.html defines #btnDownloadTodayDiet button');
+  assert(indexHtmlSource.includes('id="btnDownloadWeeklyDiet"'), 'index.html defines #btnDownloadWeeklyDiet button');
+  assert(brandCssSource.includes('.diet-download-card'), 'brand.css styles .diet-download-card');
+  assert(brandCssSource.includes('.btn-diet-download.primary'), 'brand.css styles .btn-diet-download.primary');
+  assert(brandCssSource.includes('.btn-diet-download.outline'), 'brand.css styles .btn-diet-download.outline');
+
+  assert(typeof verifiedApp.downloadTodayDietPdf === 'function', 'BoneApp exports downloadTodayDietPdf');
+  assert(typeof verifiedApp.downloadWeeklyDietPdf === 'function', 'BoneApp exports downloadWeeklyDietPdf');
+
+  // Test today's diet document generation
+  verifiedApp.printDocument('today_diet');
+  const printDocTodayHtml = mockElements['printDoc'].innerHTML;
+  assert(printDocTodayHtml.includes("Today's Personalised Bone Diet Plan"), 'today_diet PDF renders title');
+  assert(printDocTodayHtml.includes("Estimated Daily Total:"), 'today_diet PDF renders estimated daily total calculation');
+  assert(printDocTodayHtml.includes("Clinical Guidance &amp; Food Synergy Rules") || printDocTodayHtml.includes("Clinical Guidance & Food Synergy Rules"), 'today_diet PDF renders clinical guidance rules');
+  assert(printDocTodayHtml.includes("Physician &amp; Clinical Nutritionist Notes") || printDocTodayHtml.includes("Physician & Clinical Nutritionist Notes"), 'today_diet PDF renders physician notes box');
+
+  // Test weekly 7-day diet document generation
+  verifiedApp.printDocument('weekly_diet');
+  const printDocWeeklyHtml = mockElements['printDoc'].innerHTML;
+  assert(printDocWeeklyHtml.includes("7-Day Weekly Bone Health Diet Plan"), 'weekly_diet PDF renders title');
+  assert(printDocWeeklyHtml.includes("7-Day Weekly Bone Health Meal Matrix"), 'weekly_diet PDF renders 7-day matrix section');
+  assert(printDocWeeklyHtml.includes("Weekly High-Calcium Grocery &amp; Pantry Checklist") || printDocWeeklyHtml.includes("Weekly High-Calcium Grocery & Pantry Checklist"), 'weekly_diet PDF renders weekly grocery checklist');
+  assert(printDocWeeklyHtml.includes("The 3-2-1 Weekly Habit Adherence Guide"), 'weekly_diet PDF renders 3-2-1 adherence guide');
+
+  // Verify direct helper button calls
+  verifiedApp.downloadTodayDietPdf();
+  assert(mockElements['printDoc'].innerHTML.includes("Today's Personalised Bone Diet Plan"), 'downloadTodayDietPdf successfully triggers today_diet');
+  verifiedApp.downloadWeeklyDietPdf();
+  assert(mockElements['printDoc'].innerHTML.includes("7-Day Weekly Bone Health Diet Plan"), 'downloadWeeklyDietPdf successfully triggers weekly_diet');
+
+  // ---------------------------------------------------------------------------
   // FINAL SUMMARY
   // ---------------------------------------------------------------------------
   console.log('\n================================================================');

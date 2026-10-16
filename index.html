@@ -47,10 +47,10 @@
     } catch (_) {}
   </script>
   <!-- Languages: loaded first so a saved language is applied before the page shows -->
-  <script src="js/i18n.js?v=4.2.6"></script>
+  <script src="js/i18n.js?v=4.2.7"></script>
   <link rel="preload" as="image" href="assets/images/bonesip_logo_720.webp">
-  <link rel="stylesheet" href="css/style.css?v=4.2.6">
-  <link rel="stylesheet" href="css/brand.css?v=4.2.6">
+  <link rel="stylesheet" href="css/style.css?v=4.2.7">
+  <link rel="stylesheet" href="css/brand.css?v=4.2.7">
 
   <!-- Unified Global Typography: Outfit (geometric, modern, clean throughout entire app) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -490,6 +490,26 @@
         <!-- Meals -->
         <div class="diet-milestones-container" id="dietMilestonesList"></div>
 
+        <!-- Personalised Diet Plan Download Bar (Today's Diet & Weekly 7-Day Diet PDF) -->
+        <div class="diet-download-card" id="dietDownloadCard">
+          <div class="diet-download-info">
+            <div class="diet-download-icon">
+              <i class="fa-solid fa-file-pdf"></i>
+            </div>
+            <div class="diet-download-text">
+              <h4>Download Diet Plan</h4>
+              <p>Save or print your personalised bone nutrition schedule as PDF</p>
+            </div>
+          </div>
+          <div class="diet-download-actions">
+            <button type="button" class="btn-diet-download primary" id="btnDownloadTodayDiet" onclick="BoneApp.downloadTodayDietPdf()" aria-label="Download today's diet plan PDF">
+              <i class="fa-solid fa-calendar-day"></i> <span>Today's Diet (PDF)</span>
+            </button>
+            <button type="button" class="btn-diet-download outline" id="btnDownloadWeeklyDiet" onclick="BoneApp.downloadWeeklyDietPdf()" aria-label="Download weekly 7-day diet plan PDF">
+              <i class="fa-solid fa-calendar-week"></i> <span>Weekly Diet (PDF)</span>
+            </button>
+          </div>
+        </div>
 
         <!-- Clinical Guidance (Targeted for user's metabolic & health conditions) -->
         <div id="clinicalDietGuidanceContainer"></div>
@@ -1259,9 +1279,9 @@
   <noscript><div class="noscript">BONE SIP needs JavaScript to run.</div></noscript>
 
   <script src="js/vendor/confetti.browser.min.js" defer></script>
-  <script src="js/config.js?v=4.2.6"></script>
-  <script src="js/data.js?v=4.2.6"></script>
-  <script src="js/notifications.js?v=4.2.6"></script>
-  <script src="js/app.js?v=4.2.6"></script>
+  <script src="js/config.js?v=4.2.7"></script>
+  <script src="js/data.js?v=4.2.7"></script>
+  <script src="js/notifications.js?v=4.2.7"></script>
+  <script src="js/app.js?v=4.2.7"></script>
 </body>
 </html>
