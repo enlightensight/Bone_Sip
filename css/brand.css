@@ -4646,6 +4646,13 @@ button.history-entry { width: 100%; border: none; text-align: left; font-family:
   box-shadow: 0 4px 12px rgba(177, 49, 93, 0.2);
 }
 
+.profile-sheet-head {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
 .prof-user-card {
   display: flex;
   align-items: center;
