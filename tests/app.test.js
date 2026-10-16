@@ -1168,13 +1168,12 @@ setTimeout(() => {
   assert(!indexHtmlSource.includes('Save or print your personalised bone nutrition schedule as PDF'), 'dietDownloadCard does NOT render old subtitle text');
   assert(indexHtmlSource.includes('id="btnDownloadTodayDiet"'), 'index.html defines #btnDownloadTodayDiet button');
   assert(indexHtmlSource.includes('id="btnDownloadWeeklyDiet"'), 'index.html defines #btnDownloadWeeklyDiet button');
-  assert(indexHtmlSource.includes('btn-diet-icon-pill'), 'index.html defines .btn-diet-icon-pill on download buttons');
-  assert(indexHtmlSource.includes('btn-diet-action-pill'), 'index.html defines .btn-diet-action-pill on download buttons');
+  assert(!indexHtmlSource.includes('btn-diet-action-pill'), 'index.html does NOT render unwanted circle pill on download buttons');
   assert(brandCssSource.includes('.diet-download-card'), 'brand.css styles .diet-download-card');
   assert(brandCssSource.includes('.btn-diet-download.primary'), 'brand.css styles .btn-diet-download.primary');
   assert(brandCssSource.includes('.btn-diet-download.outline'), 'brand.css styles .btn-diet-download.outline');
-  assert(brandCssSource.includes('.btn-diet-icon-pill'), 'brand.css styles .btn-diet-icon-pill');
-  assert(brandCssSource.includes('.btn-diet-action-pill'), 'brand.css styles .btn-diet-action-pill');
+  assert(brandCssSource.includes('justify-content: center'), 'brand.css centers .btn-diet-download content');
+  assert(brandCssSource.includes('#B1315D'), 'brand.css styles .btn-diet-download.primary with brand berry/pink theme');
 
   assert(typeof verifiedApp.downloadTodayDietPdf === 'function', 'BoneApp exports downloadTodayDietPdf');
   assert(typeof verifiedApp.downloadWeeklyDietPdf === 'function', 'BoneApp exports downloadWeeklyDietPdf');
