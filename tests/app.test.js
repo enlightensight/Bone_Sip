@@ -1200,6 +1200,40 @@ setTimeout(() => {
   verifiedApp.downloadWeeklyDietPdf();
   assert(mockElements['printDoc'].innerHTML.includes("7-Day Weekly Bone Health Diet Plan"), 'downloadWeeklyDietPdf successfully triggers weekly_diet');
 
+  console.log('\n--- 18. Testing New Exercise Translations Across All 11 Indian Languages ---');
+  const langCodes = ['hi', 'bn', 'mr', 'te', 'ta', 'gu', 'kn', 'ml', 'pa', 'or', 'as'];
+  const testKeys = ['Side Leg Raise', 'Dumbbell Pull', 'Chest Stretch', '{0} per arm'];
+
+  langCodes.forEach(code => {
+    const langFile = path.join(__dirname, '..', 'js', 'i18n', `${code}.js`);
+    assert(fs.existsSync(langFile), `js/i18n/${code}.js exists`);
+    let langDict = {};
+    vm.runInNewContext(fs.readFileSync(langFile, 'utf8'), {
+      BoneI18n: { register: (c, d) => { langDict = d; } }
+    });
+
+    testKeys.forEach(key => {
+      assert(!!langDict[key], `Language "${code}" has translation for "${key}"`);
+      assert(!/^[a-zA-Z\s]+$/.test(langDict[key].replace(/\{0\}|\{1\}/g, '').trim()),
+        `Language "${code}" translation for "${key}" is in native script: "${langDict[key]}"`);
+    });
+  });
+
+  // Verify specific Hindi translations matching user screenshots
+  let hiDict = {};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'i18n', 'hi.js'), 'utf8'), {
+    BoneI18n: { register: (c, d) => { hiDict = d; } }
+  });
+  assert(hiDict['Side Leg Raise'] === 'साइड में पैर उठाना', 'Hindi: Side Leg Raise translated to "साइड में पैर उठाना"');
+  assert(hiDict['Dumbbell Pull'] === 'डंबल खींचना', 'Hindi: Dumbbell Pull translated to "डंबल खींचना"');
+  assert(hiDict['Chest Stretch'] === 'छाती का खिंचाव', 'Hindi: Chest Stretch translated to "छाती का खिंचाव"');
+  assert(hiDict['{0} per arm'] === 'हर हाथ से {0}', 'Hindi: {0} per arm translated to "हर हाथ से {0}"');
+  assert(hiDict['Pelvis'] === 'पेल्विस (श्रोणि)', 'Hindi: Pelvis translated to "पेल्विस (श्रोणि)"');
+  assert(hiDict['Collarbone'] === 'हंसली (कॉलरबोन)', 'Hindi: Collarbone translated to "हंसली (कॉलरबोन)"');
+  assert(hiDict['Ribs'] === 'पसलियाँ', 'Hindi: Ribs translated to "पसलियाँ"');
+  assert(hiDict['Forearm'] === 'अग्रबाहु (फोरआर्म)', 'Hindi: Forearm translated to "अग्रबाहु (फोरआर्म)"');
+  assert(hiDict['Wrist'] === 'कलाई', 'Hindi: Wrist translated to "कलाई"');
+
   // ---------------------------------------------------------------------------
   // FINAL SUMMARY
   // ---------------------------------------------------------------------------
