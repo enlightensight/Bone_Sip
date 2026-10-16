@@ -3752,31 +3752,9 @@
 
   function renderDietReminderBanner() {
     const container = document.getElementById('dietReminderBannerContainer');
-    const BoneNotifications = window.BoneNotifications;
-    if (!container || !BoneNotifications) return;
-
-    const enabled = BoneNotifications.isEnabled();
-    if (enabled) {
-      container.innerHTML = `
-        <div class="diet-reminder-pill-active" onclick="BoneApp.openRemindersModal()" role="button" tabindex="0" aria-label="${t('Manage daily routine reminders')}">
-          <span class="pulse-dot-green"></span>
-          <span class="diet-reminder-pill-text">${t('🔔 Daily reminders active: 7:00 AM · 8:00 AM · 1:00 PM · 4:30 PM · 7:30 PM')}</span>
-          <span class="diet-reminder-pill-link">${t('Manage')} <i class="fa-solid fa-chevron-right"></i></span>
-        </div>`;
-    } else {
-      container.innerHTML = `
-        <div class="diet-reminder-prompt-card">
-          <div class="diet-reminder-prompt-icon">
-            <i class="fa-solid fa-bell"></i>
-          </div>
-          <div class="diet-reminder-prompt-body">
-            <h4>${t('Never miss your bone routine!')}</h4>
-            <p>${t('Get mobile alerts for 7 AM sunbath & exercise, breakfast, lunch, snack, and dinner in your language.')}</p>
-          </div>
-          <button type="button" class="cta-btn cta-sm diet-reminder-enable-btn" onclick="BoneApp.toggleDailyReminders(true)">
-            ${t('Enable alerts')}
-          </button>
-        </div>`;
+    if (container) {
+      container.innerHTML = '';
+      container.style.display = 'none';
     }
   }
 

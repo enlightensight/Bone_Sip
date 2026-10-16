@@ -1157,6 +1157,7 @@ setTimeout(() => {
   assert(brandCssSource.includes('flex-wrap: nowrap'), 'brand.css guarantees card-head never wraps actions to line 2');
   assert(brandCssSource.includes('.card-head-actions .btn-sm {') && brandCssSource.includes('border-radius: 50% !important'), 'brand.css styles compact circular action buttons on mobile');
   assert(!indexHtmlSource.includes('profReminderToggle'), 'Profile modal does not render redundant push notifications reminder toggle');
+  assert(!indexHtmlSource.includes('dietReminderBannerContainer'), 'Diet page does not render unwanted reminder prompt banner');
 
   // ---------------------------------------------------------------------------
   // FINAL SUMMARY
