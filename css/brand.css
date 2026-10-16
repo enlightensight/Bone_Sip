@@ -2128,7 +2128,7 @@ body[data-view="assessment"] .bone-ai-fab, body[data-view="auth"] .bone-ai-fab {
 .doc-row.selected { border-color: var(--strengthen); background: var(--strengthen-bg); }
 .doc-row.selected .tick { background: var(--strengthen); border-color: var(--strengthen); color: #fff; animation: checkPop 0.35s ease; }
 
-.tscore-scale { display: grid; grid-template-columns: 1fr 1fr 1fr; border-radius: 16px; overflow: hidden; margin-bottom: 14px; }
+.tscore-scale { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: 16px; overflow: hidden; margin-bottom: 14px; }
 .tscore-zone { padding: 12px 8px; text-align: center; color: #fff; }
 .tscore-zone b { display: block; font-size: 0.86rem; }
 .tscore-zone span { font-size: 0.72rem; opacity: 0.9; font-weight: 700; }
@@ -2549,9 +2549,12 @@ body.printing-doc #printDoc {
 /* `overflow-x: hidden` on body makes it a scroll container and silently breaks
    position: sticky on the header. `clip` stops sideways scroll without that side effect. */
 html { overflow-x: hidden; }
-body { overflow-x: clip; }
 /* Sheets and dialogs sit above the floating nav (9999) and assistant button. */
 .modal-backdrop { z-index: 10050; }
+#progressiveReportModal.modal-backdrop { z-index: 10200 !important; }
+#remindersModal.modal-backdrop { z-index: 10200 !important; }
+#historyModal.modal-backdrop { z-index: 10250 !important; }
+#editProfileModal.modal-backdrop { z-index: 10250 !important; }
 .bone-chat-drawer { z-index: 10060; }
 @media (max-width: 600px) {
   .bone-chat-drawer { left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); width: auto; height: calc(100dvh - 80px); border-radius: 24px; }
@@ -4481,5 +4484,542 @@ button.history-entry { width: 100%; border: none; text-align: left; font-family:
     font-size: 0.92rem;
   }
 }
+
+/* ==========================================================================
+   PROFILE QUICK ACCESS CARDS: REPORT, DAILY REMINDERS TOGGLE & LANGUAGE
+   ========================================================================== */
+.prof-quick-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1.5px solid #F0EBF5;
+}
+
+.prof-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #FAF9FC;
+  border: 1.5px solid #EAE6F2;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.prof-card:hover {
+  background: #FFFFFF;
+  border-color: #D6265A;
+  box-shadow: 0 4px 14px rgba(214, 38, 90, 0.08);
+}
+
+.prof-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.prof-card-i3d {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.prof-card-icon-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.prof-card-icon-badge.reminder {
+  background: rgba(30, 158, 98, 0.12);
+  color: #1E9E62;
+}
+
+.prof-card-icon-badge.lang {
+  background: rgba(177, 49, 93, 0.12);
+  color: #B1315D;
+}
+
+.prof-card-title {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #231F33;
+  line-height: 1.25;
+  margin-bottom: 0;
+}
+
+.prof-card-sub {
+  font-size: 0.78rem;
+  color: #7D7893;
+  line-height: 1.3;
+}
+
+.prof-card-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.prof-card-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #B1315D 0%, #D6265A 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 8px rgba(214, 38, 90, 0.22);
+}
+
+.prof-card-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(214, 38, 90, 0.32);
+}
+
+.prof-lang-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #FFFFFF;
+  border: 1.5px solid #D9D4E4;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #231F33;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.prof-lang-pill:hover {
+  border-color: #B1315D;
+  color: #B1315D;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   PROFILE SHEET: HEADER EDIT BUTTON & TOP USER CARD
+   ========================================================================== */
+.sheet-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prof-header-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #FFF0F4;
+  color: #B1315D;
+  border: 1.5px solid #F5D0DD;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.prof-header-edit-btn:hover {
+  background: #B1315D;
+  color: #FFFFFF;
+  border-color: #B1315D;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(177, 49, 93, 0.2);
+}
+
+.prof-user-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #FFF7FA 0%, #FAF6FC 100%);
+  border: 1.5px solid #F0E3ED;
+  border-radius: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 14px rgba(177, 49, 93, 0.05);
+}
+
+.prof-user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #B1315D 0%, #D6265A 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(214, 38, 90, 0.25);
+}
+
+.prof-user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.prof-user-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #231F33;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prof-user-phone {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #5E5873;
+  margin-top: 2px;
+}
+
+.prof-user-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #1E9E62;
+}
+
+.prof-user-status .status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1E9E62;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(30, 158, 98, 0.2);
+}
+
+.prof-user-card-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: #FFFFFF;
+  color: #B1315D;
+  border: 1.5px solid #F0D4DF;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.prof-user-card-edit-btn:hover {
+  background: #B1315D;
+  color: #FFFFFF;
+  border-color: #B1315D;
+  transform: translateY(-1px);
+}
+
+.edit-prof-danger-zone {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1.5px dashed #F0EBF5;
+  display: flex;
+  justify-content: center;
+}
+
+.profile-edit-sheet {
+  max-width: 480px;
+  width: 95%;
+}
+
+/* ==========================================================================
+   TAMIL (TA) DEDICATED LAYOUT OVERRIDES
+   Tamil words have more syllables/characters and require tuned typography,
+   proper word breaking, and compact spacing so elements never clip or distort.
+   ========================================================================== */
+html[lang="ta"] .tscore-scale,
+html[data-lang="ta"] .tscore-scale {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+html[lang="ta"] .tscore-zone,
+html[data-lang="ta"] .tscore-zone {
+  padding: 10px 4px !important;
+  min-width: 0 !important;
+}
+
+html[lang="ta"] .tscore-zone b,
+html[data-lang="ta"] .tscore-zone b {
+  font-size: 0.72rem !important;
+  line-height: 1.25 !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto;
+}
+
+html[lang="ta"] .tscore-zone span,
+html[data-lang="ta"] .tscore-zone span {
+  font-size: 0.65rem !important;
+  white-space: nowrap !important;
+}
+
+html[lang="ta"] .dxa-item b,
+html[data-lang="ta"] .dxa-item b {
+  font-size: 0.9rem !important;
+  line-height: 1.35 !important;
+  word-break: break-word !important;
+}
+
+html[lang="ta"] .dxa-item p,
+html[data-lang="ta"] .dxa-item p {
+  font-size: 0.8rem !important;
+  line-height: 1.45 !important;
+  word-break: break-word !important;
+}
+
+/* Protect Hub Hero Banner & Safety Card */
+html[lang="ta"] .pillar-hero,
+html[data-lang="ta"] .pillar-hero {
+  gap: 12px !important;
+  padding: 14px 16px !important;
+}
+
+html[lang="ta"] .pillar-hero img.i3d-lg,
+html[data-lang="ta"] .pillar-hero img.i3d-lg {
+  width: 52px !important;
+  height: 52px !important;
+  flex-shrink: 0 !important;
+}
+
+html[lang="ta"] .pillar-hero h2,
+html[data-lang="ta"] .pillar-hero h2 {
+  font-size: clamp(1.02rem, 3.8vw, 1.2rem) !important;
+  line-height: 1.25 !important;
+  margin: 4px 0 3px !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+html[lang="ta"] .pillar-hero p,
+html[data-lang="ta"] .pillar-hero p {
+  font-size: 0.82rem !important;
+  line-height: 1.35 !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+html[lang="ta"] .risk-tag,
+html[data-lang="ta"] .risk-tag {
+  padding: 8px 10px !important;
+}
+
+html[lang="ta"] .risk-tag span,
+html[data-lang="ta"] .risk-tag span {
+  font-size: 0.95rem !important;
+}
+
+html[lang="ta"] .psx-ring,
+html[data-lang="ta"] .psx-ring {
+  width: 98px !important;
+  height: 98px !important;
+}
+
+html[lang="ta"] .psx-ring span,
+html[data-lang="ta"] .psx-ring span {
+  max-width: 88px !important;
+  font-size: 0.58rem !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
+  letter-spacing: -0.2px !important;
+}
+
+html[lang="ta"] .psx-hero-body h3,
+html[data-lang="ta"] .psx-hero-body h3 {
+  font-size: 1.02rem !important;
+  line-height: 1.3 !important;
+  word-break: break-word !important;
+}
+
+html[lang="ta"] .stat-pill,
+html[data-lang="ta"] .stat-pill {
+  font-size: 0.78rem !important;
+  padding: 5px 8px !important;
+  gap: 4px !important;
+  white-space: nowrap !important;
+}
+
+html[lang="ta"] .room-check-card .card-head h3,
+html[data-lang="ta"] .room-check-card .card-head h3 {
+  font-size: 0.95rem !important;
+}
+
+html[lang="ta"] .room-check-head-right .badge,
+html[data-lang="ta"] .room-check-head-right .badge {
+  font-size: 0.74rem !important;
+  padding: 4px 8px !important;
+}
+
+html[lang="ta"] .qa-item b,
+html[data-lang="ta"] .qa-item b {
+  font-size: 0.88rem !important;
+  line-height: 1.35 !important;
+  word-break: break-word !important;
+}
+
+html[lang="ta"] .qa-item p,
+html[data-lang="ta"] .qa-item p {
+  font-size: 0.78rem !important;
+  line-height: 1.4 !important;
+  word-break: break-word !important;
+}
+
+/* Diet Slots & Meals View */
+html[lang="ta"] .meal-slot-filter-strip,
+html[data-lang="ta"] .meal-slot-filter-strip {
+  gap: 6px !important;
+  padding-bottom: 10px !important;
+}
+
+html[lang="ta"] .slot-filter-pill,
+html[data-lang="ta"] .slot-filter-pill {
+  padding: 7px 11px !important;
+  min-height: 38px !important;
+  font-size: 0.82rem !important;
+  gap: 5px !important;
+}
+
+html[lang="ta"] .slot-filter-pill img,
+html[data-lang="ta"] .slot-filter-pill img {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+html[lang="ta"] .meal-item,
+html[data-lang="ta"] .meal-item {
+  gap: 8px !important;
+  padding: 10px 10px !important;
+}
+
+html[lang="ta"] .mi-text b,
+html[data-lang="ta"] .mi-text b {
+  font-size: 0.88rem !important;
+  line-height: 1.32 !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+html[lang="ta"] .mi-text span,
+html[data-lang="ta"] .mi-text span {
+  font-size: 0.72rem !important;
+  line-height: 1.35 !important;
+  word-break: break-word !important;
+}
+
+html[lang="ta"] .mi-opt,
+html[data-lang="ta"] .mi-opt {
+  padding: 4px 8px !important;
+  font-size: 0.72rem !important;
+  gap: 3px !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+}
+
+html[lang="ta"] .meal-head-text b,
+html[data-lang="ta"] .meal-head-text b {
+  font-size: 0.95rem !important;
+  word-break: break-word !important;
+}
+
+html[lang="ta"] .meal-head-text span,
+html[data-lang="ta"] .meal-head-text span {
+  font-size: 0.72rem !important;
+}
+
+html[lang="ta"] .diet-download-card,
+html[data-lang="ta"] .diet-download-card {
+  padding: 14px 14px !important;
+}
+
+html[lang="ta"] .diet-download-text h4,
+html[data-lang="ta"] .diet-download-text h4 {
+  font-size: 0.94rem !important;
+  line-height: 1.3 !important;
+  word-break: break-word !important;
+}
+
+html[lang="ta"] .btn-diet-download,
+html[data-lang="ta"] .btn-diet-download {
+  padding: 10px 14px !important;
+  font-size: 0.88rem !important;
+  min-height: 44px !important;
+}
+
+html[lang="ta"] .nutri-ring-item b,
+html[data-lang="ta"] .nutri-ring-item b {
+  font-size: 0.72rem !important;
+  word-break: break-word !important;
+}
+
+html[lang="ta"] .nutri-ring-item span,
+html[data-lang="ta"] .nutri-ring-item span {
+  font-size: 0.68rem !important;
+}
+
+/* Pillar Navigation & Global Elements */
+html[lang="ta"] .pillar-nav-label,
+html[data-lang="ta"] .pillar-nav-label {
+  font-size: 0.72rem !important;
+  letter-spacing: -0.2px !important;
+  white-space: nowrap !important;
+}
+
+html[lang="ta"] .card-head h3,
+html[data-lang="ta"] .card-head h3 {
+  font-size: 0.95rem !important;
+}
+
+html[lang="ta"] .ex-card h4,
+html[data-lang="ta"] .ex-card h4 {
+  font-size: 0.95rem !important;
+  line-height: 1.3 !important;
+  word-break: break-word !important;
+}
+
+html[lang="ta"] .ex-blurb,
+html[data-lang="ta"] .ex-blurb {
+  font-size: 0.8rem !important;
+  line-height: 1.4 !important;
+  word-break: break-word !important;
+}
+
+html[lang="ta"] .quick-card-text b,
+html[data-lang="ta"] .quick-card-text b {
+  font-size: 0.92rem !important;
+  word-break: break-word !important;
+}
+
+html[lang="ta"] .profile-hero h3,
+html[data-lang="ta"] .profile-hero h3 {
+  font-size: 1.25rem !important;
+  word-break: break-word !important;
+}
+
 
 

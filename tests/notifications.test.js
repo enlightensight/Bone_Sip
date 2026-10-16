@@ -137,8 +137,8 @@ assert(swCode.includes('assets/icons/favicon-32.png'), 'sw.js specifies badge as
 console.log('\n--- 4. Testing HTML Elements & UI Integration ---');
 
 const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-assert(indexHtml.includes('id="headerRemindersBtn"'), 'Header reminder button #headerRemindersBtn is present');
-assert(indexHtml.includes('id="headerReminderDot"'), 'Header reminder status dot #headerReminderDot is present');
+assert(indexHtml.includes('id="profDailyReminderToggle"'), 'Profile daily reminder toggle #profDailyReminderToggle is present');
+assert(indexHtml.includes('id="profDailyReminderStatus"'), 'Profile daily reminder status #profDailyReminderStatus is present');
 assert(!indexHtml.includes('id="dietReminderBannerContainer"'), 'Diet view reminder banner container #dietReminderBannerContainer is removed from Diet page');
 assert(indexHtml.includes('id="remindersModal"'), 'Reminders modal #remindersModal is present');
 assert(indexHtml.includes('id="remindersMasterToggle"'), 'Reminders master switch toggle #remindersMasterToggle is present');

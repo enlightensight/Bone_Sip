@@ -47,10 +47,10 @@
     } catch (_) {}
   </script>
   <!-- Languages: loaded first so a saved language is applied before the page shows -->
-  <script src="js/i18n.js?v=4.3.1"></script>
+  <script src="js/i18n.js?v=4.3.2"></script>
   <link rel="preload" as="image" href="assets/images/bonesip_logo_720.webp">
-  <link rel="stylesheet" href="css/style.css?v=4.3.1">
-  <link rel="stylesheet" href="css/brand.css?v=4.3.1">
+  <link rel="stylesheet" href="css/style.css?v=4.3.2">
+  <link rel="stylesheet" href="css/brand.css?v=4.3.2">
 
   <!-- Unified Global Typography: Outfit (geometric, modern, clean throughout entire app) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -211,18 +211,8 @@
       </button>
 
       <div class="header-actions">
-        <button class="icon-pill reminder-pill" id="headerRemindersBtn" onclick="BoneApp.openRemindersModal()" title="Daily routine reminders" aria-label="Daily routine reminders">
-          <i class="fa-solid fa-bell" aria-hidden="true"></i>
-          <span class="reminder-status-dot" id="headerReminderDot"></span>
-        </button>
-        <button class="icon-pill lang-pill" id="headerLangBtn" onclick="BoneApp.openLanguagePicker()" title="Language" aria-label="Change language">
-          <i class="fa-solid fa-language" aria-hidden="true"></i> <span id="headerLangLabel" translate="no">English</span>
-        </button>
         <button class="header-login-btn" id="headerLoginBtn" onclick="BoneApp.openLogin()" aria-label="Log in">
           <i class="fa-solid fa-right-to-bracket"></i> <span>Log in</span>
-        </button>
-        <button class="header-report-btn" id="headerReportBtn" onclick="BoneApp.openProgressiveReportModal()" title="My health report" aria-label="Open my health report">
-          <img src="assets/icons3d/bone_report_3d.webp" alt="My health report" class="header-report-img" width="38" height="38">
         </button>
         <div id="userHeaderProfile" onclick="BoneApp.openUserProfileModal()">
           <button class="avatar-btn" id="loginHeaderBtn" aria-label="Open profile" title="My profile">
@@ -931,7 +921,7 @@
   </div>
 
   <!-- =========================================================================
-       PROFILE & PREFERENCES
+       PROFILE & PREFERENCES (View & Quick Access)
        ========================================================================= -->
   <div class="modal-backdrop" id="userProfileModal" style="display: none;">
     <div class="modal-card sheet profile-sheet">
@@ -940,92 +930,188 @@
         <button class="modal-close-btn" onclick="BoneApp.closeUserProfileModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <div class="pref-section">
-        <div class="pref-section-header">
-          <h4 class="pref-section-title">Height &amp; weight</h4>
-          <div class="unit-capsule-toggle">
-            <button class="unit-capsule-btn" id="unitToggleFt" onclick="BoneApp.setHeightUnit('ft')">ft/in</button>
-            <button class="unit-capsule-btn active" id="unitToggleCm" onclick="BoneApp.setHeightUnit('cm')">cm</button>
+      <!-- TOP: USER NAME & NUMBER CARD -->
+      <div class="prof-user-card" id="profUserCard">
+        <div class="prof-user-avatar" id="profUserAvatar">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <div class="prof-user-details">
+          <div class="prof-user-name" id="profUserDisplayName">Your Name</div>
+          <div class="prof-user-phone" id="profUserDisplayPhone">+91 ••••• •••••</div>
+          <div class="prof-user-status" id="profUserStatusTag">
+            <span class="status-indicator"></span>
+            <span id="profUserStatusText">Saved on device</span>
           </div>
         </div>
-        <div class="two-col">
-          <input type="number" id="profInputHeight" class="pref-input-box" placeholder="Height (cm)" value="165" aria-label="Height">
-          <input type="number" id="profInputWeight" class="pref-input-box" placeholder="Weight (kg)" value="62" aria-label="Weight">
+        <button type="button" class="prof-user-card-edit-btn" onclick="BoneApp.openEditProfileModal()" aria-label="Edit Profile">
+          <i class="fa-solid fa-pen"></i> <span>Edit</span>
+        </button>
+      </div>
+
+      <!-- QUICK ACCESS: REPORT, DAILY REMINDERS TOGGLE & LANGUAGE -->
+      <div class="prof-quick-grid">
+        <!-- 1. Report Card -->
+        <div class="prof-card prof-report-card" onclick="BoneApp.openProgressiveReportModal()" role="button" tabindex="0" aria-label="Open my report">
+          <div class="prof-card-left">
+            <img src="assets/icons3d/bone_report_3d.webp" alt="" class="prof-card-i3d" width="38" height="38">
+            <div>
+              <div class="prof-card-title">Report</div>
+            </div>
+          </div>
+          <div class="prof-card-right">
+            <button type="button" class="prof-card-action-btn" aria-label="View report">
+              <span>View</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Daily Reminders Row with Direct Toggle Switch -->
+        <div class="prof-card prof-reminder-card">
+          <div class="prof-card-left" onclick="BoneApp.openRemindersModal()" style="cursor: pointer;" title="View reminder timings">
+            <div class="prof-card-icon-badge reminder"><i class="fa-solid fa-bell"></i></div>
+            <div>
+              <div class="prof-card-title">Daily reminders</div>
+              <span id="profDailyReminderStatus" style="display: none;" hidden></span>
+            </div>
+          </div>
+          <div class="prof-card-right">
+            <label class="switch-toggle" for="profDailyReminderToggle" title="Toggle daily reminders">
+              <input type="checkbox" id="profDailyReminderToggle" onchange="BoneApp.toggleDailyReminders(this.checked)">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. Language Selector Row -->
+        <div class="prof-card prof-lang-card" onclick="BoneApp.openLanguagePicker()" role="button" tabindex="0" aria-label="Change app language" style="cursor: pointer;">
+          <div class="prof-card-left">
+            <div class="prof-card-icon-badge lang"><i class="fa-solid fa-language"></i></div>
+            <div>
+              <div class="prof-card-title">Language</div>
+            </div>
+          </div>
+          <div class="prof-card-right">
+            <button type="button" class="prof-lang-pill" id="profLangBtn" aria-label="Change language">
+              <span id="profLangLabel" translate="no">English</span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div class="pref-section">
-        <h4 class="pref-section-title">Diet</h4>
-        <div class="pref-pill-group" id="profDietPills">
-          <button class="pref-pill active" data-diet="veg" onclick="BoneApp.selectPrefDiet('veg')"><img src="assets/icons3d/salad.webp" alt="" width="18" height="18"> Veg</button>
-          <button class="pref-pill" data-diet="eggetarian" onclick="BoneApp.selectPrefDiet('eggetarian')"><img src="assets/icons3d/egg.webp" alt="" width="18" height="18"> Egg</button>
-          <button class="pref-pill" data-diet="non_veg" onclick="BoneApp.selectPrefDiet('non_veg')"><img src="assets/icons3d/poultry.webp" alt="" width="18" height="18"> Non-veg</button>
-          <button class="pref-pill" data-diet="vegan" onclick="BoneApp.selectPrefDiet('vegan')"><img src="assets/icons3d/seedling.webp" alt="" width="18" height="18"> Vegan</button>
-        </div>
-        <select id="profSelectDiet" hidden>
-          <option value="veg">Vegetarian</option>
-          <option value="eggetarian">Eggetarian</option>
-          <option value="non_veg">Non-Vegetarian</option>
-          <option value="vegan">Vegan</option>
-        </select>
-      </div>
-
-      <div class="pref-section">
-        <h4 class="pref-section-title">Activity</h4>
-        <div class="pref-pill-group" id="profActivityPills">
-          <button class="pref-pill" data-activity="sedentary" onclick="BoneApp.selectPrefActivity('sedentary')"><img src="assets/icons3d/laptop.webp" alt="" width="18" height="18"> Sitting</button>
-          <button class="pref-pill active" data-activity="light" onclick="BoneApp.selectPrefActivity('light')"><img src="assets/icons3d/walking.webp" alt="" width="18" height="18"> Light</button>
-          <button class="pref-pill" data-activity="moderate" onclick="BoneApp.selectPrefActivity('moderate')"><img src="assets/icons3d/running.webp" alt="" width="18" height="18"> Moderate</button>
-          <button class="pref-pill" data-activity="very_active" onclick="BoneApp.selectPrefActivity('very_active')"><img src="assets/icons3d/weights.webp" alt="" width="18" height="18"> Very active</button>
-        </div>
-      </div>
-
-      <div class="pref-section">
-        <h4 class="pref-section-title">Regional food</h4>
-        <div class="pref-pill-group" id="profRegionPills">
-          <button class="pref-pill active" data-region="north" onclick="BoneApp.selectPrefRegion('north')">North</button>
-          <button class="pref-pill" data-region="south" onclick="BoneApp.selectPrefRegion('south')">South</button>
-          <button class="pref-pill" data-region="west" onclick="BoneApp.selectPrefRegion('west')">West</button>
-          <button class="pref-pill" data-region="east" onclick="BoneApp.selectPrefRegion('east')">East</button>
-          <button class="pref-pill" data-region="continental" onclick="BoneApp.selectPrefRegion('continental')">Global</button>
-        </div>
-        <select id="profSelectRegion" hidden>
-          <option value="north">North Indian</option>
-          <option value="south">South Indian</option>
-          <option value="west">West Indian</option>
-          <option value="east">East Indian</option>
-          <option value="continental">Continental</option>
-        </select>
-      </div>
-
-      <div class="pref-section">
-        <h4 class="pref-section-title">Health &amp; metabolic conditions</h4>
-        <div class="pref-pill-group" id="profHealthPills">
-          <button type="button" class="pref-pill" data-cond="diabetes" onclick="BoneApp.togglePrefCondition('diabetes')"><img src="assets/icons3d/glucose.webp" alt="" width="18" height="18"> Diabetes</button>
-          <button type="button" class="pref-pill" data-cond="hypertension" onclick="BoneApp.togglePrefCondition('hypertension')"><img src="assets/icons3d/bp_cuff.webp" alt="" width="18" height="18"> Hypertension</button>
-          <button type="button" class="pref-pill" data-cond="obesity" onclick="BoneApp.togglePrefCondition('obesity')"><img src="assets/icons3d/scale.webp" alt="" width="18" height="18"> Obesity</button>
-          <button type="button" class="pref-pill" data-cond="dyslipidemia" onclick="BoneApp.togglePrefCondition('dyslipidemia')"><img src="assets/icons3d/cholesterol.webp" alt="" width="18" height="18"> High cholesterol</button>
-          <button type="button" class="pref-pill" data-cond="thyroid" onclick="BoneApp.togglePrefCondition('thyroid')"><img src="assets/icons3d/thyroid.webp" alt="" width="18" height="18"> Thyroid</button>
-          <button type="button" class="pref-pill" data-cond="kidney" onclick="BoneApp.togglePrefCondition('kidney')"><img src="assets/icons3d/kidney.webp" alt="" width="18" height="18"> Kidney</button>
-          <button type="button" class="pref-pill" data-cond="lactose_intolerance" onclick="BoneApp.togglePrefCondition('lactose_intolerance')"><img src="assets/icons3d/lactose.webp" alt="" width="18" height="18"> Lactose-free</button>
-          <button type="button" class="pref-pill" data-cond="none" onclick="BoneApp.togglePrefCondition('none')"><img src="assets/icons3d/check.webp" alt="" width="18" height="18"> None</button>
-        </div>
-      </div>
-
-      <div class="pref-section">
-        <h4 class="pref-section-title">About you</h4>
-        <div class="two-col">
-          <input type="text" id="profInputName" class="pref-input-box" placeholder="Your name" autocomplete="name" maxlength="60" aria-label="Full name">
-          <input type="tel" id="profInputPhone" class="pref-input-box" placeholder="Mobile" inputmode="numeric" maxlength="10" aria-label="Mobile number">
-        </div>
-      </div>
-
-      <button class="cta-btn btn-full" onclick="BoneApp.saveUserProfileModal()"><i class="fa-solid fa-check"></i> Save</button>
+      <!-- LAST: ACCOUNT ACTIONS (LOG OUT ONLY; DELETE ACCOUNT IS IN EDIT PROFILE) -->
       <div class="profile-account" id="profileAccountBox"></div>
-      <div class="profile-data-actions" id="profileDataActions">
+      <div class="profile-data-actions" id="profileDataActions" style="display: none;">
         <button class="link-btn danger" id="profileResetBtn" onclick="BoneApp.resetDatabase()"><i class="fa-solid fa-trash-can"></i> Reset</button>
       </div>
       <p class="privacy-note" id="profilePrivacyNote"><i class="fa-solid fa-lock"></i> Your data stays on this device.</p>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       EDIT PROFILE POPUP (Height, Weight, Diet, Activity, Conditions & Danger Zone)
+       ========================================================================= -->
+  <div class="modal-backdrop" id="editProfileModal" style="display: none;">
+    <div class="modal-card sheet profile-edit-sheet">
+      <div class="sheet-head">
+        <h3><i class="fa-solid fa-user-pen" style="color: var(--brand-pink); margin-right: 6px;"></i> Edit Profile</h3>
+        <button class="modal-close-btn" onclick="BoneApp.closeEditProfileModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="sheet-scroll">
+        <!-- ABOUT YOU (NAME AND NUMBER ON TOP) -->
+        <div class="pref-section">
+          <h4 class="pref-section-title">About you</h4>
+          <div class="two-col">
+            <input type="text" id="profInputName" class="pref-input-box" placeholder="Your name" autocomplete="name" maxlength="60" aria-label="Full name">
+            <input type="tel" id="profInputPhone" class="pref-input-box" placeholder="Mobile" inputmode="numeric" maxlength="10" aria-label="Mobile number">
+          </div>
+        </div>
+
+        <!-- HEIGHT & WEIGHT -->
+        <div class="pref-section">
+          <div class="pref-section-header">
+            <h4 class="pref-section-title">Height &amp; weight</h4>
+            <div class="unit-capsule-toggle">
+              <button class="unit-capsule-btn" id="unitToggleFt" onclick="BoneApp.setHeightUnit('ft')">ft/in</button>
+              <button class="unit-capsule-btn active" id="unitToggleCm" onclick="BoneApp.setHeightUnit('cm')">cm</button>
+            </div>
+          </div>
+          <div class="two-col">
+            <input type="number" id="profInputHeight" class="pref-input-box" placeholder="Height (cm)" value="165" aria-label="Height">
+            <input type="number" id="profInputWeight" class="pref-input-box" placeholder="Weight (kg)" value="62" aria-label="Weight">
+          </div>
+        </div>
+
+        <!-- DIET -->
+        <div class="pref-section">
+          <h4 class="pref-section-title">Diet</h4>
+          <div class="pref-pill-group" id="profDietPills">
+            <button class="pref-pill active" data-diet="veg" onclick="BoneApp.selectPrefDiet('veg')"><img src="assets/icons3d/salad.webp" alt="" width="18" height="18"> Veg</button>
+            <button class="pref-pill" data-diet="eggetarian" onclick="BoneApp.selectPrefDiet('eggetarian')"><img src="assets/icons3d/egg.webp" alt="" width="18" height="18"> Egg</button>
+            <button class="pref-pill" data-diet="non_veg" onclick="BoneApp.selectPrefDiet('non_veg')"><img src="assets/icons3d/poultry.webp" alt="" width="18" height="18"> Non-veg</button>
+            <button class="pref-pill" data-diet="vegan" onclick="BoneApp.selectPrefDiet('vegan')"><img src="assets/icons3d/seedling.webp" alt="" width="18" height="18"> Vegan</button>
+          </div>
+          <select id="profSelectDiet" hidden>
+            <option value="veg">Vegetarian</option>
+            <option value="eggetarian">Eggetarian</option>
+            <option value="non_veg">Non-Vegetarian</option>
+            <option value="vegan">Vegan</option>
+          </select>
+        </div>
+
+        <!-- ACTIVITY -->
+        <div class="pref-section">
+          <h4 class="pref-section-title">Activity</h4>
+          <div class="pref-pill-group" id="profActivityPills">
+            <button class="pref-pill" data-activity="sedentary" onclick="BoneApp.selectPrefActivity('sedentary')"><img src="assets/icons3d/laptop.webp" alt="" width="18" height="18"> Sitting</button>
+            <button class="pref-pill active" data-activity="light" onclick="BoneApp.selectPrefActivity('light')"><img src="assets/icons3d/walking.webp" alt="" width="18" height="18"> Light</button>
+            <button class="pref-pill" data-activity="moderate" onclick="BoneApp.selectPrefActivity('moderate')"><img src="assets/icons3d/running.webp" alt="" width="18" height="18"> Moderate</button>
+            <button class="pref-pill" data-activity="very_active" onclick="BoneApp.selectPrefActivity('very_active')"><img src="assets/icons3d/weights.webp" alt="" width="18" height="18"> Very active</button>
+          </div>
+        </div>
+
+        <!-- REGIONAL FOOD -->
+        <div class="pref-section">
+          <h4 class="pref-section-title">Regional food</h4>
+          <div class="pref-pill-group" id="profRegionPills">
+            <button class="pref-pill active" data-region="north" onclick="BoneApp.selectPrefRegion('north')">North</button>
+            <button class="pref-pill" data-region="south" onclick="BoneApp.selectPrefRegion('south')">South</button>
+            <button class="pref-pill" data-region="west" onclick="BoneApp.selectPrefRegion('west')">West</button>
+            <button class="pref-pill" data-region="east" onclick="BoneApp.selectPrefRegion('east')">East</button>
+            <button class="pref-pill" data-region="continental" onclick="BoneApp.selectPrefRegion('continental')">Global</button>
+          </div>
+          <select id="profSelectRegion" hidden>
+            <option value="north">North Indian</option>
+            <option value="south">South Indian</option>
+            <option value="west">West Indian</option>
+            <option value="east">East Indian</option>
+            <option value="continental">Continental</option>
+          </select>
+        </div>
+
+        <!-- HEALTH & METABOLIC CONDITIONS -->
+        <div class="pref-section">
+          <h4 class="pref-section-title">Health &amp; metabolic conditions</h4>
+          <div class="pref-pill-group" id="profHealthPills">
+            <button type="button" class="pref-pill" data-cond="diabetes" onclick="BoneApp.togglePrefCondition('diabetes')"><img src="assets/icons3d/glucose.webp" alt="" width="18" height="18"> Diabetes</button>
+            <button type="button" class="pref-pill" data-cond="hypertension" onclick="BoneApp.togglePrefCondition('hypertension')"><img src="assets/icons3d/bp_cuff.webp" alt="" width="18" height="18"> Hypertension</button>
+            <button type="button" class="pref-pill" data-cond="obesity" onclick="BoneApp.togglePrefCondition('obesity')"><img src="assets/icons3d/scale.webp" alt="" width="18" height="18"> Obesity</button>
+            <button type="button" class="pref-pill" data-cond="dyslipidemia" onclick="BoneApp.togglePrefCondition('dyslipidemia')"><img src="assets/icons3d/cholesterol.webp" alt="" width="18" height="18"> High cholesterol</button>
+            <button type="button" class="pref-pill" data-cond="thyroid" onclick="BoneApp.togglePrefCondition('thyroid')"><img src="assets/icons3d/thyroid.webp" alt="" width="18" height="18"> Thyroid</button>
+            <button type="button" class="pref-pill" data-cond="kidney" onclick="BoneApp.togglePrefCondition('kidney')"><img src="assets/icons3d/kidney.webp" alt="" width="18" height="18"> Kidney</button>
+            <button type="button" class="pref-pill" data-cond="lactose_intolerance" onclick="BoneApp.togglePrefCondition('lactose_intolerance')"><img src="assets/icons3d/lactose.webp" alt="" width="18" height="18"> Lactose-free</button>
+            <button type="button" class="pref-pill" data-cond="none" onclick="BoneApp.togglePrefCondition('none')"><img src="assets/icons3d/check.webp" alt="" width="18" height="18"> None</button>
+          </div>
+        </div>
+
+        <button class="cta-btn btn-full" onclick="BoneApp.saveUserProfileModal()"><i class="fa-solid fa-check"></i> Save</button>
+
+        <!-- LAST: DELETE ACCOUNT -->
+        <div class="edit-prof-danger-zone" id="editProfDangerZone">
+          <button type="button" class="link-btn danger" onclick="BoneApp.deleteAccount()"><i class="fa-solid fa-user-xmark"></i> Delete account</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1278,9 +1364,9 @@
   <noscript><div class="noscript">BONE SIP needs JavaScript to run.</div></noscript>
 
   <script src="js/vendor/confetti.browser.min.js" defer></script>
-  <script src="js/config.js?v=4.3.1"></script>
-  <script src="js/data.js?v=4.3.1"></script>
-  <script src="js/notifications.js?v=4.3.1"></script>
-  <script src="js/app.js?v=4.3.1"></script>
+  <script src="js/config.js?v=4.3.2"></script>
+  <script src="js/data.js?v=4.3.2"></script>
+  <script src="js/notifications.js?v=4.3.2"></script>
+  <script src="js/app.js?v=4.3.2"></script>
 </body>
 </html>

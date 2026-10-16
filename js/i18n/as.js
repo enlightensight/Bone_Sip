@@ -204,7 +204,7 @@ BoneI18n.register("as", {
     "Bone Buddy AI assistant": "বোন বাডি AI সহাযক",
     "Bone Buddy will reply in {lang}": "বোন বাডি {lang} মেং জৱাব দেগা",
     "Bone care & scans": "হাড়ৰ যত্ন আৰু স্কেন",
-    "Bone Health Report": "হড্ডিযোং কী সেহত কী ৰিপোৰ্ট",
+    "Bone Health Report": "হাড়ৰ স্বাস্থ্য প্ৰতিবেদন",
     "Bone history": "হড্ডিযোং কা ইতিহাস",
     "Bone scan": "হড্ডিযোং কী জাँচ",
     "Bone scan (DXA)": "হাড়ৰ স্কেন (DXA)",
@@ -1373,5 +1373,17 @@ BoneI18n.register("as", {
     "Contains dairy (choose lactose-free alternative)": "ইয়াত দুগ্ধজাত সামগ্ৰী আছে (লেক্ট'জ-মুক্ত বিকল্প বাছক)",
     "{0}% Lactose-free plant calcium & protein": "{0}% লেক্ট'জ-মুক্ত উদ্ভিদজাত কেলচিয়াম আৰু প্ৰটিন",
     "Contains nuts (swap with roasted sesame/seeds)": "ইয়াত বাদাম আছে (ভজা তিল/গুটিৰে সলনি কৰক)",
-    "Nut-free mineral & protein safe source": "বাদাম-মুক্ত নিৰাপদ খনিজ আৰু প্ৰটিনৰ উৎস"
+    "Nut-free mineral & protein safe source": "বাদাম-মুক্ত নিৰাপদ খনিজ আৰু প্ৰটিনৰ উৎস",
+    "Verified Account": "যাচাইকৃত একাউণ্ট",
+    "Saved on device": "ডিভাইচত সংৰক্ষিত",
+    "Edit": "সম্পাদনা কৰক",
+    "View": "চাওক",
+    "Daily routine reminders": "দৈনিক ৰুটিন সোঁৱৰণী",
+    "Active: 7 AM sun & exercise, meals & dinner": "সক্ৰিয়: পুৱা ৭ বজাত ৰদ আৰু ব্যায়াম, আহাৰ আৰু ৰাতিৰ আহাৰ",
+    "Turn on daily routine alerts": "দৈনিক ৰুটিন সতৰ্কবাৰ্তা অন কৰক",
+    "App language": "এপৰ ভাষা",
+    "11 Indian regional languages": "11টা ভাৰতীয় আঞ্চলিক ভাষা",
+    "Assessment summary, clinical score & save PDF": "মূল্যায়ন সাৰাংশ, ক্লিনিকেল স্কৰ আৰু PDF সংৰক্ষণ কৰক",
+    "Edit Profile": "প্ৰফাইল সম্পাদনা কৰক",
+    "Daily reminders": "দৈনিক সোঁৱৰণী"
 });

@@ -1373,5 +1373,17 @@ BoneI18n.register("mr", {
     "Contains dairy (choose lactose-free alternative)": "यात दुग्धजन्य पदार्थ आहेत (लॅक्टोज-मुक्त पर्याय निवडा)",
     "{0}% Lactose-free plant calcium & protein": "{0}% लॅक्टोज-मुक्त वनस्पतीजन्य कॅल्शियम आणि प्रथिने",
     "Contains nuts (swap with roasted sesame/seeds)": "यात नट्स आहेत (भाजलेले तीळ/बिया वापरा)",
-    "Nut-free mineral & protein safe source": "नट्स-मुक्त सुरक्षित खनिज आणि प्रथिनांचा स्रोत"
+    "Nut-free mineral & protein safe source": "नट्स-मुक्त सुरक्षित खनिज आणि प्रथिनांचा स्रोत",
+    "Verified Account": "सत्यापित खाते",
+    "Saved on device": "डिव्हाइसवर सेव्ह केले",
+    "Edit": "संपादित करा",
+    "View": "पहा",
+    "Daily routine reminders": "दैनिक दिनचर्या स्मरणपत्रे",
+    "Active: 7 AM sun & exercise, meals & dinner": "सक्रिय: सकाळी ७ वाजता ऊन आणि व्यायाम, जेवण आणि रात्रीचे जेवण",
+    "Turn on daily routine alerts": "दैनिक दिनचर्या अलर्ट चालू करा",
+    "App language": "ॲपची भाषा",
+    "11 Indian regional languages": "11 भारतीय प्रादेशिक भाषा",
+    "Assessment summary, clinical score & save PDF": "मूल्यमापन सारांश, क्लिनिकल स्कोअर आणि पीडीएफ सेव्ह करा",
+    "Edit Profile": "प्रोफाइल संपादित करा",
+    "Daily reminders": "दैनिक स्मरणपत्रे"
 });

@@ -802,7 +802,11 @@ setTimeout(() => {
 
   const verifiedApp = verifiedSandbox.window.BoneApp;
   verifiedApp.openUserProfileModal();
-  assert(mockElements['profileAccountBox'].innerHTML.includes('+91 95553 55555'), 'Verified user profile displays phone number');
+  assert(
+    (mockElements['profUserDisplayPhone'] && mockElements['profUserDisplayPhone'].textContent.includes('95553')) ||
+    mockElements['profileAccountBox'].innerHTML.includes('95553'),
+    'Verified user profile displays phone number'
+  );
   assert(mockElements['profileAccountBox'].innerHTML.includes('Log out'), 'Verified user profile displays Log out button');
   // ---------------------------------------------------------------------------
   // 9. Testing Yesterday Followed Feedback Integration & AI Bone Buddy Greeting

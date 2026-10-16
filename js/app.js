@@ -2931,7 +2931,7 @@
           <div class="cdb-badge"><i class="fa-solid fa-stethoscope"></i> ${t('Clinical Guidance')}</div>
           <div class="cdb-conditions">
             ${condNames.map(cn => `<span class="cdb-cond-chip">${escapeHtml(t(cn))}</span>`).join('')}
-            <button type="button" class="cdb-edit-btn" onclick="BoneApp.openUserProfileModal()" aria-label="${t('Edit health conditions')}"><i class="fa-solid fa-pen"></i></button>
+            <button type="button" class="cdb-edit-btn" onclick="BoneApp.openEditProfileModal()" aria-label="${t('Edit health conditions')}"><i class="fa-solid fa-pen"></i></button>
           </div>
         </div>
         <div class="cdb-tips-grid">
@@ -3385,7 +3385,10 @@
     playSound('tap');
     generateProgressiveHealthReport();
     const modal = document.getElementById('progressiveReportModal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+      modal.style.zIndex = '10200';
+      modal.style.display = 'flex';
+    }
   }
 
   function closeProgressiveReportModal() {
@@ -3573,8 +3576,41 @@
     });
   }
 
+  function updateProfileUserCard() {
+    const nameEl = document.getElementById('profUserDisplayName');
+    const phoneEl = document.getElementById('profUserDisplayPhone');
+    const statusEl = document.getElementById('profUserStatusText');
+    const statusDot = document.querySelector('#profUserStatusTag .status-indicator');
+    const phone = loggedInPhone();
+    const verified = isLoggedIn();
+    const fullName = (state.userProfile.fullName || '').trim();
+
+    if (nameEl) {
+      nameEl.textContent = fullName || (phone ? `User ••••${phone.slice(-4)}` : t('Guest User'));
+    }
+    if (phoneEl) {
+      if (phone) {
+        phoneEl.textContent = `+91 ${phone.slice(0, 5)} ${phone.slice(5)}`;
+      } else if (state.userProfile.phone) {
+        const p = state.userProfile.phone;
+        phoneEl.textContent = p.length === 10 ? `+91 ${p.slice(0, 5)} ${p.slice(5)}` : p;
+      } else {
+        phoneEl.textContent = 'Mobile not added';
+      }
+    }
+    if (statusEl) {
+      statusEl.textContent = verified ? t('Verified Account') : t('Saved on device');
+    }
+    if (statusDot) {
+      statusDot.style.background = verified ? '#1E9E62' : '#E8A317';
+    }
+  }
+
   function openUserProfileModal() {
     playSound('tap');
+    updateHeaderReminderButton();
+    updateHeaderLangButton();
+    updateProfileUserCard();
     const modal = document.getElementById('userProfileModal');
     const nameInput = document.getElementById('profInputName');
     const phoneInput = document.getElementById('profInputPhone');
@@ -3617,7 +3653,80 @@
     });
 
     renderProfileAccountBox();
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+      if (window.BoneI18n && typeof window.BoneI18n.translateTree === 'function') {
+        window.BoneI18n.translateTree(modal);
+      }
+      modal.style.display = 'flex';
+    }
+  }
+
+  function openEditProfileModal() {
+    playSound('tap');
+    const modal = document.getElementById('editProfileModal');
+    const nameInput = document.getElementById('profInputName');
+    const phoneInput = document.getElementById('profInputPhone');
+    const hInput = document.getElementById('profInputHeight');
+    const wInput = document.getElementById('profInputWeight');
+    const regSelect = document.getElementById('profSelectRegion');
+    const dietSelect = document.getElementById('profSelectDiet');
+
+    const phone = loggedInPhone();
+    if (nameInput) nameInput.value = state.userProfile.fullName || '';
+    if (phoneInput) {
+      phoneInput.value = phone || state.userProfile.phone || '';
+      phoneInput.readOnly = isLoggedIn();
+      phoneInput.title = isLoggedIn() ? 'Verified number' : '';
+    }
+    if (hInput) hInput.value = state.userProfile.heightCm || 165;
+    if (wInput) wInput.value = state.userProfile.weightKg || 62;
+    if (regSelect) regSelect.value = state.userProfile.regionalFood || 'north';
+    if (dietSelect) dietSelect.value = state.userProfile.diet || 'veg';
+
+    const userDiet = state.userProfile.diet || 'veg';
+    const userReg = state.userProfile.regionalFood || 'north';
+    const userAct = state.userProfile.activityLevel || 'light';
+    const userConds = Array.isArray(state.userProfile.healthConditions)
+      ? state.userProfile.healthConditions
+      : (Array.isArray(state.userProfile.conditions) ? state.userProfile.conditions : []);
+
+    document.querySelectorAll('#profDietPills .pref-pill').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.diet === userDiet);
+    });
+    document.querySelectorAll('#profRegionPills .pref-pill').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.region === userReg);
+    });
+    document.querySelectorAll('#profActivityPills .pref-pill').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.activity === userAct);
+    });
+    document.querySelectorAll('#profHealthPills .pref-pill').forEach(btn => {
+      btn.classList.toggle('active', userConds.includes(btn.dataset.cond));
+    });
+
+    renderEditProfileDangerZone();
+    if (modal) {
+      modal.style.zIndex = '10250';
+      modal.style.display = 'flex';
+    }
+  }
+
+  function closeEditProfileModal() {
+    playSound('tap');
+    const modal = document.getElementById('editProfileModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function renderEditProfileDangerZone() {
+    const zone = document.getElementById('editProfDangerZone');
+    if (!zone) return;
+    const loggedIn = isLoggedIn();
+    if (loggedIn) {
+      zone.innerHTML = `
+        <button type="button" class="link-btn danger" onclick="BoneApp.deleteAccount()"><i class="fa-solid fa-user-xmark"></i> ${t('Delete account')}</button>`;
+    } else {
+      zone.innerHTML = `
+        <button type="button" class="link-btn danger" onclick="BoneApp.resetDatabase()"><i class="fa-solid fa-trash-can"></i> ${t('Reset')}</button>`;
+    }
   }
 
   // Login state at the bottom of the profile: log in, or log out / delete account.
@@ -3636,15 +3745,9 @@
     if (!box) return;
 
     if (loggedIn) {
-      const formattedPhone = phone ? `+91 ${escapeHtml(phone.slice(0, 5))} ${escapeHtml(phone.slice(5))}` : t('Logged in');
       box.innerHTML = `
-        <div class="pa-row">
-          <span class="pa-icon"><i class="fa-solid ${inCloud ? 'fa-cloud' : 'fa-mobile-screen-button'}"></i></span>
-          <div><b>${formattedPhone}</b><span>${inCloud ? t('Logged in · saved to your account') : t('Logged in · verified mobile')}</span></div>
-        </div>
-        <div class="pa-actions">
-          <button type="button" class="btn btn-outline" onclick="BoneApp.logout()"><i class="fa-solid fa-right-from-bracket"></i> ${t('Log out')}</button>
-          <button type="button" class="link-btn danger" onclick="BoneApp.deleteAccount()"><i class="fa-solid fa-user-xmark"></i> ${t('Delete account')}</button>
+        <div class="pa-actions pa-actions-single">
+          <button type="button" class="btn btn-outline btn-full" onclick="BoneApp.logout()"><i class="fa-solid fa-right-from-bracket"></i> ${t('Log out')}</button>
         </div>`;
     } else {
       box.innerHTML = `
@@ -3692,9 +3795,11 @@
 
     calculateBMI();
     BoneDB.save();
+    updateProfileUserCard();
     updateHeaderProfileBadge();
     if (state.completedPillars.build) renderBuildDietView();
     renderChatContextStrip();
+    closeEditProfileModal();
     closeUserProfileModal();
     showToast('Profile saved', 'fa-circle-check');
   }
@@ -3747,6 +3852,14 @@
     if (btn) {
       btn.title = enabled ? t('Daily reminders active (7 AM, 8 AM, 1 PM, 4:30 PM, 7:30 PM)') : t('Enable daily routine reminders');
       btn.setAttribute('aria-label', btn.title);
+    }
+    const profToggle = document.getElementById('profDailyReminderToggle');
+    const profStatus = document.getElementById('profDailyReminderStatus');
+    if (profToggle) profToggle.checked = !!enabled;
+    if (profStatus) {
+      profStatus.textContent = enabled
+        ? t('Active: 7 AM sun & exercise, meals & dinner')
+        : t('Turn on daily routine alerts');
     }
   }
 
@@ -5892,7 +6005,6 @@
         <div class="wk-list-head">
           <div>
             <h3>${group.label}</h3>
-            <span>${group.blurb} · ${list.length} ${list.length === 1 ? 'move' : 'moves'} · ~${minutesFor(list)} min</span>
           </div>
           <button class="wk-start-all" onclick="BoneApp.startWorkout('${group.id}')"><i class="fa-solid fa-play"></i> Start all</button>
         </div>
@@ -8708,6 +8820,8 @@
     const label = document.getElementById('headerLangLabel');
     const lang = I18N.language ? I18N.language() : null;
     if (label) label.textContent = lang ? lang.native : 'English';
+    const profLangLabel = document.getElementById('profLangLabel');
+    if (profLangLabel) profLangLabel.textContent = lang ? (lang.native || lang.name) : 'English';
   }
 
   // The reply language Ojas uses: the chat's own choice, else the app language.
@@ -8723,6 +8837,21 @@
     updateHeaderProfileBadge();
     updateHeaderReminderButton();
     renderDietReminderBanner();
+    updateProfileUserCard();
+    renderProfileAccountBox();
+    const userProfileModal = document.getElementById('userProfileModal');
+    if (userProfileModal && userProfileModal.style.display === 'flex') {
+      if (window.BoneI18n && typeof window.BoneI18n.translateTree === 'function') {
+        window.BoneI18n.translateTree(userProfileModal);
+      }
+    }
+    const editProfileModal = document.getElementById('editProfileModal');
+    if (editProfileModal && editProfileModal.style.display === 'flex') {
+      renderEditProfileDangerZone();
+      if (window.BoneI18n && typeof window.BoneI18n.translateTree === 'function') {
+        window.BoneI18n.translateTree(editProfileModal);
+      }
+    }
     const remindersModal = document.getElementById('remindersModal');
     if (remindersModal && remindersModal.style.display === 'flex') {
       renderRemindersModal();
@@ -9119,6 +9248,8 @@
     // User Profile & Database
     openUserProfileModal,
     closeUserProfileModal,
+    openEditProfileModal,
+    closeEditProfileModal,
     saveUserProfileModal,
     exportDatabaseJSON,
     resetDatabase,

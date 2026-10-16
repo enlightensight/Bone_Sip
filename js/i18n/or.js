@@ -1373,5 +1373,17 @@ BoneI18n.register("or", {
     "Contains dairy (choose lactose-free alternative)": "ଏଥିରେ ଦୁଗ୍ଧଜାତ ଦ୍ରବ୍ୟ ଅଛି (ଲ୍ୟାକ୍ଟୋଜ୍-ମୁକ୍ତ ବିକଳ୍ପ ବାଛନ୍ତୁ)",
     "{0}% Lactose-free plant calcium & protein": "{0}% ଲ୍ୟାକ୍ଟୋଜ୍-ମୁକ୍ତ ଉଦ୍ଭିଦ କ୍ୟାଲସିୟମ୍ ଏବଂ ପ୍ରୋଟିନ୍",
     "Contains nuts (swap with roasted sesame/seeds)": "ଏଥିରେ ବାଦାମ ଅଛି (ଭଜା ରାଶି/ମଞ୍ଜି ଦ୍ୱାରା ବଦଳାନ୍ତୁ)",
-    "Nut-free mineral & protein safe source": "ବାଦାମ-ମୁକ୍ତ ସୁରକ୍ଷିତ ଖଣିଜ ଏବଂ ପ୍ରୋଟିନ୍ ଉତ୍ସ"
+    "Nut-free mineral & protein safe source": "ବାଦାମ-ମୁକ୍ତ ସୁରକ୍ଷିତ ଖଣିଜ ଏବଂ ପ୍ରୋଟିନ୍ ଉତ୍ସ",
+    "Verified Account": "ଯାଞ୍ଚ ହୋଇଥିବା ଖାତା",
+    "Saved on device": "ଡିଭାଇସରେ ସଂରକ୍ଷିତ",
+    "Edit": "ସମ୍ପାଦନ କରନ୍ତୁ",
+    "View": "ଦେଖନ୍ତୁ",
+    "Daily routine reminders": "ଦୈନନ୍ଦିନ ରୁଟିନ୍ ମନେପକାଇବା",
+    "Active: 7 AM sun & exercise, meals & dinner": "ସକ୍ରିୟ: ସକାଳ ୭ଟାରେ ଖରା ଓ ବ୍ୟାୟାମ, ଭୋଜନ ଓ ରାତ୍ରିଭୋଜନ",
+    "Turn on daily routine alerts": "ଦୈନନ୍ଦିନ ରୁଟିନ୍ ଆଲର୍ଟ ଚାଲୁ କରନ୍ତୁ",
+    "App language": "ଆପ୍ ଭାଷା",
+    "11 Indian regional languages": "11ଟି ଭାରତୀୟ ଆଞ୍ଚଳିକ ଭାଷା",
+    "Assessment summary, clinical score & save PDF": "ମୂଲ୍ୟାଙ୍କନ ସାରାଂଶ, କ୍ଲିନିକାଲ୍ ସ୍କୋର ଏବଂ PDF ସଂରକ୍ଷଣ କରନ୍ତୁ",
+    "Edit Profile": "ପ୍ରୋଫାଇଲ୍ ସମ୍ପାଦନ କରନ୍ତୁ",
+    "Daily reminders": "ଦୈନନ୍ଦିନ ମନେପକାଇବା"
 });

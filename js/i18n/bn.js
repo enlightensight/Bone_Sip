@@ -1373,5 +1373,17 @@ BoneI18n.register("bn", {
     "Contains dairy (choose lactose-free alternative)": "এতে দুগ্ধজাত উপাদান আছে (ল্যাকটোজ-মুক্ত বিকল্প বেছে নিন)",
     "{0}% Lactose-free plant calcium & protein": "{0}% ল্যাকটোজ-মুক্ত উদ্ভিজ্জ ক্যালসিয়াম ও প্রোটিন",
     "Contains nuts (swap with roasted sesame/seeds)": "এতে বাদাম আছে (ভাজা তিল/বীজ দিয়ে বদলান)",
-    "Nut-free mineral & protein safe source": "বাদাম-মুক্ত নিরাপদ খনিজ ও প্রোটিনের উৎস"
+    "Nut-free mineral & protein safe source": "বাদাম-মুক্ত নিরাপদ খনিজ ও প্রোটিনের উৎস",
+    "Verified Account": "যাচাইকৃত অ্যাকাউন্ট",
+    "Saved on device": "ডিভাইসে সংরক্ষিত",
+    "Edit": "সম্পাদনা",
+    "View": "দেখুন",
+    "Daily routine reminders": "দৈনিক রুটিন অনুস্মারক",
+    "Active: 7 AM sun & exercise, meals & dinner": "সক্রিয়: সকাল ৭টায় রোদ ও ব্যায়াম, খাবার ও রাতের খাবার",
+    "Turn on daily routine alerts": "দৈনিক রুটিন সতর্কতা চালু করুন",
+    "App language": "অ্যাপের ভাষা",
+    "11 Indian regional languages": "11টি ভারতীয় আঞ্চলিক ভাষা",
+    "Assessment summary, clinical score & save PDF": "মূল্যায়ন সারাংশ, ক্লিনিকাল স্কোর এবং পিডিএফ সংরক্ষণ",
+    "Edit Profile": "প্রোফাইল সম্পাদনা",
+    "Daily reminders": "দৈনিক অনুস্মারক"
 });
