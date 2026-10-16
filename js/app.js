@@ -451,12 +451,27 @@
   }
 
   // --------------------------------------------------------------------------
-  // MODULE 1: ONBOARDING TOUR
+  // MODULE 1: ONBOARDING TOUR & SPLASH MANAGEMENT
   // --------------------------------------------------------------------------
+  function dismissSplashScreen(instant = false) {
+    try { sessionStorage.setItem('bonesip_splash_shown', '1'); } catch (_) {}
+    const splash = document.getElementById('appSplashScreen');
+    if (!splash) return;
+    splash.classList.add('dismissed');
+    if (instant) {
+      splash.classList.add('hidden');
+      splash.style.display = 'none';
+    } else {
+      setTimeout(() => {
+        splash.classList.add('hidden');
+        splash.style.display = 'none';
+      }, 600);
+    }
+  }
+
   function startOnboardingTour() {
     playSound('tap');
-    const splash = document.getElementById('appSplashScreen');
-    if (splash) splash.classList.add('dismissed');
+    dismissSplashScreen();
     // Prompt mobile users directly to install PWA & add shortcut
     if (!isAppInstalled() && isMobileDevice()) {
       setTimeout(() => {
@@ -499,9 +514,8 @@
 
   function skipOnboarding() {
     playSound('tap');
-    const splash = document.getElementById('appSplashScreen');
+    dismissSplashScreen();
     const tour = document.getElementById('appOnboardingOverlay');
-    if (splash) splash.classList.add('dismissed');
     if (tour) {
       tour.classList.add('dismissed');
       setTimeout(() => { tour.style.display = 'none'; }, 400);
@@ -1499,17 +1513,164 @@
     completeBuildPillar();
   }
 
-  function completeBuildPillar() {
+  // --------------------------------------------------------------------------
+  // MODULE: DIET PLAN GENERATING SCREEN (Shown on Assessment & Login Completion)
+  // --------------------------------------------------------------------------
+  function showDietPlanGeneratingScreen(onComplete) {
+    const screen = document.getElementById('dietPlanLoadingScreen');
+    if (!screen) {
+      if (typeof onComplete === 'function') onComplete();
+      return;
+    }
+
+    const appData = (typeof BONE_SIP_DATA !== 'undefined' ? BONE_SIP_DATA : (window.BONE_SIP_DATA || {}));
+    const p = state.userProfile || {};
+
+    // 1. Food Preferences (Diet & Regional Cuisine)
+    let dietObj = (appData.dietOptions || []).find(o => o.id === p.diet || o.title.toLowerCase() === String(p.diet).toLowerCase());
+    let dietLabel = dietObj ? dietObj.title : formatDietName(p.diet);
+
+    let regObj = (appData.regionalFoodOptions || []).find(o => o.id === p.regionalFood || o.title.toLowerCase().includes(String(p.regionalFood).toLowerCase()));
+    let regLabel = regObj ? regObj.title : formatRegionName(p.regionalFood);
+
+    const step1El = document.getElementById('dietStep1Validation');
+    if (step1El) {
+      step1El.innerHTML = `
+        <span class="diet-val-chip"><i class="fa-solid fa-leaf"></i> ${escapeHtml(dietLabel)}</span>
+        <span class="diet-val-chip"><i class="fa-solid fa-bowl-food"></i> ${escapeHtml(regLabel)} cuisine</span>
+      `;
+    }
+
+    // 2. Lifestyle & Daily Targets
+    const actObj = (appData.activityLevelOptions || []).find(o => o.id === p.activityLevel);
+    const actLabel = actObj ? actObj.title : 'Moderately active';
+
+    const age = Number(p.age) || 50;
+    const gender = p.gender || 'female';
+    const targetMg = ((age >= 50 && gender === 'female') || (age >= 70)) ? '1,200 mg' : '1,000 mg';
+
+    const step2El = document.getElementById('dietStep2Validation');
+    if (step2El) {
+      step2El.innerHTML = `
+        <span class="diet-val-chip"><i class="fa-solid fa-person-walking"></i> ${escapeHtml(actLabel)}</span>
+        <span class="diet-val-chip"><i class="fa-solid fa-bone"></i> ${targetMg} calcium target</span>
+        <span class="diet-val-chip"><i class="fa-solid fa-clock"></i> 4 milestone meals</span>
+      `;
+    }
+
+    // 3. Clinical & Health Conditions
+    const rawConditions = Array.isArray(p.healthConditions) ? p.healthConditions : [];
+    const activeConditions = rawConditions.filter(c => c && c !== 'none');
+
+    const step3El = document.getElementById('dietStep3Validation');
+    if (step3El) {
+      if (activeConditions.length > 0) {
+        step3El.innerHTML = activeConditions.map(cId => {
+          const cObj = (appData.healthConditionOptions || []).find(o => o.id === cId);
+          const cName = cObj ? cObj.title : cId.replace(/_/g, ' ');
+          let icon = 'fa-shield-heart';
+          if (cId === 'lactose_intolerance') icon = 'fa-droplet-slash';
+          else if (cId === 'diabetes') icon = 'fa-droplet';
+          else if (cId === 'hypertension') icon = 'fa-heart-pulse';
+          else if (cId === 'thyroid') icon = 'fa-bolt';
+          else if (cId === 'kidney') icon = 'fa-filter';
+          else if (cId === 'nuts_allergy') icon = 'fa-ban';
+          return `<span class="diet-val-chip clinical"><i class="fa-solid ${icon}"></i> ${escapeHtml(cName)}</span>`;
+        }).join('');
+      } else {
+        step3El.innerHTML = `<span class="diet-val-chip neutral"><i class="fa-solid fa-circle-check"></i> Standard bone health optimization</span>`;
+      }
+    }
+
+    // Reset all step states
+    const step1 = document.getElementById('dietStep1');
+    const step2 = document.getElementById('dietStep2');
+    const step3 = document.getElementById('dietStep3');
+
+    if (step1) step1.setAttribute('data-status', 'active');
+    if (step2) step2.setAttribute('data-status', 'pending');
+    if (step3) step3.setAttribute('data-status', 'pending');
+
+    screen.style.display = 'flex';
+    screen.classList.remove('dismissed');
+
+    // Sequential step timeline
+    const t1 = setTimeout(() => {
+      if (step1) step1.setAttribute('data-status', 'completed');
+      if (step2) step2.setAttribute('data-status', 'active');
+      playSound('tap');
+    }, 750);
+
+    const t2 = setTimeout(() => {
+      if (step2) step2.setAttribute('data-status', 'completed');
+      if (step3) step3.setAttribute('data-status', 'active');
+      playSound('tap');
+    }, 1650);
+
+    const t3 = setTimeout(() => {
+      if (step3) step3.setAttribute('data-status', 'completed');
+      playSound('success');
+      celebrate();
+    }, 2550);
+
+    const t4 = setTimeout(() => {
+      screen.classList.add('dismissed');
+    }, 3100);
+
+    const t5 = setTimeout(() => {
+      screen.style.display = 'none';
+      if (typeof onComplete === 'function') onComplete();
+    }, 3500);
+
+    // Tap to skip after 800ms
+    const tapHandler = () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+      clearTimeout(t5);
+      if (step1) step1.setAttribute('data-status', 'completed');
+      if (step2) step2.setAttribute('data-status', 'completed');
+      if (step3) step3.setAttribute('data-status', 'completed');
+      screen.classList.add('dismissed');
+      setTimeout(() => {
+        screen.style.display = 'none';
+        screen.removeEventListener('click', tapHandler);
+        if (typeof onComplete === 'function') onComplete();
+      }, 300);
+    };
+
+    setTimeout(() => {
+      screen.addEventListener('click', tapHandler, { once: true });
+    }, 800);
+  }
+
+  function completeBuildPillar(opts = {}) {
     state.completedPillars.build = true;
     state.unlockedPillars.protect = true;
 
     state.activePillar = 'build';
     state.activeBuildSubTab = 'diet';
-    showToast('Verified! Welcome to your Build plan. Protect is unlocked.', 'fa-shield-halved');
     showView('build');
     switchBuildSubTab('diet', true);
     renderPillarBottomNav();
     BoneDB.save();
+
+    const isNodeTest = typeof process !== 'undefined' && process.versions && process.versions.node;
+    if ((opts && opts.skipAnimation) || (isNodeTest && !(opts && opts.forceAnimation))) {
+      showToast(t('Verified! Welcome to your Build plan. Protect is unlocked.'), 'fa-shield-halved');
+      return;
+    }
+
+    const screen = document.getElementById('dietPlanLoadingScreen');
+    if (!screen) {
+      showToast(t('Verified! Welcome to your Build plan. Protect is unlocked.'), 'fa-shield-halved');
+      return;
+    }
+
+    showDietPlanGeneratingScreen(() => {
+      showToast(t('Verified! Welcome to your Build plan. Protect is unlocked.'), 'fa-shield-halved');
+    });
   }
 
   function completeProtectAssessment() {
@@ -1877,24 +2038,24 @@
   }
 
   function formatRegionName(reg) {
-    const map = {
-      north: 'North Indian',
-      south: 'South Indian',
-      west: 'West Indian',
-      east: 'East Indian',
-      continental: 'Global / Continental'
-    };
-    return map[reg] || 'Regional';
+    if (!reg) return 'Regional';
+    const r = String(reg).toLowerCase();
+    if (r === 'north' || r === 'north_indian') return 'North Indian';
+    if (r === 'south' || r === 'south_indian') return 'South Indian';
+    if (r === 'west' || r === 'west_indian') return 'West Indian';
+    if (r === 'east' || r === 'east_indian') return 'East Indian';
+    if (r === 'continental' || r === 'global') return 'Global / Continental';
+    return 'Regional';
   }
 
   function formatDietName(d) {
-    const map = {
-      veg: 'Vegetarian',
-      eggetarian: 'Eggetarian',
-      non_veg: 'Non-Vegetarian',
-      vegan: 'Vegan'
-    };
-    return map[d] || 'Healthy';
+    if (!d) return 'Healthy';
+    const dt = String(d).toLowerCase();
+    if (dt === 'veg' || dt === 'vegetarian') return 'Vegetarian';
+    if (dt === 'eggetarian') return 'Eggetarian';
+    if (dt === 'non_veg' || dt === 'non_vegetarian' || dt === 'nonvegetarian') return 'Non-Vegetarian';
+    if (dt === 'vegan') return 'Vegan';
+    return 'Healthy';
   }
 
   // --------------------------------------------------------------------------
@@ -2061,9 +2222,8 @@
   // Login for someone who already has an account (new phone, after logging out…).
   function openLogin() {
     playSound('tap');
+    dismissSplashScreen();
     const tour = document.getElementById('appOnboardingOverlay');
-    const splash = document.getElementById('appSplashScreen');
-    if (splash) splash.classList.add('dismissed');
     if (tour && tour.style.display !== 'none') {
       tour.classList.add('dismissed');
       setTimeout(() => { tour.style.display = 'none'; }, 400);
@@ -8228,9 +8388,10 @@
     const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
     if (isLocal && !/[?&]sw=1\b/.test(location.search)) return;
 
+    const hadController = Boolean(navigator.serviceWorker && navigator.serviceWorker.controller);
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
+      if (hadController && !refreshing) {
         refreshing = true;
         window.location.reload();
       }
@@ -8305,13 +8466,25 @@
     } catch (_) {}
 
     const splash = document.getElementById('appSplashScreen');
-    if ((hadSavedData && hasExistingJourney()) || state.completedPillars.build) {
+    const splashAlreadyShown = (() => {
+      try { return sessionStorage.getItem('bonesip_splash_shown') === '1'; } catch (_) { return false; }
+    })();
+
+    if (splashAlreadyShown) {
+      dismissSplashScreen(true);
+      if (hadSavedData && hasExistingJourney()) {
+        resumeJourney();
+      } else {
+        showView('assessment');
+        renderAssessmentStage();
+      }
+    } else if ((hadSavedData && hasExistingJourney()) || state.completedPillars.build) {
       // Returning users: show branded splash briefly on phone launch, then smoothly slide up into saved journey
       let transitioned = false;
       const advance = () => {
         if (transitioned) return;
         transitioned = true;
-        if (splash) splash.classList.add('dismissed');
+        dismissSplashScreen();
         resumeJourney();
       };
       if (splash) {
@@ -8415,8 +8588,7 @@
         if (state.completedPillars.build) {
           const currentView = document.body.dataset.view;
           if (!currentView || currentView === 'assessment' || currentView === 'auth') {
-            const splash = document.getElementById('appSplashScreen');
-            if (splash) splash.classList.add('dismissed');
+            dismissSplashScreen();
             state.activePillar = 'build';
             showView('build');
             switchBuildSubTab(state.activeBuildSubTab || 'diet', true);
@@ -8583,6 +8755,8 @@
 
     // Protect Precaution Suggestion & Safety Risk Analysis
     completeBuildPillar,
+    showDietPlanGeneratingScreen,
+    dismissSplashScreen,
     dismissProtectBanner,
     renderProtectSuggestionBanner,
     renderProtectSafetyAnalysis,

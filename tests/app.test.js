@@ -931,6 +931,61 @@ setTimeout(() => {
   assert(verifiedApp.getState().checkedDietMilestones['2026-10-15'].has('m_lunch'), 'toggleDietMilestone marks milestone successfully on dateKey');
 
   // ---------------------------------------------------------------------------
+  // 12. Testing Double Splash Screen Prevention & Diet Plan Generating Loading Screen
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 12. Testing Double Splash Screen Prevention & Diet Plan Generating Loading Screen ---');
+  const indexHtml = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+  const brandCss = fs.readFileSync(path.resolve(__dirname, '../css/brand.css'), 'utf8');
+
+  // Splash Screen Guard Tests
+  assert(indexHtml.includes("sessionStorage.getItem('bonesip_splash_shown') === '1'"),
+    'index.html head has early inline sessionStorage splash suppression check');
+  assert(indexHtml.includes("document.documentElement.classList.add('splash-already-shown')"),
+    'index.html marks documentElement with splash-already-shown class early');
+  assert(brandCss.includes('html.splash-already-shown #appSplashScreen') && brandCss.includes('display: none !important'),
+    'brand.css unconditionally suppresses #appSplashScreen when splash-already-shown class is present');
+
+  // Diet Plan Loading Screen Markup & Styles Tests
+  assert(indexHtml.includes('id="dietPlanLoadingScreen"'),
+    'index.html defines #dietPlanLoadingScreen overlay element');
+  assert(indexHtml.includes('id="dietStep1Validation"') && indexHtml.includes('id="dietStep2Validation"') && indexHtml.includes('id="dietStep3Validation"'),
+    'index.html defines all 3 dynamic validation containers');
+  assert(brandCss.includes('.diet-plan-loading-screen'),
+    'brand.css defines .diet-plan-loading-screen styles');
+  assert(brandCss.includes('.diet-val-chip'),
+    'brand.css defines .diet-val-chip for dynamic user selection display');
+  assert(brandCss.includes('.diet-step-icon.checked') && brandCss.includes('.diet-step-icon.spinner'),
+    'brand.css defines animated spinners and completed checkmark badges');
+
+  // API & Dynamic Selection Validation Tests
+  assert(typeof verifiedApp.showDietPlanGeneratingScreen === 'function',
+    'BoneApp exports showDietPlanGeneratingScreen function');
+  assert(typeof verifiedApp.dismissSplashScreen === 'function',
+    'BoneApp exports dismissSplashScreen function');
+
+  // Set user selections: Vegetarian, North Indian, Lactose Intolerant
+  verifiedApp.getState().userProfile.diet = 'vegetarian';
+  verifiedApp.getState().userProfile.regionalFood = 'north_indian';
+  verifiedApp.getState().userProfile.activityLevel = 'moderate';
+  verifiedApp.getState().userProfile.healthConditions = ['lactose_intolerance'];
+
+  // Invoke showDietPlanGeneratingScreen
+  verifiedApp.showDietPlanGeneratingScreen();
+
+  const step1Html = mockElements['dietStep1Validation'].innerHTML;
+  const step2Html = mockElements['dietStep2Validation'].innerHTML;
+  const step3Html = mockElements['dietStep3Validation'].innerHTML;
+
+  assert(step1Html.includes('Vegetarian') || step1Html.includes('vegetarian'),
+    'Diet step 1 dynamically renders user diet preference (Vegetarian)');
+  assert(step1Html.includes('North Indian'),
+    'Diet step 1 dynamically renders user regional cuisine preference (North Indian)');
+  assert(step2Html.includes('Moderately active') || step2Html.includes('calcium target'),
+    'Diet step 2 dynamically renders lifestyle & calcium targets');
+  assert(step3Html.includes('Lactose Intolerance'),
+    'Diet step 3 dynamically renders user health condition (Lactose Intolerance)');
+
+  // ---------------------------------------------------------------------------
   // FINAL SUMMARY
   // ---------------------------------------------------------------------------
   console.log('\n================================================================');

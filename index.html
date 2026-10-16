@@ -38,11 +38,19 @@
       window.dispatchEvent(new Event('pwa-installed'));
     });
   </script>
+  <!-- Suppress duplicate splash on reload/navigation in same session -->
+  <script>
+    try {
+      if (sessionStorage.getItem('bonesip_splash_shown') === '1') {
+        document.documentElement.classList.add('splash-already-shown');
+      }
+    } catch (_) {}
+  </script>
   <!-- Languages: loaded first so a saved language is applied before the page shows -->
-  <script src="js/i18n.js?v=4.1.5"></script>
+  <script src="js/i18n.js?v=4.1.6"></script>
   <link rel="preload" as="image" href="assets/images/bonesip_logo_720.webp">
-  <link rel="stylesheet" href="css/style.css?v=4.1.5">
-  <link rel="stylesheet" href="css/brand.css?v=4.1.5">
+  <link rel="stylesheet" href="css/style.css?v=4.1.6">
+  <link rel="stylesheet" href="css/brand.css?v=4.1.6">
 
   <!-- Unified Global Typography: Outfit (geometric, modern, clean throughout entire app) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -139,6 +147,56 @@
       <div class="onboarding-bottom-bar">
         <div class="onboarding-dots-indicator" id="onboardingDots"></div>
         <button class="cta-btn" id="onboardNextBtn" onclick="BoneApp.nextOnboardingSlide()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       DIET PLAN GENERATION LOADING SCREEN (Shown after assessment & login)
+       ========================================================================= -->
+  <div class="diet-plan-loading-screen" id="dietPlanLoadingScreen" style="display: none;" role="status" aria-live="polite" aria-label="Creating your diet plan">
+    <div class="diet-plan-loading-content">
+      <div class="diet-loading-header">
+        <h2 class="diet-loading-title">Creating your diet plan</h2>
+        <div class="diet-loading-bar" aria-hidden="true"></div>
+      </div>
+
+      <div class="diet-loading-steps" id="dietLoadingSteps">
+        <!-- Step 1: Food preferences -->
+        <div class="diet-loading-step" id="dietStep1" data-status="pending">
+          <div class="diet-step-indicator">
+            <span class="diet-step-icon spinner" aria-hidden="true"></span>
+            <span class="diet-step-icon checked" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+          </div>
+          <div class="diet-step-body">
+            <h3 class="diet-step-title">Matching meals to your food preferences</h3>
+            <div class="diet-step-validation" id="dietStep1Validation"></div>
+          </div>
+        </div>
+
+        <!-- Step 2: Lifestyle & bone goals -->
+        <div class="diet-loading-step" id="dietStep2" data-status="pending">
+          <div class="diet-step-indicator">
+            <span class="diet-step-icon spinner" aria-hidden="true"></span>
+            <span class="diet-step-icon checked" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+          </div>
+          <div class="diet-step-body">
+            <h3 class="diet-step-title">Shaping the plan around your lifestyle</h3>
+            <div class="diet-step-validation" id="dietStep2Validation"></div>
+          </div>
+        </div>
+
+        <!-- Step 3: Clinical conditions -->
+        <div class="diet-loading-step" id="dietStep3" data-status="pending">
+          <div class="diet-step-indicator">
+            <span class="diet-step-icon spinner" aria-hidden="true"></span>
+            <span class="diet-step-icon checked" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+          </div>
+          <div class="diet-step-body">
+            <h3 class="diet-step-title">Accounting for your health conditions</h3>
+            <div class="diet-step-validation" id="dietStep3Validation"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1169,9 +1227,9 @@
   <noscript><div class="noscript">BONE SIP needs JavaScript to run.</div></noscript>
 
   <script src="js/vendor/confetti.browser.min.js" defer></script>
-  <script src="js/config.js?v=4.1.5"></script>
-  <script src="js/data.js?v=4.1.5"></script>
-  <script src="js/notifications.js?v=4.1.5"></script>
-  <script src="js/app.js?v=4.1.5"></script>
+  <script src="js/config.js?v=4.1.6"></script>
+  <script src="js/data.js?v=4.1.6"></script>
+  <script src="js/notifications.js?v=4.1.6"></script>
+  <script src="js/app.js?v=4.1.6"></script>
 </body>
 </html>

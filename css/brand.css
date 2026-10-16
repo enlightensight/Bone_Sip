@@ -119,9 +119,15 @@ h1, h2, h3, h4, h5 { font-family: var(--font-heading); letter-spacing: -0.01em; 
 .step-chip.strengthen { background: var(--strengthen-bg); color: var(--strengthen); }
 .step-chip.muted { background: var(--bg-surface-elevated); color: var(--text-muted); }
 
-/* ==========================================================================
-   SPLASH
-   ========================================================================== */
+/* Early suppression for duplicate splash when already shown in current session */
+html.splash-already-shown #appSplashScreen,
+html.splash-already-shown .splash {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
 .splash {
   position: fixed; inset: 0; z-index: 99999;
   display: flex; align-items: center; justify-content: center;
@@ -129,7 +135,7 @@ h1, h2, h3, h4, h5 { font-family: var(--font-heading); letter-spacing: -0.01em; 
   transition: transform 0.6s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.5s ease;
 }
 .splash.dismissed { transform: translateY(-100%); opacity: 0; pointer-events: none; }
-.splash.hidden { display: none; }
+.splash.hidden { display: none !important; }
 .splash-bg { position: absolute; inset: 0; pointer-events: none; }
 .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.55; animation: blobDrift 14s ease-in-out infinite; }
 .blob-1 { width: 380px; height: 380px; background: #FBC4D3; top: -120px; right: -80px; }
@@ -165,6 +171,224 @@ h1, h2, h3, h4, h5 { font-family: var(--font-heading); letter-spacing: -0.01em; 
 .splash .cta-btn { animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 1.4s both; }
 .splash-foot { margin-top: 22px; font-size: 0.8rem; color: var(--text-muted); font-weight: 600; animation: fadeUp 0.6s ease 1.6s both; }
 .splash-foot i { color: var(--brand-pink); }
+
+/* ==========================================================================
+   DIET PLAN GENERATION LOADING SCREEN (Customised Diet Plan Generation)
+   ========================================================================== */
+.diet-plan-loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+  padding: 32px 24px;
+  overflow-y: auto;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.diet-plan-loading-screen.dismissed {
+  opacity: 0;
+  transform: translateY(-24px);
+  pointer-events: none;
+}
+
+.diet-plan-loading-content {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 8px;
+}
+
+.diet-loading-header {
+  margin-bottom: 34px;
+}
+
+.diet-loading-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #231F33;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.diet-loading-bar {
+  width: 38px;
+  height: 4px;
+  background: var(--success, #1E9E62);
+  border-radius: 999px;
+  animation: barPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes barPulse {
+  0%, 100% { width: 38px; opacity: 1; }
+  50% { width: 64px; opacity: 0.85; }
+}
+
+.diet-loading-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.diet-loading-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  transition: opacity 0.3s ease;
+}
+
+.diet-step-indicator {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.diet-step-icon {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Pending state */
+.diet-loading-step[data-status="pending"] {
+  opacity: 0.5;
+}
+.diet-loading-step[data-status="pending"] .diet-step-icon.spinner {
+  border: 2px solid #E2E8F0;
+  background: #F8FAFC;
+  opacity: 1;
+}
+.diet-loading-step[data-status="pending"] .diet-step-icon.checked {
+  opacity: 0;
+  transform: scale(0.5);
+  pointer-events: none;
+}
+.diet-loading-step[data-status="pending"] .diet-step-validation {
+  display: none;
+}
+
+/* Active state (spinning green ring) */
+.diet-loading-step[data-status="active"] {
+  opacity: 1;
+}
+.diet-loading-step[data-status="active"] .diet-step-icon.spinner {
+  border: 2.5px solid #DCFCE7;
+  border-top-color: var(--success, #1E9E62);
+  border-radius: 50%;
+  opacity: 1;
+  animation: dietSpin 0.85s linear infinite;
+}
+.diet-loading-step[data-status="active"] .diet-step-icon.checked {
+  opacity: 0;
+  transform: scale(0.5);
+  pointer-events: none;
+}
+.diet-loading-step[data-status="active"] .diet-step-validation {
+  display: none;
+}
+
+/* Completed state (solid emerald circle with white checkmark) */
+.diet-loading-step[data-status="completed"] {
+  opacity: 1;
+}
+.diet-loading-step[data-status="completed"] .diet-step-icon.spinner {
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+}
+.diet-loading-step[data-status="completed"] .diet-step-icon.checked {
+  opacity: 1;
+  transform: scale(1);
+  background: var(--success, #1E9E62);
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 8px rgba(30, 158, 98, 0.25);
+  animation: checkPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes dietSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes checkPop {
+  0% { transform: scale(0.4); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.diet-step-body {
+  flex: 1;
+}
+
+.diet-step-title {
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: #231F33;
+  margin: 0 0 4px 0;
+  line-height: 1.4;
+}
+
+.diet-step-validation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  animation: valSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes valSlideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.diet-val-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #F0FDF4;
+  border: 1px solid #DCFCE7;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #15803D;
+  box-shadow: 0 1px 2px rgba(22, 101, 52, 0.04);
+}
+
+.diet-val-chip i {
+  font-size: 0.78rem;
+  color: #1E9E62;
+}
+
+.diet-val-chip.clinical {
+  background: #FFF1F2;
+  border-color: #FFE4E6;
+  color: #BE123C;
+}
+
+.diet-val-chip.clinical i {
+  color: #E11D48;
+}
+
+.diet-val-chip.neutral {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+  color: #475569;
+}
+
+.diet-val-chip.neutral i {
+  color: #64748B;
+}
 
 /* ==========================================================================
    ONBOARDING
