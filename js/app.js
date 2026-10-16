@@ -1170,7 +1170,7 @@
     if (disp) disp.textContent = `${val} kg`;
   }
 
-  // Height & weight start empty; once saved they collapse into a summary with an Edit button.
+  // Height & weight inputs. Saved automatically when clicking Continue.
   function baselineHtml() {
     const p = state.userProfile;
     if (p.baselineSet && !state.editingBaseline) {
@@ -1182,49 +1182,77 @@
           <button class="btn btn-sm btn-outline" onclick="BoneApp.editBaseline()"><i class="fa-solid fa-pen"></i> Edit</button>
         </div>`;
     }
-    const h = p.baselineSet ? p.heightCm : '';
-    const w = p.baselineSet ? p.weightKg : '';
+    const h = p.heightCm || (p.baselineSet ? p.heightCm : '');
+    const w = p.weightKg || (p.baselineSet ? p.weightKg : '');
     return `
       <div class="baseline-form" id="baselineForm">
         <div class="bf-title">Your height &amp; weight</div>
         <div class="bf-row">
           <label class="bf-field">
             <i class="fa-solid fa-ruler-vertical"></i>
-            <input type="number" id="baselineHeight" inputmode="numeric" min="100" max="230" placeholder="Height" value="${h}" aria-label="Height in centimetres">
+            <input type="number" id="baselineHeight" inputmode="numeric" min="100" max="230" placeholder="Height" value="${h}" aria-label="Height in centimetres" oninput="BoneApp.syncBaselineInputs()" onkeydown="if(event.key==='Enter')BoneApp.continueFromDiet()">
             <span>cm</span>
           </label>
           <label class="bf-field">
             <i class="fa-solid fa-weight-scale"></i>
-            <input type="number" id="baselineWeight" inputmode="numeric" min="25" max="250" placeholder="Weight" value="${w}" aria-label="Weight in kilograms">
+            <input type="number" id="baselineWeight" inputmode="numeric" min="25" max="250" placeholder="Weight" value="${w}" aria-label="Weight in kilograms" oninput="BoneApp.syncBaselineInputs()" onkeydown="if(event.key==='Enter')BoneApp.continueFromDiet()">
             <span>kg</span>
           </label>
-          <button class="btn btn-sm btn-primary bf-save" onclick="BoneApp.saveBaseline()"><i class="fa-solid fa-check"></i> Save</button>
         </div>
       </div>`;
   }
 
-  function saveBaseline() {
+  function syncBaselineInputs() {
+    const hEl = document.getElementById('baselineHeight');
+    const wEl = document.getElementById('baselineWeight');
+    if (hEl && hEl.value) {
+      const h = parseInt(hEl.value, 10);
+      if (h >= 100 && h <= 230) state.userProfile.heightCm = h;
+    }
+    if (wEl && wEl.value) {
+      const w = parseInt(wEl.value, 10);
+      if (w >= 25 && w <= 250) state.userProfile.weightKg = w;
+    }
+  }
+
+  function saveBaseline(silent = false) {
     const hEl = document.getElementById('baselineHeight');
     const wEl = document.getElementById('baselineWeight');
     const h = parseInt(hEl && hEl.value, 10);
     const w = parseInt(wEl && wEl.value, 10);
     if (!(h >= 100 && h <= 230)) {
       showToast('Enter height between 100 and 230 cm', 'fa-ruler-vertical');
+      const form = document.getElementById('baselineForm');
+      if (form) {
+        form.classList.remove('shake');
+        void form.offsetWidth;
+        form.classList.add('shake');
+      }
       if (hEl) hEl.focus();
-      return;
+      return false;
     }
     if (!(w >= 25 && w <= 250)) {
       showToast('Enter weight between 25 and 250 kg', 'fa-weight-scale');
+      const form = document.getElementById('baselineForm');
+      if (form) {
+        form.classList.remove('shake');
+        void form.offsetWidth;
+        form.classList.add('shake');
+      }
       if (wEl) wEl.focus();
-      return;
+      return false;
     }
-    playSound('check');
     state.userProfile.heightCm = h;
     state.userProfile.weightKg = w;
     state.userProfile.baselineSet = true;
     state.editingBaseline = false;
     calculateBMI();
-    renderAssessmentStage();
+    BoneDB.save();
+    if (!silent) {
+      playSound('check');
+      renderAssessmentStage();
+    }
+    return true;
   }
 
   function editBaseline() {
@@ -1236,19 +1264,24 @@
   }
 
   function continueFromDiet() {
-    if (!state.userProfile.baselineSet || state.editingBaseline) {
+    const hEl = document.getElementById('baselineHeight');
+    const wEl = document.getElementById('baselineWeight');
+
+    // If inputs are currently on screen, validate & save them with the Continue button
+    if (hEl && wEl) {
+      const ok = saveBaseline(true);
+      if (!ok) return;
+    } else if (!state.userProfile.baselineSet) {
       playSound('tap');
-      showToast('Please save your height & weight first', 'fa-circle-info');
-      const form = document.getElementById('baselineForm');
-      if (form) {
-        form.classList.remove('shake');
-        void form.offsetWidth;
-        form.classList.add('shake');
-      }
-      const hEl = document.getElementById('baselineHeight');
-      if (hEl && !hEl.value) hEl.focus();
+      showToast('Please enter your height & weight', 'fa-circle-info');
+      state.editingBaseline = true;
+      renderAssessmentStage();
+      const el = document.getElementById('baselineHeight');
+      if (el) el.focus();
       return;
     }
+
+    playSound('check');
     setBuildAssessmentStep('regional_food');
   }
 
@@ -1594,33 +1627,33 @@
     screen.style.display = 'flex';
     screen.classList.remove('dismissed');
 
-    // Sequential step timeline
+    // Sequential step timeline - comfortable, deliberate pacing so users can easily read selections
     const t1 = setTimeout(() => {
       if (step1) step1.setAttribute('data-status', 'completed');
       if (step2) step2.setAttribute('data-status', 'active');
       playSound('tap');
-    }, 750);
+    }, 1800);
 
     const t2 = setTimeout(() => {
       if (step2) step2.setAttribute('data-status', 'completed');
       if (step3) step3.setAttribute('data-status', 'active');
       playSound('tap');
-    }, 1650);
+    }, 3600);
 
     const t3 = setTimeout(() => {
       if (step3) step3.setAttribute('data-status', 'completed');
       playSound('success');
       celebrate();
-    }, 2550);
+    }, 5400);
 
     const t4 = setTimeout(() => {
       screen.classList.add('dismissed');
-    }, 3100);
+    }, 6500);
 
     const t5 = setTimeout(() => {
       screen.style.display = 'none';
       if (typeof onComplete === 'function') onComplete();
-    }, 3500);
+    }, 6900);
 
     // Tap to skip after 800ms
     const tapHandler = () => {
@@ -8633,6 +8666,7 @@
     onHeightChange,
     onWeightChange,
     saveHeightWeightModal,
+    syncBaselineInputs,
     saveBaseline,
     editBaseline,
     continueFromDiet,

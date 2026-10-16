@@ -986,6 +986,38 @@ setTimeout(() => {
     'Diet step 3 dynamically renders user health condition (Lactose Intolerance)');
 
   // ---------------------------------------------------------------------------
+  // 13. Testing Height & Weight Auto-Save with Continue Button
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 13. Testing Height & Weight Auto-Save with Continue Button ---');
+
+  const appJsSource = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
+
+  assert(!appJsSource.includes('class="btn btn-sm btn-primary bf-save"'),
+    'baselineHtml does NOT render a redundant Save button inside height & weight card');
+  assert(appJsSource.includes('BoneApp.syncBaselineInputs()'),
+    'baselineHtml includes oninput syncBaselineInputs handler');
+  assert(typeof verifiedApp.syncBaselineInputs === 'function',
+    'BoneApp exports syncBaselineInputs function');
+  assert(typeof verifiedApp.continueFromDiet === 'function',
+    'BoneApp exports continueFromDiet function');
+
+  // Test automatic validation & save on continue
+  mockElements['baselineHeight'] = { value: '180', focus: () => {} };
+  mockElements['baselineWeight'] = { value: '80', focus: () => {} };
+  verifiedApp.getState().userProfile.baselineSet = false;
+
+  verifiedApp.continueFromDiet();
+
+  assert(verifiedApp.getState().userProfile.heightCm === 180,
+    'continueFromDiet automatically saves heightCm (180 cm) without needing separate Save button');
+  assert(verifiedApp.getState().userProfile.weightKg === 80,
+    'continueFromDiet automatically saves weightKg (80 kg) without needing separate Save button');
+  assert(verifiedApp.getState().userProfile.baselineSet === true,
+    'continueFromDiet marks baselineSet as true');
+  assert(verifiedApp.getState().buildAssessmentStep === 'regional_food',
+    'continueFromDiet advances to regional_food step');
+
+  // ---------------------------------------------------------------------------
   // FINAL SUMMARY
   // ---------------------------------------------------------------------------
   console.log('\n================================================================');

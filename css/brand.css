@@ -2225,21 +2225,20 @@ body { overflow-x: clip; }
 }
 
 /* Height & weight entry (Build step 1) */
-.baseline-form { background: #fff; border: 1.5px solid var(--border-subtle); border-radius: 18px; padding: 12px 14px 14px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+.baseline-form { background: #fff; border: 1.5px solid var(--border-subtle); border-radius: 18px; padding: 14px 16px 16px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
 .baseline-form.shake { animation: wiggle 0.4s ease; border-color: var(--build); }
-.bf-title { font-weight: 800; font-size: 0.86rem; margin-bottom: 10px; }
-.bf-row { display: flex; gap: 8px; align-items: stretch; }
-.bf-field { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; border: 1.5px solid var(--border-medium); border-radius: 12px; padding: 0 10px; background: var(--bg-card-hover); transition: border-color var(--transition-fast); }
-.bf-field:focus-within { border-color: var(--build); background: #fff; }
-.bf-field i { color: var(--build); font-size: 0.9rem; }
-.bf-field input { flex: 1; min-width: 0; width: 100%; border: none; outline: none; background: transparent; padding: 10px 0; font-size: 1rem; font-weight: 700; color: var(--text-primary); -moz-appearance: textfield; }
+.bf-title { font-weight: 800; font-size: 0.9rem; margin-bottom: 12px; color: var(--text-primary); }
+.bf-row { display: flex; gap: 10px; align-items: stretch; }
+.bf-field { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--border-medium); border-radius: 14px; padding: 0 12px; background: var(--bg-card-hover); transition: border-color var(--transition-fast), box-shadow var(--transition-fast); }
+.bf-field:focus-within { border-color: var(--build); background: #fff; box-shadow: 0 0 0 3px rgba(177, 49, 93, 0.12); }
+.bf-field i { color: var(--build); font-size: 0.95rem; }
+.bf-field input { flex: 1; min-width: 0; width: 100%; border: none; outline: none; background: transparent; padding: 11px 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary); -moz-appearance: textfield; }
 .bf-field input::-webkit-outer-spin-button, .bf-field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.bf-field span { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
-.bf-save { flex-shrink: 0; border-radius: 12px; padding: 0 14px; }
+.bf-field span { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
 @media (max-width: 480px) {
-  .bf-row { flex-wrap: wrap; }
-  .bf-field { flex: 1 1 calc(50% - 4px); }
-  .bf-save { flex: 1 1 100%; padding: 10px 14px; }
+  .bf-row { display: flex; gap: 8px; }
+  .bf-field { flex: 1 1 calc(50% - 4px); padding: 0 10px; }
+  .bf-field input { font-size: 1rem; padding: 10px 0; }
 }
 
 /* ==========================================================================
