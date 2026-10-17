@@ -84,7 +84,7 @@ function createAccounts({ db, env = process.env, prod = false }) {
   const testCode = String(env.OTP_TEST_CODE || '123456');
   const smsApiKey = String(env.SMSHORIZON_API_KEY || env.SMS_API_KEY || '').trim();
   const smsUser = String(env.SMSHORIZON_USER || 'enlighten').trim();
-  const smsTid = String(env.SMSHORIZON_TID || '1607100000000323238').trim();
+  const smsTid = String(env.SMSHORIZON_TID || '160710000000323238').trim();
   const smsSender = String(env.SMSHORIZON_SENDER || 'HORIZN').trim();
   const smsTemplateText = String(env.SMSHORIZON_TEMPLATE_TEXT || 'OTP for your new user account registration is: {code}\n\n- SmsHorizon');
   const smsEnabled = Boolean(smsApiKey);

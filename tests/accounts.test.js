@@ -189,7 +189,7 @@ async function login(call, phone) {
       OTP_TEST_MODE: '0',
       SMSHORIZON_API_KEY: 'test_key_dummy',
       SMSHORIZON_USER: 'enlighten',
-      SMSHORIZON_TID: '1607100000000323238',
+      SMSHORIZON_TID: '160710000000323238',
       SMSHORIZON_SENDER: 'BONESIP'
     }
   });
