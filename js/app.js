@@ -1409,7 +1409,7 @@
       window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
         size: 'invisible',
         callback: () => {}
-      }, auth);
+      });
       return window.recaptchaVerifier;
     } catch (e) {
       console.warn('RecaptchaVerifier init error:', e);
