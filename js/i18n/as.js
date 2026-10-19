@@ -1392,6 +1392,7 @@
     "Your plan": "আপকী যোজনা",
     "Your risk": "আপকা জোখিম",
     "Your visit is today": "আপোনাৰ সাক্ষাৎ আজি",
-    "Your weekly bone medicine": "আপোনাৰ সাপ্তাহিক হাড়ৰ ঔষধ"
+    "Your weekly bone medicine": "আপোনাৰ সাপ্তাহিক হাড়ৰ ঔষধ",
+  "Sending the code to {phone}…": "{phone}লৈ ক'ড পঠিওৱা হৈছে…"
 });
 })();

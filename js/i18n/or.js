@@ -1392,6 +1392,7 @@
     "Your plan": "ଆପଣଙ୍କ ଯୋଜନା",
     "Your risk": "ଆପଣଙ୍କ ବିପଦ",
     "Your visit is today": "ଆପଣଙ୍କ ସାକ୍ଷାତ ଆଜି",
-    "Your weekly bone medicine": "ଆପଣଙ୍କ ସାପ୍ତାହିକ ହାଡ଼ ଔଷଧ"
+    "Your weekly bone medicine": "ଆପଣଙ୍କ ସାପ୍ତାହିକ ହାଡ଼ ଔଷଧ",
+  "Sending the code to {phone}…": "{phone}କୁ କୋଡ୍ ପଠାଯାଉଛି…"
 });
 })();

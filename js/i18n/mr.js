@@ -1392,6 +1392,7 @@
     "Your plan": "तुमची योजना",
     "Your risk": "तुमचा धोका",
     "Your visit is today": "तुमची भेट आज आहे",
-    "Your weekly bone medicine": "तुमचे आठवड्याचे हाडांचे औषध"
+    "Your weekly bone medicine": "तुमचे आठवड्याचे हाडांचे औषध",
+  "Sending the code to {phone}…": "{phone} वर कोड पाठवत आहोत…"
 });
 })();

@@ -1392,6 +1392,7 @@
     "Your plan": "ನಿಮ್ಮ ಯೋಜನೆ",
     "Your risk": "ನಿಮ್ಮ ಅಪಾಯ",
     "Your visit is today": "ನಿಮ್ಮ ಭೇಟಿ ಇಂದು",
-    "Your weekly bone medicine": "ನಿಮ್ಮ ವಾರದ ಮೂಳೆ ಔಷಧಿ"
+    "Your weekly bone medicine": "ನಿಮ್ಮ ವಾರದ ಮೂಳೆ ಔಷಧಿ",
+  "Sending the code to {phone}…": "{phone}ಗೆ ಕೋಡ್ ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ…"
 });
 })();

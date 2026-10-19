@@ -1392,6 +1392,7 @@
     "Your plan": "आपकी योजना",
     "Your risk": "आपका जोखिम",
     "Your visit is today": "आपकी मुलाक़ात आज है",
-    "Your weekly bone medicine": "आपकी हफ़्ते की हड्डी की दवा"
+    "Your weekly bone medicine": "आपकी हफ़्ते की हड्डी की दवा",
+  "Sending the code to {phone}…": "{phone} पर कोड भेजा जा रहा है…"
 });
 })();

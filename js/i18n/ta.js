@@ -1392,6 +1392,7 @@
     "Your plan": "உங்கள் திட்டம்",
     "Your risk": "உங்கள் அபாயம்",
     "Your visit is today": "உங்கள் சந்திப்பு இன்று",
-    "Your weekly bone medicine": "உங்கள் வாராந்திர எலும்பு மருந்து"
+    "Your weekly bone medicine": "உங்கள் வாராந்திர எலும்பு மருந்து",
+  "Sending the code to {phone}…": "{phone}-க்குக் குறியீடு அனுப்பப்படுகிறது…"
 });
 })();

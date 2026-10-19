@@ -1392,6 +1392,7 @@
     "Your plan": "നിങ്ങളുടെ പദ്ധതി",
     "Your risk": "നിങ്ങളുടെ സാധ്യത",
     "Your visit is today": "നിങ്ങളുടെ സന്ദർശനം ഇന്നാണ്",
-    "Your weekly bone medicine": "നിങ്ങളുടെ ആഴ്ചതോറുമുള്ള എല്ല് മരുന്ന്"
+    "Your weekly bone medicine": "നിങ്ങളുടെ ആഴ്ചതോറുമുള്ള എല്ല് മരുന്ന്",
+  "Sending the code to {phone}…": "{phone}-ലേക്ക് കോഡ് അയയ്ക്കുന്നു…"
 });
 })();

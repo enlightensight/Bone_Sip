@@ -1366,20 +1366,13 @@
   <!-- Invisible reCAPTCHA for Firebase phone login. Kept outside the login steps: if it sits
        in a part of the page that gets hidden, Google's script throws "reading 'style'". -->
   <div id="recaptcha-container"></div>
-  <script src="js/config.js?v=4.4.2"></script>
-  <!-- Firebase Phone Auth (and its reCAPTCHA) loads only when config.js sets phoneLoginProvider: 'firebase'. -->
-  <script>
-    if ((window.BONE_SIP_CONFIG || {}).phoneLoginProvider === 'firebase') {
-      ['firebase-app-compat.js', 'firebase-auth-compat.js'].forEach(function (name) {
-        var s = document.createElement('script');
-        s.src = 'https://www.gstatic.com/firebasejs/12.19.0/' + name;
-        s.async = false;
-        document.body.appendChild(s);
-      });
-    }
-  </script>
+  <!-- Firebase App & Phone Auth SDKs: same version and loading as 4.3.4, the version that
+       delivered real OTP SMS. Loaded before the app so Send OTP can never run without it. -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="js/config.js?v=4.4.4"></script>
   <script src="js/data.js?v=4.3.4"></script>
   <script src="js/notifications.js?v=4.3.4"></script>
-  <script src="js/app.js?v=4.4.2"></script>
+  <script src="js/app.js?v=4.4.4"></script>
 </body>
 </html>

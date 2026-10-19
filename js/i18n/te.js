@@ -1392,6 +1392,7 @@
     "Your plan": "మీ ప్రణాళిక",
     "Your risk": "మీ ప్రమాదం",
     "Your visit is today": "మీ సందర్శన ఈరోజే",
-    "Your weekly bone medicine": "మీ వారపు ఎముక మందు"
+    "Your weekly bone medicine": "మీ వారపు ఎముక మందు",
+  "Sending the code to {phone}…": "{phone}కి కోడ్ పంపుతున్నాం…"
 });
 })();

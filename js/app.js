@@ -1557,6 +1557,11 @@
       }
       if (otpSendInFlight) return;
       otpSendInFlight = true;
+      // Open the code screen right away: on mobile data Firebase's reply can take a
+      // while, and the SMS may even arrive first. The code can be typed meanwhile;
+      // verifyInlineOTP waits for the send to finish.
+      openOtpEntry(cleanPhone, 'firebase', true);
+      window.firebaseConfirmationResult = null;
       try {
         // One attempt per tap. The verifier preloaded with the login screen is used
         // as is; one already used for an earlier attempt is replaced here, not right
@@ -1565,14 +1570,20 @@
         const verifier = getOrCreateRecaptcha();
         if (!verifier) throw Object.assign(new Error('reCAPTCHA could not start'), { code: 'app/recaptcha-unavailable' });
         recaptchaUsed = true;
-        window.firebaseConfirmationResult = await firebase.auth().signInWithPhoneNumber('+91' + cleanPhone, verifier);
-        mode = 'firebase';
+        window.firebaseConfirmationPromise = firebase.auth().signInWithPhoneNumber('+91' + cleanPhone, verifier);
+        window.firebaseConfirmationResult = await window.firebaseConfirmationPromise;
       } catch (err) {
+        window.firebaseConfirmationPromise = null;
         logFirebasePhoneError(err);
+        showAuthPhoneStep();
         return;
       } finally {
         otpSendInFlight = false;
       }
+      const sentText = document.getElementById('inlineOtpSentPhoneText');
+      if (sentText) sentText.textContent = t('Code sent to {phone}', { phone: `+91 ${cleanPhone.slice(0, 5)} ${cleanPhone.slice(5)}` });
+      showToast(t('Code sent to {phone}', { phone: `+91 ${cleanPhone}` }), 'fa-comment-sms');
+      return;
     } else if (accountsApi()) {
       let r = null;
       try { r = await apiCall('POST', '/auth/otp/send', { phone: cleanPhone }); } catch (err) { r = null; }
@@ -1618,6 +1629,15 @@
       }
     }
 
+    openOtpEntry(cleanPhone, mode, false);
+    const showCode = mode === 'demo' || (mode === 'cloud' && !!cloud.testCode);
+    showToast(showCode ? t('Use the code shown on screen') : t('Code sent to {phone}', { phone: `+91 ${cleanPhone}` }), 'fa-comment-sms');
+  }
+
+  // Switches the login card to the 6-digit code screen. With `sending` it opens
+  // straight away while the code is still on its way, so the user isn't left
+  // waiting on the number screen.
+  function openOtpEntry(cleanPhone, mode, sending) {
     state.auth.pendingPhone = cleanPhone;
     state.auth.pendingMode = mode;
 
@@ -1628,8 +1648,9 @@
     const back = document.getElementById('authBackBtn');
     if (back) back.hidden = false;
 
+    const pretty = `+91 ${cleanPhone.slice(0, 5)} ${cleanPhone.slice(5)}`;
     const sentText = document.getElementById('inlineOtpSentPhoneText');
-    if (sentText) sentText.textContent = t('Code sent to {phone}', { phone: `+91 ${cleanPhone.slice(0, 5)} ${cleanPhone.slice(5)}` });
+    if (sentText) sentText.textContent = sending ? t('Sending the code to {phone}…', { phone: pretty }) : t('Code sent to {phone}', { phone: pretty });
 
     const showCode = mode === 'demo' || (mode === 'cloud' && !!cloud.testCode);
     const bubble = document.getElementById('inlineSmsSimBubble');
@@ -1644,8 +1665,6 @@
     const boxes = document.querySelectorAll('.inline-otp');
     boxes.forEach(b => { b.value = ''; });
     if (boxes[0]) setTimeout(() => boxes[0].focus(), 150);
-
-    showToast(showCode ? t('Use the code shown on screen') : t('Code sent to {phone}', { phone: `+91 ${cleanPhone}` }), 'fa-comment-sms');
   }
 
   function autofillInlineOTP() {
@@ -1705,6 +1724,10 @@
     let account = null;
     try {
       if (state.auth.pendingMode === 'firebase') {
+        // The code screen opens before Firebase confirms the send; wait for it.
+        if (!window.firebaseConfirmationResult && window.firebaseConfirmationPromise) {
+          try { window.firebaseConfirmationResult = await window.firebaseConfirmationPromise; } catch (e) { /* reported by sendInlineOTP */ }
+        }
         if (!window.firebaseConfirmationResult) {
           showToast(t('Please request a code first'), 'fa-circle-info');
           return;
@@ -9100,11 +9123,20 @@
 
     const hadController = Boolean(navigator.serviceWorker && navigator.serviceWorker.controller);
     let refreshing = false;
+    // A new version took over: reload to use it, but never in the middle of logging
+    // in. Reloading there loses the pending code (the SMS still arrives, but the
+    // user is back on the number screen). Wait until they have left the login screen.
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (hadController && !refreshing) {
-        refreshing = true;
+      if (!hadController || refreshing) return;
+      refreshing = true;
+      const reloadWhenSafe = () => {
+        if (document.body.dataset.view === 'auth') {
+          setTimeout(reloadWhenSafe, 3000);
+          return;
+        }
         window.location.reload();
-      }
+      };
+      reloadWhenSafe();
     });
 
     const register = () => {
