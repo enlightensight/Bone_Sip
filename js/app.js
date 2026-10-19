@@ -1560,6 +1560,10 @@
       // Open the code screen right away: on mobile data Firebase's reply can take a
       // while, and the SMS may even arrive first. The code can be typed meanwhile;
       // verifyInlineOTP waits for the send to finish.
+      // On a resend the first code may still arrive and is still valid: keep it so a
+      // failed resend (e.g. "too many attempts") doesn't throw it away.
+      const otpScreenOpen = (document.getElementById('inlineAuthOtpStep') || {}).style?.display === 'block';
+      const previous = otpScreenOpen && state.auth.pendingPhone === cleanPhone ? window.firebaseConfirmationResult : null;
       openOtpEntry(cleanPhone, 'firebase', true);
       window.firebaseConfirmationResult = null;
       try {
@@ -1575,7 +1579,14 @@
       } catch (err) {
         window.firebaseConfirmationPromise = null;
         logFirebasePhoneError(err);
-        showAuthPhoneStep();
+        if (previous) {
+          // Resend failed: stay on the code screen with the code already sent.
+          window.firebaseConfirmationResult = previous;
+          const sentText = document.getElementById('inlineOtpSentPhoneText');
+          if (sentText) sentText.textContent = t('Code sent to {phone}', { phone: `+91 ${cleanPhone.slice(0, 5)} ${cleanPhone.slice(5)}` });
+        } else {
+          showAuthPhoneStep();
+        }
         return;
       } finally {
         otpSendInFlight = false;
@@ -1665,6 +1676,39 @@
     const boxes = document.querySelectorAll('.inline-otp');
     boxes.forEach(b => { b.value = ''; });
     if (boxes[0]) setTimeout(() => boxes[0].focus(), 150);
+    startResendCountdown();
+  }
+
+  // Resend stays locked for a minute after each code. Firebase treats a second SMS
+  // to the same number within seconds as abuse and blocks the device
+  // ("too many attempts"), so the wait protects the user.
+  const RESEND_WAIT_SECONDS = 60;
+  let resendTimer = null;
+  function startResendCountdown(seconds = RESEND_WAIT_SECONDS) {
+    const btn = document.getElementById('otpResendBtn');
+    const timer = document.getElementById('otpResendTimer');
+    if (!btn) return;
+    clearInterval(resendTimer);
+    const endsAt = Date.now() + seconds * 1000;
+    const tick = () => {
+      const left = Math.ceil((endsAt - Date.now()) / 1000);
+      if (left <= 0) {
+        clearInterval(resendTimer);
+        btn.disabled = false;
+        if (timer) timer.textContent = '';
+        return;
+      }
+      btn.disabled = true;
+      if (timer) timer.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+    };
+    tick();
+    resendTimer = setInterval(tick, 500);
+  }
+
+  function resendInlineOTP() {
+    const btn = document.getElementById('otpResendBtn');
+    if (btn && btn.disabled) return;
+    sendInlineOTP();
   }
 
   function autofillInlineOTP() {
@@ -9489,6 +9533,7 @@
     saveUserProfileModal,
     exportDatabaseJSON,
     resetDatabase,
+    resendInlineOTP,
     openLogin,
     cancelLogin,
     logout,
