@@ -2,10 +2,21 @@
 // Edit this file per environment (or generate it at deploy time); it is loaded before app.js.
 window.BONE_SIP_CONFIG = {
   // 'demo'       → OTP is simulated in the browser and the code is shown on screen.
-  // 'production' → OTP is sent/verified through the endpoints below (you must provide a backend).
-  mode: 'demo',
+  // 'production' → Real OTP verification (Firebase Phone Auth SMS or custom backend).
+  mode: 'production',
 
   demoOtpCode: '849201',
+
+  // Firebase Web SDK Configuration for real Phone Auth OTP SMS
+  firebase: {
+    apiKey: "AIzaSyC55hDbISrZ7Ff7Y6_n1QFEGLVHtw1PTrA",
+    authDomain: "bonesip-6d4f1.firebaseapp.com",
+    projectId: "bonesip-6d4f1",
+    storageBucket: "bonesip-6d4f1.firebasestorage.app",
+    messagingSenderId: "1092336676373",
+    appId: "1:1092336676373:web:a946dbcaabc9a9b6aa281c",
+    measurementId: "G-6V441RZN2R"
+  },
 
   otp: {
     // POST { phone: "9876543210" } → 2xx when the SMS has been sent.

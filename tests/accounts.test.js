@@ -189,13 +189,15 @@ async function login(call, phone) {
       OTP_TEST_MODE: '0',
       SMSHORIZON_API_KEY: 'test_key_dummy',
       SMSHORIZON_USER: 'enlighten',
-      SMSHORIZON_TID: '160710000000323238',
+      SMSHORIZON_TID: '1607100000000323238',
       SMSHORIZON_SENDER: 'BONESIP'
     }
   });
   await new Promise(r => withSms.listen(0, '127.0.0.1', r));
   const smsClient = client(`http://127.0.0.1:${withSms.address().port}`);
   assert((await smsClient('POST', '/api/auth/otp/send', { phone: '123' })).status === 400, 'Rejects invalid phone with SMS configured');
+  assert((await smsClient('POST', '/api/auth/firebase-verify', {})).status === 400, 'Firebase verify rejects missing token');
+  assert((await smsClient('POST', '/api/auth/firebase-verify', { idToken: 'invalid.token.here' })).status === 401, 'Firebase verify rejects invalid token');
   withSms.close();
 
   console.log(`\n🏁 ACCOUNTS TESTS: ${pass} Passed, ${fail} Failed`);

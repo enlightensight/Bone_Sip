@@ -1378,6 +1378,45 @@
     card.classList.add('shake');
   }
 
+  function hasFirebasePhoneAuth() {
+    const cfg = window.BONE_SIP_CONFIG || {};
+    return typeof window.firebase !== 'undefined' &&
+           typeof firebase.auth === 'function' &&
+           cfg.firebase &&
+           Boolean(cfg.firebase.apiKey);
+  }
+
+  function initFirebaseAuth() {
+    const cfg = window.BONE_SIP_CONFIG || {};
+    if (!hasFirebasePhoneAuth()) return null;
+    if (!firebase.apps.length) {
+      try {
+        firebase.initializeApp(cfg.firebase);
+      } catch (e) {
+        console.warn('Firebase init error:', e);
+      }
+    }
+    return firebase.auth();
+  }
+
+  function getOrCreateRecaptcha() {
+    const auth = initFirebaseAuth();
+    if (!auth) return null;
+    if (window.recaptchaVerifier) return window.recaptchaVerifier;
+    const container = document.getElementById('recaptcha-container');
+    if (!container) return null;
+    try {
+      window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+        size: 'invisible',
+        callback: () => {}
+      });
+      return window.recaptchaVerifier;
+    } catch (e) {
+      console.warn('RecaptchaVerifier init error:', e);
+      return null;
+    }
+  }
+
   // The code to show on screen when there is no real SMS yet (demo or server test mode).
   function onScreenOtpCode() {
     return state.auth.pendingMode === 'cloud' ? cloud.testCode : ((window.BONE_SIP_CONFIG || {}).demoOtpCode || '849201');
@@ -1403,7 +1442,33 @@
     const cfg = window.BONE_SIP_CONFIG || {};
     let mode = isDemoMode() ? 'demo' : 'custom';
     cloud.testCode = '';
-    if (accountsApi()) {
+
+    if (hasFirebasePhoneAuth()) {
+      const verifier = getOrCreateRecaptcha();
+      if (!verifier) {
+        showToast(t('Could not send the code. Please check your internet and try again.'), 'fa-triangle-exclamation');
+        return;
+      }
+      try {
+        const confirmationResult = await firebase.auth().signInWithPhoneNumber('+91' + cleanPhone, verifier);
+        window.firebaseConfirmationResult = confirmationResult;
+        mode = 'firebase';
+      } catch (err) {
+        console.error('[Firebase Phone Auth] Error:', err);
+        if (window.recaptchaVerifier && typeof grecaptcha !== 'undefined') {
+          try {
+            const widgetId = await window.recaptchaVerifier.render();
+            grecaptcha.reset(widgetId);
+          } catch (_) {}
+        }
+        let msg = t('Could not send the code. Please check your internet and try again.');
+        if (err && err.code === 'auth/invalid-phone-number') msg = t('Enter a valid 10-digit mobile number');
+        else if (err && err.code === 'auth/quota-exceeded') msg = t('Too many tries. Please wait an hour and try again.');
+        else if (err && err.code === 'auth/too-many-requests') msg = t('Too many tries. Please wait an hour and try again.');
+        showToast(msg, 'fa-triangle-exclamation');
+        return;
+      }
+    } else if (accountsApi()) {
       let r = null;
       try { r = await apiCall('POST', '/auth/otp/send', { phone: cleanPhone }); } catch (err) { r = null; }
       if (!r) {
@@ -1534,7 +1599,34 @@
     let failNote = t('That code didn’t match. Please try again.');
     let account = null;
     try {
-      if (state.auth.pendingMode === 'cloud') {
+      if (state.auth.pendingMode === 'firebase') {
+        if (!window.firebaseConfirmationResult) {
+          showToast(t('Please request a code first'), 'fa-circle-info');
+          return;
+        }
+        try {
+          const userCred = await window.firebaseConfirmationResult.confirm(code);
+          const idToken = await userCred.user.getIdToken();
+          if (accountsApi()) {
+            const r = await apiCall('POST', '/auth/firebase-verify', { idToken, phone });
+            verified = r && r.ok;
+            if (verified) account = r.json;
+            else failNote = (r && r.json && r.json.error) ? r.json.error : t('Could not check the code. Please check your internet and try again.');
+          } else {
+            verified = true;
+          }
+        } catch (err) {
+          console.error('[Firebase Auth] Verification error:', err);
+          verified = false;
+          if (err && err.code === 'auth/invalid-verification-code') {
+            failNote = t('That code didn’t match. Please try again.');
+          } else if (err && err.code === 'auth/code-expired') {
+            failNote = t('That code has expired. Tap Resend for a new one.');
+          } else {
+            failNote = t('That code didn’t match. Please try again.');
+          }
+        }
+      } else if (state.auth.pendingMode === 'cloud') {
         const r = await apiCall('POST', '/auth/otp/verify', { phone, code });
         verified = r.ok;
         if (r.ok) account = r.json;
@@ -2397,6 +2489,9 @@
       try { await syncToCloud(); } catch (e) { /* ignore */ }
       try { await apiCall('POST', '/auth/logout', {}); } catch (e) { /* offline: the session just expires */ }
     }
+    if (typeof firebase !== 'undefined' && firebase.auth && firebase.apps && firebase.apps.length) {
+      try { await firebase.auth().signOut(); } catch (e) { /* ignore */ }
+    }
     state.auth.isVerified = false;
     state.auth.phone = '';
     state.auth.cloud = false;
@@ -2414,6 +2509,9 @@
     if (!r.ok) {
       showToast(t('Could not delete right now. Please check your internet and try again.'), 'fa-triangle-exclamation');
       return;
+    }
+    if (typeof firebase !== 'undefined' && firebase.auth && firebase.apps && firebase.apps.length && firebase.auth().currentUser) {
+      try { await firebase.auth().currentUser.delete(); } catch (e) { /* ignore */ }
     }
     clearLocalAccountData();
     showToast(t('Your account has been deleted'), 'fa-circle-check');

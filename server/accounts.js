@@ -79,12 +79,73 @@ function cleanList(list, keyName) {
   }));
 }
 
+let googleCerts = null;
+let googleCertsExp = 0;
+
+async function fetchGooglePublicCerts() {
+  const now = Date.now();
+  if (googleCerts && now < googleCertsExp) return googleCerts;
+  try {
+    const res = await fetch('https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const cacheControl = res.headers.get('cache-control') || '';
+    const match = cacheControl.match(/max-age=(\d+)/i);
+    const maxAgeSec = match ? parseInt(match[1], 10) : 3600;
+    googleCerts = await res.json();
+    googleCertsExp = now + (maxAgeSec * 1000);
+    return googleCerts;
+  } catch (err) {
+    if (googleCerts) return googleCerts;
+    throw err;
+  }
+}
+
+async function verifyFirebaseIdToken(token, expectedProjectId) {
+  if (!token || typeof token !== 'string') throw new Error('Missing token');
+  const parts = token.split('.');
+  if (parts.length !== 3) throw new Error('Malformed token');
+
+  const [headerB64, payloadB64, sigB64] = parts;
+  let header, payload;
+  try {
+    header = JSON.parse(Buffer.from(headerB64, 'base64url').toString('utf8'));
+    payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+  } catch (e) {
+    throw new Error('Invalid token JSON');
+  }
+
+  if (header.alg !== 'RS256' || !header.kid) throw new Error('Invalid token algorithm');
+
+  const certs = await fetchGooglePublicCerts();
+  const cert = certs[header.kid];
+  if (!cert) throw new Error('Unknown signing key');
+
+  const verifier = crypto.createVerify('RSA-SHA256');
+  verifier.update(`${headerB64}.${payloadB64}`);
+  const valid = verifier.verify(cert, sigB64, 'base64url');
+  if (!valid) throw new Error('Invalid token signature');
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (expectedProjectId && payload.aud !== expectedProjectId) {
+    throw new Error(`Invalid audience: expected ${expectedProjectId}, got ${payload.aud}`);
+  }
+  if (expectedProjectId && payload.iss !== `https://securetoken.google.com/${expectedProjectId}`) {
+    throw new Error('Invalid issuer');
+  }
+  if (!payload.sub || typeof payload.sub !== 'string') throw new Error('Missing sub');
+  if (payload.exp && payload.exp < (nowSec - 60)) throw new Error('Token expired');
+  if (payload.iat && payload.iat > (nowSec + 60)) throw new Error('Token issued in future');
+
+  return payload;
+}
+
 function createAccounts({ db, env = process.env, prod = false }) {
   const testMode = env.OTP_TEST_MODE === '1';
   const testCode = String(env.OTP_TEST_CODE || '123456');
+  const firebaseProjectId = String(env.FIREBASE_PROJECT_ID || 'bonesip-6d4f1').trim();
   const smsApiKey = String(env.SMSHORIZON_API_KEY || env.SMS_API_KEY || '').trim();
   const smsUser = String(env.SMSHORIZON_USER || 'enlighten').trim();
-  const smsTid = String(env.SMSHORIZON_TID || '160710000000323238').trim();
+  const smsTid = String(env.SMSHORIZON_TID || '1607100000000323238').trim();
   const smsSender = String(env.SMSHORIZON_SENDER || 'HORIZN').trim();
   const smsTemplateText = String(env.SMSHORIZON_TEMPLATE_TEXT || 'OTP for your new user account registration is: {code}\n\n- SmsHorizon');
   const smsEnabled = Boolean(smsApiKey);
@@ -318,6 +379,33 @@ function createAccounts({ db, env = process.env, prod = false }) {
     }, { 'Set-Cookie': cookie('bs_session', token, maxAge) });
   }
 
+  async function verifyFirebase(body) {
+    const idToken = String((body && body.idToken) || '').trim();
+    if (!idToken) return json(400, { error: 'missing_token' });
+
+    let decoded;
+    try {
+      decoded = await verifyFirebaseIdToken(idToken, firebaseProjectId);
+    } catch (err) {
+      console.warn('[Firebase Auth] Token verification failed:', err.message);
+      return json(401, { error: 'invalid_firebase_token', details: err.message });
+    }
+
+    const phone = String(decoded.phone_number || '').replace(/\D/g, '').slice(-10);
+    if (!PHONE_RE.test(phone)) return json(400, { error: 'invalid_phone_in_token' });
+
+    const user = findOrCreateUser(phone);
+    q.touchUser.run(isoNow(), user.id);
+    const { token, maxAge } = startSession(user.id, false);
+    const saved = q.getState.get(user.id);
+    q.pruneSessions.run(Date.now());
+    return json(200, {
+      user: publicUser(user),
+      state: saved ? JSON.parse(saved.data) : null,
+      stateUpdatedAt: saved ? saved.updated_at : null
+    }, { 'Set-Cookie': cookie('bs_session', token, maxAge) });
+  }
+
   // ---------------------------------------------------------------- Me
   function saveDays(userId, days) {
     if (!Array.isArray(days) || days.length > 120) return false;
@@ -479,6 +567,7 @@ function createAccounts({ db, env = process.env, prod = false }) {
     // Auth
     if (pathname === '/api/auth/otp/send' && method === 'POST') return sendOtp(body, ip);
     if (pathname === '/api/auth/otp/verify' && method === 'POST') return verifyOtp(body);
+    if (pathname === '/api/auth/firebase-verify' && method === 'POST') return verifyFirebase(body);
     if (pathname === '/api/auth/logout' && method === 'POST') {
       const s = sessionUser(headers, false);
       if (s) q.dropSession.run(s.tokenHash);
