@@ -1409,11 +1409,20 @@
       window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
         size: 'invisible',
         callback: () => {}
-      });
+      }, auth);
       return window.recaptchaVerifier;
     } catch (e) {
       console.warn('RecaptchaVerifier init error:', e);
       return null;
+    }
+  }
+
+  function resetRecaptchaVerifier() {
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+      } catch (_) {}
+      window.recaptchaVerifier = null;
     }
   }
 
@@ -1455,16 +1464,12 @@
         mode = 'firebase';
       } catch (err) {
         console.error('[Firebase Phone Auth] Error:', err);
-        if (window.recaptchaVerifier && typeof grecaptcha !== 'undefined') {
-          try {
-            const widgetId = await window.recaptchaVerifier.render();
-            grecaptcha.reset(widgetId);
-          } catch (_) {}
-        }
+        resetRecaptchaVerifier();
         let msg = t('Could not send the code. Please check your internet and try again.');
         if (err && err.code === 'auth/invalid-phone-number') msg = t('Enter a valid 10-digit mobile number');
         else if (err && err.code === 'auth/quota-exceeded') msg = t('Too many tries. Please wait an hour and try again.');
         else if (err && err.code === 'auth/too-many-requests') msg = t('Too many tries. Please wait an hour and try again.');
+        else if (err && err.code === 'auth/invalid-app-credential') msg = t('Verification expired. Please try clicking Send OTP again.');
         showToast(msg, 'fa-triangle-exclamation');
         return;
       }
