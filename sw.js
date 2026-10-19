@@ -1,6 +1,6 @@
 // BONE SIP service worker — offline app shell + runtime caching.
 // Bump CACHE_VERSION whenever you deploy changed files (or let your build step do it).
-const CACHE_VERSION = 'bonesip-v4.4.5';
+const CACHE_VERSION = 'bonesip-v4.4.6';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -12,9 +12,9 @@ const APP_SHELL = [
   "css/brand.css?v=4.4.5",
   "js/config.js?v=4.4.4",
   "js/data.js?v=4.3.4",
-  "js/notifications.js?v=4.3.4",
+  "js/notifications.js?v=4.4.6",
   "js/i18n.js?v=4.3.4",
-  "js/app.js?v=4.4.5",
+  "js/app.js?v=4.4.6",
   "js/vendor/confetti.browser.min.js",
   "assets/images/bonesip_logo_720.webp",
   "assets/images/ojas-avatar.svg",
@@ -244,6 +244,7 @@ self.addEventListener('push', (event) => {
 
   const title = payload.title || 'BONE SIP';
   const options = Object.assign({
+    body: payload.body || '',
     icon: 'assets/icons/icon-192.png',
     badge: 'assets/icons/favicon-32.png',
     vibrate: [200, 100, 200],

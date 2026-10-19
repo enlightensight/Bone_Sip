@@ -4262,7 +4262,9 @@
     const BoneNotifications = window.BoneNotifications;
     if (!BoneNotifications) return;
     playSound('tap');
-    const ok = await BoneNotifications.sendTestNotification();
+    // When the server sends the reminders, test that path: it is the one used at 7 AM.
+    const ok = (BoneNotifications.isPushActive() && await BoneNotifications.sendServerTest()) ||
+      await BoneNotifications.sendTestNotification();
     if (ok) {
       showToast(t('📲 Test notification sent! Check your device lock screen/tray.'), 'fa-mobile-screen');
     } else {
@@ -9103,6 +9105,8 @@
 
   // Re-render everything built with t()/dates so it switches language too.
   function onLanguageChanged() {
+    // Reminders sent by the server follow the app's language.
+    if (window.BoneNotifications && window.BoneNotifications.isPushActive()) window.BoneNotifications.syncPush();
     updateHeaderLangButton();
     renderPillarBottomNav();
     updateHeaderProfileBadge();

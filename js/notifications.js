@@ -17,6 +17,9 @@
 
   const STORAGE_KEY_ENABLED = 'bonesip_reminders_enabled';
   const STORAGE_KEY_LAST_TEST = 'bonesip_last_test_notification';
+  // Set while the server sends this phone's reminders by push (they arrive even
+  // when the app is closed); the in-page timer below is then not needed.
+  const STORAGE_KEY_PUSH = 'bonesip_push_endpoint';
   const ICON_PATH = 'assets/icons/icon-192.png';
   const BADGE_PATH = 'assets/icons/favicon-32.png';
 
@@ -574,6 +577,114 @@
     try {
       localStorage.setItem(STORAGE_KEY_ENABLED, flag ? 'true' : 'false');
     } catch (e) {}
+    if (flag) syncPush();
+    else unsubscribePush();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Server push: the server sends each reminder at its time (server/push.js).
+  // ---------------------------------------------------------------------------
+  function pushApi(path) {
+    const cfg = global.BONE_SIP_CONFIG || {};
+    const base = typeof cfg.accountsApi === 'string' ? cfg.accountsApi : '/api';
+    return base ? base.replace(/\/+$/, '') + '/push/' + path : null;
+  }
+
+  function pushSupported() {
+    return typeof navigator !== 'undefined' && 'serviceWorker' in navigator &&
+      typeof window !== 'undefined' && 'PushManager' in window && !!pushApi('key') &&
+      typeof location !== 'undefined' && /^https?:$/.test(location.protocol);
+  }
+
+  function pushEndpoint() {
+    try { return localStorage.getItem(STORAGE_KEY_PUSH) || ''; } catch (e) { return ''; }
+  }
+
+  function isPushActive() {
+    return !!pushEndpoint();
+  }
+
+  function keyToBytes(base64url) {
+    const b64 = (base64url + '='.repeat((4 - base64url.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(b64);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  function postJson(url, body) {
+    return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'same-origin' });
+  }
+
+  let pushSyncing = null;
+  // Registers (or refreshes) this phone with the server: subscription, language and time zone.
+  function syncPush() {
+    if (!pushSupported() || !isEnabled()) return Promise.resolve(false);
+    if (pushSyncing) return pushSyncing;
+    pushSyncing = (async () => {
+      try {
+        const keyRes = await fetch(pushApi('key'), { cache: 'no-store' });
+        if (!keyRes.ok) throw new Error('no push key');
+        const { publicKey } = await keyRes.json();
+        // ready never settles when no service worker is registered (e.g. local dev).
+        const reg = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('no service worker')), 15000))
+        ]);
+        let sub = await reg.pushManager.getSubscription();
+        // The server's key changed (e.g. a new server): the old subscription no longer works.
+        if (sub && sub.options && sub.options.applicationServerKey) {
+          const current = new Uint8Array(sub.options.applicationServerKey);
+          const wanted = keyToBytes(publicKey);
+          if (current.length !== wanted.length || current.some((b, i) => b !== wanted[i])) {
+            await sub.unsubscribe();
+            sub = null;
+          }
+        }
+        if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyToBytes(publicKey) });
+        let tz = 'Asia/Kolkata';
+        try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
+        const res = await postJson(pushApi('subscribe'), { subscription: sub.toJSON(), lang: getCurrentLang(), tz });
+        if (!res.ok) throw new Error('subscribe failed: ' + res.status);
+        try { localStorage.setItem(STORAGE_KEY_PUSH, sub.endpoint); } catch (e) {}
+        return true;
+      } catch (err) {
+        // No push (old browser, offline, no server): the in-page timer keeps working as before.
+        console.warn('[BoneNotifications] Push reminders unavailable:', err && err.message ? err.message : err);
+        try { localStorage.removeItem(STORAGE_KEY_PUSH); } catch (e) {}
+        return false;
+      } finally {
+        pushSyncing = null;
+      }
+    })();
+    return pushSyncing;
+  }
+
+  async function unsubscribePush() {
+    const endpoint = pushEndpoint();
+    try { localStorage.removeItem(STORAGE_KEY_PUSH); } catch (e) {}
+    if (!pushSupported()) return;
+    try {
+      if (endpoint) await postJson(pushApi('unsubscribe'), { endpoint });
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg && await reg.pushManager.getSubscription();
+      if (sub) {
+        if (sub.endpoint !== endpoint) await postJson(pushApi('unsubscribe'), { endpoint: sub.endpoint });
+        await sub.unsubscribe();
+      }
+    } catch (e) {}
+  }
+
+  // Asks the server to push one notification now: proves reminders can reach this phone.
+  async function sendServerTest() {
+    const endpoint = pushEndpoint();
+    if (!endpoint) return false;
+    try {
+      const res = await postJson(pushApi('test'), { endpoint });
+      return res.ok;
+    } catch (e) {
+      return false;
+    }
   }
 
   async function requestPermission() {
@@ -700,8 +811,10 @@
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
+  // In-page fallback for browsers without push: only works while the app is open.
   function checkScheduleAndNotify() {
     if (!isEnabled()) return;
+    if (isPushActive()) return; // the server sends them; showing them here too would buzz twice
 
     const now = new Date();
     const currentHour = now.getHours();
@@ -736,6 +849,8 @@
     schedulerTimer = setInterval(checkScheduleAndNotify, 30000);
     // Run an immediate check
     checkScheduleAndNotify();
+    // Keep the server's copy of this phone's subscription, language and time zone current.
+    syncPush();
 
     // Also check whenever user switches back to this tab/window
     if (typeof document !== 'undefined') {
@@ -767,6 +882,10 @@
     setEnabled,
     requestPermission,
     sendTestNotification,
+    sendServerTest,
+    syncPush,
+    unsubscribePush,
+    isPushActive,
     triggerSlot,
     checkScheduleAndNotify,
     startScheduler,

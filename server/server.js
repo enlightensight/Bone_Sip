@@ -22,6 +22,7 @@ try { process.loadEnvFile(path.join(ROOT, '.env')); } catch (e) { /* no .env: us
 const { handleChat } = require('./assistant');
 const { openDb } = require('./db');
 const { createAccounts } = require('./accounts');
+const { createPush } = require('./push');
 
 const PORT = Number(process.argv[2] || process.env.PORT || 8080);
 const HOST = process.env.HOST || '127.0.0.1';
@@ -120,7 +121,10 @@ function readJson(req, limit = 64 * 1024) {
 }
 
 function createServer({ dataDir = process.env.DATA_DIR || path.join(ROOT, 'data'), env = process.env } = {}) {
-  const accounts = createAccounts({ db: openDb(dataDir), env, prod: PROD });
+  const db = openDb(dataDir);
+  const accounts = createAccounts({ db, env, prod: PROD });
+  // Daily reminders are sent by the server so they arrive while the app is closed.
+  const push = createPush({ db, env, dataDir });
 
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url || '/', 'http://x');
@@ -135,6 +139,18 @@ function createServer({ dataDir = process.env.DATA_DIR || path.join(ROOT, 'data'
       if (!body) return send(res, 400, JSON.stringify({ error: 'bad_request' }), { 'Content-Type': 'application/json' });
       const result = await handleChat({ body, headers: req.headers, ip });
       return send(res, result.status, JSON.stringify(result.json), Object.assign({ 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }, result.headers || {}));
+    }
+
+    if (pathname.startsWith('/api/push/')) {
+      try {
+        const body = req.method === 'POST' ? await readJson(req, 8 * 1024) : null;
+        const result = await push.handle({ method: req.method, pathname, ip, body });
+        if (result) return send(res, result.status, result.body, result.headers);
+      } catch (err) {
+        console.error('push API error:', err);
+        return send(res, 500, JSON.stringify({ error: 'server_error' }), { 'Content-Type': 'application/json' });
+      }
+      return send(res, 404, JSON.stringify({ error: 'not_found' }), { 'Content-Type': 'application/json' });
     }
 
     if (pathname.startsWith('/api/')) {
@@ -162,6 +178,8 @@ function createServer({ dataDir = process.env.DATA_DIR || path.join(ROOT, 'data'
   });
 
   server.accounts = accounts;
+  server.push = push;
+  server.on('close', () => push.stop());
   return server;
 }
 
@@ -170,11 +188,13 @@ module.exports = { createServer };
 if (require.main === module) {
   const server = createServer();
   server.listen(PORT, HOST, () => {
+    server.push.start();
     console.log(`BONE SIP running at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT} (${PROD ? 'production' : 'development'})`);
     if (!process.env.GROQ_API_KEY) console.warn('GROQ_API_KEY is not set: the AI assistant will use its offline answers.');
     if (server.accounts.testMode) console.warn('OTP_TEST_MODE is on: every number logs in with the test code. Turn it off once SMS is set up.');
     else if (server.accounts.smsEnabled) console.log('SmsHorizon SMS service is active: real OTP SMS verification enabled.');
     else console.warn('OTP_TEST_MODE is off and no SMS service is set up: phone login is disabled.');
+    console.log(`Daily reminder push is on (${server.push.subscriberCount()} phones subscribed).`);
     if (!server.accounts.adminConfigured) console.warn('ADMIN_PHONE / ADMIN_PIN are not set: the admin portal (/admin.html) is disabled.');
   });
 }
