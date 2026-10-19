@@ -7,6 +7,10 @@ window.BONE_SIP_CONFIG = {
 
   demoOtpCode: '849201',
 
+  // Who sends the login code: 'firebase' (Firebase Phone Auth, needs reCAPTCHA) or
+  // 'server' (our server via SmsHorizon, set SMSHORIZON_* in .env; no reCAPTCHA).
+  phoneLoginProvider: 'firebase',
+
   // Firebase Web SDK Configuration for real Phone Auth OTP SMS
   firebase: {
     apiKey: "AIzaSyC55hDbISrZ7Ff7Y6_n1QFEGLVHtw1PTrA",

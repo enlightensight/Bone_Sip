@@ -1378,8 +1378,15 @@
     card.classList.add('shake');
   }
 
+  let otpSendInFlight = false;
+  const OTP_COOLDOWN_KEY = 'bonesip_otp_paused_until';
+  const OTP_COOLDOWN_MS = 30 * 60 * 1000;
+
+  // config.js phoneLoginProvider: 'firebase' (default) or 'server' (our server sends
+  // the code through SmsHorizon; no reCAPTCHA).
   function hasFirebasePhoneAuth() {
     const cfg = window.BONE_SIP_CONFIG || {};
+    if (cfg.phoneLoginProvider === 'server') return false;
     return typeof window.firebase !== 'undefined' &&
            typeof firebase.auth === 'function' &&
            cfg.firebase &&
@@ -1399,17 +1406,43 @@
     return firebase.auth();
   }
 
+  // Firebase accepts phone login only from the "Authorized domains" in the Firebase
+  // console (Authentication → Settings). From any other address (127.0.0.1, a LAN IP
+  // such as 192.168.x.x, a Netlify/Vercel preview, www.) its reCAPTCHA check fails with
+  // auth/invalid-app-credential, so check first and use the server login instead.
+  let firebaseDomainsPromise = null;
+  function firebaseAllowsThisHost() {
+    const key = ((window.BONE_SIP_CONFIG || {}).firebase || {}).apiKey;
+    if (!firebaseDomainsPromise) {
+      firebaseDomainsPromise = fetch(`https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=${encodeURIComponent(key)}`)
+        .then(r => (r.ok ? r.json() : null))
+        .then(j => (j && Array.isArray(j.authorizedDomains) ? j.authorizedDomains : null))
+        .catch(() => null);
+    }
+    return firebaseDomainsPromise.then(list => {
+      if (!list) return true; // Could not check (offline or blocked): let Firebase decide.
+      const ok = list.includes(location.hostname);
+      if (!ok) {
+        console.warn(`[Firebase Phone Auth] "${location.hostname}" is not an authorized domain (allowed: ${list.join(', ')}). ` +
+          'Add it in Firebase console → Authentication → Settings → Authorized domains, or open the app on one of those. Using the server login instead.');
+      }
+      return ok;
+    });
+  }
+
   function getOrCreateRecaptcha() {
     const auth = initFirebaseAuth();
     if (!auth) return null;
     if (window.recaptchaVerifier) return window.recaptchaVerifier;
-    const container = document.getElementById('recaptcha-container');
-    if (!container) return null;
+    const host = document.getElementById('recaptcha-container');
+    if (!host) return null;
+    // reCAPTCHA remembers every element it has drawn in, even after clear(), and
+    // throws "already been rendered in this element". Each verifier gets a new one.
+    host.innerHTML = '';
+    const slot = document.createElement('div');
+    host.appendChild(slot);
     try {
-      window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-        size: 'invisible',
-        callback: () => {}
-      });
+      window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier(slot, { size: 'invisible' });
       return window.recaptchaVerifier;
     } catch (e) {
       console.warn('RecaptchaVerifier init error:', e);
@@ -1424,6 +1457,37 @@
       } catch (_) {}
       window.recaptchaVerifier = null;
     }
+    const host = document.getElementById('recaptcha-container');
+    if (host) host.innerHTML = '';
+  }
+
+  // Firebase hides its reason behind a 400 in the Network tab; print the code with
+  // what it means, and show the user a plain message.
+  const FIREBASE_PHONE_HINTS = {
+    'auth/invalid-app-credential': 'reCAPTCHA check rejected. Usual causes: the page address is not in Firebase → Authentication → Settings → Authorized domains, the API key has website restrictions (Google Cloud → Credentials), a browser extension changes requests, or the check expired on a slow network. On localhost, real numbers are often refused: use Firebase "Phone numbers for testing" or test on the live site.',
+    'auth/captcha-check-failed': 'reCAPTCHA check failed or expired. Try again.',
+    'auth/operation-not-allowed': 'Phone sign-in is off, or India (+91) is blocked. Turn on Firebase → Authentication → Sign-in method → Phone, and allow India in Settings → SMS region policy.',
+    'auth/billing-not-enabled': 'SMS needs billing. Upgrade the Firebase project to the Blaze plan.',
+    'auth/quota-exceeded': 'Daily SMS quota used up for this Firebase project.',
+    'auth/too-many-requests': 'Too many attempts from this device or number. Wait and try later.',
+    'auth/invalid-phone-number': 'Phone number format rejected.',
+    'auth/missing-app-credential': 'reCAPTCHA did not run. Check that it is not blocked by the page CSP or an extension.'
+  };
+
+  function logFirebasePhoneError(err) {
+    const code = (err && err.code) || 'unknown';
+    console.error(`[Firebase Phone Auth] ${code}: ${FIREBASE_PHONE_HINTS[code] || (err && err.message) || ''}`, err);
+    // Firebase blocks a device after repeated attempts; every extra try while blocked
+    // can extend the block, so pause sending from this device for a while.
+    if (code === 'auth/too-many-requests' || code === 'auth/quota-exceeded') {
+      try { localStorage.setItem(OTP_COOLDOWN_KEY, String(Date.now() + OTP_COOLDOWN_MS)); } catch (e) { /* private mode */ }
+    }
+    let msg = t('Could not send the code. Please check your internet and try again.');
+    if (code === 'auth/invalid-phone-number') msg = t('Enter a valid 10-digit mobile number');
+    else if (code === 'auth/quota-exceeded' || code === 'auth/too-many-requests') msg = t('Too many tries. Please wait an hour and try again.');
+    else if (code === 'auth/invalid-app-credential' || code === 'auth/captcha-check-failed') msg = t('Verification expired. Please try clicking Send OTP again.');
+    else if (code === 'auth/operation-not-allowed' || code === 'auth/billing-not-enabled') msg = t('Phone login is not switched on yet. Please try later.');
+    showToast(msg, 'fa-triangle-exclamation');
   }
 
   // The code to show on screen when there is no real SMS yet (demo or server test mode).
@@ -1431,7 +1495,37 @@
     return state.auth.pendingMode === 'cloud' ? cloud.testCode : ((window.BONE_SIP_CONFIG || {}).demoOtpCode || '849201');
   }
 
+  // Loads Google's invisible check while the user types their number, so tapping
+  // Send OTP doesn't first wait for reCAPTCHA to download.
+  let recaptchaUsed = false;
+  async function prewarmRecaptcha() {
+    if (!hasFirebasePhoneAuth() || window.recaptchaVerifier) return;
+    if (!(await firebaseAllowsThisHost())) return;
+    const verifier = getOrCreateRecaptcha();
+    if (!verifier) return;
+    recaptchaUsed = false;
+    try { await verifier.render(); } catch (e) { /* the tap will try again */ }
+  }
+
+  // Spinner on the button while the code is being sent; ignores extra taps.
+  let sendOtpBusy = false;
   async function sendInlineOTP() {
+    if (sendOtpBusy) return;
+    sendOtpBusy = true;
+    const btn = document.getElementById('inlineSendOtpBtn');
+    const icon = btn && btn.querySelector('i');
+    if (btn) { btn.disabled = true; btn.classList.add('is-loading'); }
+    if (icon) icon.className = 'fa-solid fa-spinner fa-spin';
+    try {
+      await sendInlineOTPNow();
+    } finally {
+      sendOtpBusy = false;
+      if (btn) { btn.disabled = false; btn.classList.remove('is-loading'); }
+      if (icon) icon.className = 'fa-solid fa-arrow-right';
+    }
+  }
+
+  async function sendInlineOTPNow() {
     playSound('tap');
     const input = document.getElementById('inlineMobileNumberInput');
     const cleanPhone = (input ? input.value : '').replace(/\D/g, '').slice(-10);
@@ -1452,26 +1546,32 @@
     let mode = isDemoMode() ? 'demo' : 'custom';
     cloud.testCode = '';
 
-    if (hasFirebasePhoneAuth()) {
-      const verifier = getOrCreateRecaptcha();
-      if (!verifier) {
-        showToast(t('Could not send the code. Please check your internet and try again.'), 'fa-triangle-exclamation');
+    const useFirebase = hasFirebasePhoneAuth() && await firebaseAllowsThisHost();
+    if (useFirebase) {
+      let pausedUntil = 0;
+      try { pausedUntil = Number(localStorage.getItem(OTP_COOLDOWN_KEY)) || 0; } catch (e) { /* private mode */ }
+      if (pausedUntil > Date.now()) {
+        console.warn(`[Firebase Phone Auth] Sending paused on this device until ${new Date(pausedUntil).toLocaleTimeString()} after "too many requests".`);
+        showToast(t('Too many tries. Please wait an hour and try again.'), 'fa-triangle-exclamation');
         return;
       }
+      if (otpSendInFlight) return;
+      otpSendInFlight = true;
       try {
-        const confirmationResult = await firebase.auth().signInWithPhoneNumber('+91' + cleanPhone, verifier);
-        window.firebaseConfirmationResult = confirmationResult;
+        // One attempt per tap. The verifier preloaded with the login screen is used
+        // as is; one already used for an earlier attempt is replaced here, not right
+        // after that attempt failed, so Google's puzzle can finish closing first.
+        if (recaptchaUsed) resetRecaptchaVerifier();
+        const verifier = getOrCreateRecaptcha();
+        if (!verifier) throw Object.assign(new Error('reCAPTCHA could not start'), { code: 'app/recaptcha-unavailable' });
+        recaptchaUsed = true;
+        window.firebaseConfirmationResult = await firebase.auth().signInWithPhoneNumber('+91' + cleanPhone, verifier);
         mode = 'firebase';
       } catch (err) {
-        console.error('[Firebase Phone Auth] Error:', err);
-        resetRecaptchaVerifier();
-        let msg = t('Could not send the code. Please check your internet and try again.');
-        if (err && err.code === 'auth/invalid-phone-number') msg = t('Enter a valid 10-digit mobile number');
-        else if (err && err.code === 'auth/quota-exceeded') msg = t('Too many tries. Please wait an hour and try again.');
-        else if (err && err.code === 'auth/too-many-requests') msg = t('Too many tries. Please wait an hour and try again.');
-        else if (err && err.code === 'auth/invalid-app-credential') msg = t('Verification expired. Please try clicking Send OTP again.');
-        showToast(msg, 'fa-triangle-exclamation');
+        logFirebasePhoneError(err);
         return;
+      } finally {
+        otpSendInFlight = false;
       }
     } else if (accountsApi()) {
       let r = null;
@@ -2484,6 +2584,7 @@
         if (typeof input.select === 'function') input.select();
       }, 150);
     }
+    prewarmRecaptcha();
   }
 
   async function logout() {

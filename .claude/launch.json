@@ -9,6 +9,15 @@
         "5510"
       ],
       "port": 5510
+    },
+    {
+      "name": "bonesip-8080",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "server/server.js",
+        "8080"
+      ],
+      "port": 8080
     }
   ]
 }

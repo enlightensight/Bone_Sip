@@ -5030,3 +5030,6 @@ html[data-lang="ta"] .profile-hero h3 {
 
 
 
+
+/* Send OTP while the code is being sent: keep the brand colour, show progress. */
+.cta-btn.is-loading:disabled, .cta-btn.is-loading[disabled] { filter: none; opacity: 0.9; cursor: progress; }
